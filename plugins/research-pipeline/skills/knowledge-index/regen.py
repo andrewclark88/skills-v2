@@ -411,6 +411,15 @@ def main():
         if fm is None:
             continue
         kind = fm.get("kind") or derive_kind(fm)
+        # Bucket by canonical kind for emit. The explicit research aliases brief/program
+        # (blessed by lint_doc) keep their granular `kind` in the entry, but must emit
+        # under `research` — emit_terse only writes planning/research/historical sections,
+        # so a doc bucketed under a raw alias would silently vanish from the index.
+        bucket = kind
+        if bucket in ("brief", "program"):
+            bucket = "research"
+        elif bucket not in ("planning", "research", "historical"):
+            bucket = derive_kind(fm)
         title = fm.get("title")
         # fallback title from first heading
         if not title:
@@ -434,7 +443,7 @@ def main():
                 entry[opt] = fm[opt]
         if fm.get("description"):
             entry["consumer_hint"] = fm["description"].strip() if isinstance(fm["description"], str) else fm["description"]
-        by_kind.setdefault(kind, []).append(entry)
+        by_kind.setdefault(bucket, []).append(entry)
 
         # detail entry
         d = {}
