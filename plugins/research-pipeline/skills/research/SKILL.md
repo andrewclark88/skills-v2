@@ -150,10 +150,15 @@ Write to the project's briefs/research directory. **Required: emit standard fron
 **For technology research:**
 ```markdown
 ---
-description: {one-line summary — what was researched and key recommendation}
+description: {one-line "when do I read this?" hook — frame as the question this doc answers}
 type: brief
 research_method: /research
 updated: {today's date, YYYY-MM-DD}
+summary: |
+  {2-4 sentences — what was researched and the key recommendation}
+key_findings:
+  - {finding or recommendation}
+  - {finding or recommendation}
 ---
 
 # Research: {Topic}
@@ -184,11 +189,16 @@ updated: {today's date, YYYY-MM-DD}
 **For domain research:**
 ```markdown
 ---
-description: {one-line summary of what this brief covers}
+description: {one-line "when do I read this?" hook — frame as the question this doc answers}
 type: brief
 research_method: /research
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, if this brief gates a specific phase — optional}
+summary: |
+  {2-4 sentences — what this brief covers and why it matters}
+key_findings:
+  - {key finding}
+  - {key finding}
 ---
 
 # Brief: {Topic}

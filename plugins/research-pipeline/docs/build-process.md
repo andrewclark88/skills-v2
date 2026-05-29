@@ -1,16 +1,18 @@
 # Build Process
 
-Standard methodology for building projects. Follow this process for all new projects and modules. Skills (slash commands) automate each step — see the Pipeline section for the full flow.
+Standard methodology for building projects on the agile-workflow substrate, grounded by the research-pipeline plugin. Follow this process for all new projects and modules. Skills automate each step — see the Pipeline section for the full flow.
+
+Skills are namespaced: `research-pipeline:` (rp — research, planning, design grounding) and `agile-workflow:` (aw — substrate, implementation, gates, releases). Throughout this doc, bare `code-formatted` names refer to the skill in its owning plugin; the namespace is given where ambiguity matters.
 
 ## Where This Lives
 
-This document is the source of truth. It's enforced through three layers:
+This document is the source of truth for the methodology. It lives inside the research-pipeline plugin and is referenced, not copied, by every consuming surface.
 
 | File | Scope | Purpose |
 |------|-------|---------|
-| `~/.claude/CLAUDE.md` | Global — always loaded in every conversation | Hard guardrails. Cannot be dropped even in long sessions. |
-| Project-level `CLAUDE.md` | Loaded when working in a project | Points to this document. |
-| `skills/docs/build-process.md` | This file | Full methodology, reference, and checklists. Human-readable and portable. |
+| `~/.claude/CLAUDE.md` | Global — always loaded in every conversation | Hard guardrails. Cannot be dropped even in long sessions. Points here. |
+| Project-level `AGENTS.md` (and `CLAUDE.md` symlink) | Loaded when working in a project | The project's substrate overlay. Points here. |
+| `${CLAUDE_PLUGIN_ROOT}/docs/build-process.md` | This file | Full methodology, reference, and checklists. Read by every research-pipeline skill at start (`You follow the build process at ${CLAUDE_PLUGIN_ROOT}/docs/build-process.md`). |
 
 If the rules here conflict with a project-level doc, this document wins.
 
@@ -18,160 +20,163 @@ If the rules here conflict with a project-level doc, this document wins.
 
 ## The Pipeline
 
-Every project follows this pipeline. Skills in `code blocks` are slash commands.
+Every project follows this pipeline. **Work is tracked as markdown items in `.work/`, not as planning documents.** Each item is a file with YAML frontmatter (`id`, `kind`, `stage`, `tags`, `parent`, `depends_on`, `release_binding`, `gate_origin`). Stages advance `drafting → implementing → review → done`, and **every stage transition is a git commit** — git is the audit trail. Releases **bind late**: an item gets a `release_binding` only when `aw:release-deploy` runs.
+
+The item hierarchy replaces the old roadmap-as-document model:
+- **Epic** — a multi-feature architectural arc (`rp:epicize` emits these)
+- **Feature** — one design + implement cycle, 5-15 units (`rp:epic-design` spawns these)
+- **Story** — an independent implementation stride under a feature (`rp:feature-design` may spawn these)
+- **Task** — a checklist line in a parent's body (no file)
 
 ```
-SESSION START (every session that isn't truly the first one on a project)
+SESSION START (every session on a project with a substrate)
 │
-├─ 0. Load Existing Knowledge  /knowledge-index   ← ESSENTIAL
-│     └─ scans docs/knowledge-index.yaml + planning docs
-│     └─ shows what briefs, architecture, roadmap, and research exist
-│     └─ prevents duplicate work and surfaces relevant context for the task
-│     └─ skip ONLY when starting a brand-new project with no docs yet
+├─ knowledge-index nav auto-loads  (docs/knowledge-index-nav.yaml — corpus situational awareness)
+├─ substrate snapshot auto-loads   (aw SessionStart hook — items at review, the ready queue, top backlog)
+│     └─ run rp:knowledge-index if the nav file is missing or stale
+│     └─ query the queue with .work/bin/work-view --ready / --blocked / --kind
 │
-PROJECT START (truly new project — no existing docs)
+PROJECT START (truly new project — no foundation docs yet)
 │
-├─ 1. Define the Project       /ideate
-│     └─ produces: north-star.md (vision, principles, domain model, research plan)
-│     └─ auto-calls /scout during ideation (breadth-first prior art discovery)
-│     └─ produces: scout-landscape.md (adjacent projects, patterns, lessons)
-│     └─ scout's research recommendations merge into the north star's research plan
+├─ 1. Define the Project       rp:ideate
+│     └─ produces foundation docs: VISION.md, SPEC.md, ARCHITECTURE.md (high-level),
+│        PRINCIPLES.md (optional), research-plan.md
+│     └─ auto-calls rp:scout (prior art) during ideation
+│     └─ for established projects, declare existing docs in .work/CONVENTIONS.md instead
 │
-├─ 2. Research the Domain      /research  (for a focused topic, one domain)
-│                              /deep-research  (for topics spanning 5+ orthogonal facets)
-│                              /research-program  (for megatopics spanning multiple domains)
-│     └─ produces: domain briefs (+ reference skills for /research; parent + specialist briefs
-│        for /deep-research; program + super-parent + N campaigns for /research-program)
-│     └─ repeat until all critical domains are understood
-│     └─ don't rush this — assumptions here cause rewrites later
-│     └─ escalation is user-gated: /research → /deep-research → /research-program
+├─ 2. Research the Domain      rp:research          (focused topic, one domain)
+│                              rp:deep-research     (5+ orthogonal facets)
+│                              rp:research-program  (megatopic spanning 3+ domains)
+│     └─ produces briefs under .research/ (+ reference skill for rp:research)
+│     └─ repeat until all critical domains are understood — assumptions cause rewrites
+│     └─ escalation is user-gated: research → deep-research → research-program
 │
-├─ 3. Design the Architecture  /architecture
-│     └─ produces: architecture.md (modules, data flow, conventions)
-│     └─ grounded in north star + domain briefs — no unresearched assumptions
-│     └─ run /doc-review — verify architecture matches north star + briefs
+├─ 3. Design the Architecture  rp:architecture
+│     └─ produces docs/architecture.md (modules, data flow, conventions, dependencies)
+│     └─ grounded in foundation docs + briefs — no unresearched assumptions
+│     └─ run rp:doc-review to verify it matches VISION/SPEC + briefs
 │
-├─ 4. Plan the Build           /roadmap
-│     └─ produces: roadmap.md (blocking briefs, Input/Output/Tests per phase)
-│     └─ run /doc-review — verify roadmap matches architecture + north star
+├─ bootstrap the substrate     aw:convert    (creates .work/, CONVENTIONS.md, AGENTS.md section, work-view)
 │
-│  ┌── PER PHASE ──────────────────────────────────────────────┐
-│  │                                                           │
-│  ├─ 5. Brief (if listed)     /brief                          │
-│  │     └─ produces: curated domain brief for the builder     │
-│  │                                                           │
-│  ├─ 6. Design                /design                         │
-│  │     └─ produces: design doc (interfaces, types,           │
-│  │        acceptance criteria, file paths)                    │
-│  │                                                           │
-│  ├─ 7. Build                 /implement or /implement-orchestrator
-│  │     └─ produces: code + tests                             │
-│  │                                                           │
-│  ├─ 8. PR + CI               (branch → PR → CI green → merge)
-│  │     └─ phase done when PR merges                          │
-│  │                                                           │
-│  ├─ 9. Update Docs           /update-documentation           │
-│  │     └─ syncs all docs to code changes                     │
-│  │                                                           │
-│  └───────────────────────────────────────────────────────────┘
+├─ 4. Decompose into Epics     rp:epicize
+│     └─ emits EPIC items to .work/active/epics/ at stage:drafting, with depends_on chains
+│     └─ tags research-thin epics [needs-brief]
+│     └─ NOT a roadmap.md — epics are containment shapes, not temporal slots
 │
-│  ┌── EVERY 2-4 PHASES ──────────────────────────────────────┐
-│  │                                                           │
-│  ├─ Quality Checkpoint (every 2-4 phases)                    │
-│  │  ├─ /quality-checkpoint → orchestrator; runs the four     │
-│  │  │                        below on a shared scope and      │
-│  │  │                        produces a consolidated summary  │
-│  │  │  ├─ /doc-review      → planning-doc consistency        │
-│  │  │  ├─ /refactor-design → duplication / abstractions      │
-│  │  │  ├─ /extract-patterns→ document reusable patterns      │
-│  │  │  └─ /test-quality    → spec-driven test gaps           │
-│  │  │                                                         │
-│  │  └─ Or run any of the four individually if the full        │
-│  │     checkpoint isn't warranted                              │
-│  └───────────────────────────────────────────────────────────┘
+│  ┌── PER EPIC ───────────────────────────────────────────────┐
+│  │                                                            │
+│  ├─ 5. Brief (if [needs-brief])   rp:brief                    │
+│  │     └─ produces a curated domain brief under .research/    │
+│  │        / docs/briefs/; gates epic-design                   │
+│  │                                                            │
+│  ├─ 6. Decompose the Epic         rp:epic-design              │
+│  │     └─ spawns FEATURE items to .work/active/features/      │
+│  │     └─ writes the realized decomposition INTO the epic body│
+│  │     └─ advances the epic drafting → implementing           │
+│  │                                                            │
+│  │  ┌── PER FEATURE ───────────────────────────────────────┐ │
+│  │  │                                                       │ │
+│  │  ├─ 7. Design the Feature   rp:feature-design            │ │
+│  │  │     └─ writes the design INTO the feature item body   │ │
+│  │  │        (interfaces, units, order, tests, risks)       │ │
+│  │  │     └─ may spawn STORY items; advances → implementing │ │
+│  │  │     └─ [refactor] → aw:refactor-design                │ │
+│  │  │        [perf] → aw:perf-design                        │ │
+│  │  │        [e2e-test]/[testing] → aw:e2e-test-design      │ │
+│  │  │                                                       │ │
+│  │  ├─ 8. Build              aw:implement (tiny, ≤~50 LoC)  │ │
+│  │  │                        aw:implement-orchestrator (default)
+│  │  │     └─ code + tests; advances implementing → review   │ │
+│  │  │                                                       │ │
+│  │  ├─ 9. Review             aw:review                      │ │
+│  │  │     └─ verdict; files findings as items; advances     │ │
+│  │  │        review → done (or back to implementing)        │ │
+│  │  │                                                       │ │
+│  │  └──────────────────────────────────────────────────────┘ │
+│  └────────────────────────────────────────────────────────────┘
 │
-│  ┌── PRE-DEPLOY ────────────────────────────────────────────┐
-│  │                                                           │
-│  ├─ /security-review       → comprehensive audit, scored     │
-│  │                           report, address Critical/High   │
-│  │                           before deploying                │
-│  └───────────────────────────────────────────────────────────┘
+├─ AUTOPILOT (the queue driver — aw:autopilot)
+│     └─ picks ready items by depends_on + stage, routes drafting items to the
+│        right design skill (epic_design / feature_design via CONVENTIONS.md
+│        design_skill_routing, or tag-routed refactor/perf/e2e), delegates
+│        implementing → implement-orchestrator and review → review, commits each
+│        transition, repeats until the scope is done or blocked
 │
-├─ /update-documentation maintains the Features section of architecture.md
-│     └─ what the tool can do today — updated after each phase, not written once
+├─ QUALITY CHECKPOINT          rp:quality-checkpoint
+│     └─ orchestrates the release gate sweep on a bound (or --pending) bundle;
+│        each gate emits findings as substrate items, not a pass/fail report
 │
-├─ Deploy (final phase)
-│     └─ Terraform via CI only — see Infrastructure Safety
+├─ RELEASE                     aw:release-deploy <version>
+│     └─ binds items to the version, advances release planned → quality-gate,
+│        runs the configured gates in CONVENTIONS.md order, waits for all bound
+│        + gate-produced items to reach done, ships per release mapping, archives
+│        bound items via git mv to .work/releases/<version>/, advances → released
 │
 │  ┌── ONGOING / AS-NEEDED ───────────────────────────────────┐
-│  │                                                           │
-│  ├─ /cruft-cleaner         → remove dead code, AI bloat      │
-│  ├─ /bold-refactor         → find architectural              │
-│  │                           simplifications                  │
-│  ├─ /feature               → quick extension outside roadmap  │
-│  ├─ /expand                → scope expansion for subsystems   │
-│  ├─ /repo-eval             → multi-dimensional codebase       │
-│  │                           scoring                          │
-│  ├─ /e2e-test-design       → end-to-end test suite design     │
-│  ├─ /release               → changelog + release              │
+│  │                                                          │
+│  ├─ aw:scope           → promote backlog ideas into items   │
+│  ├─ aw:park            → capture an idea to .work/backlog/   │
+│  ├─ aw:fix             → repair a verified bug as a story    │
+│  ├─ rp:expand          → scope/foundation change             │
+│  ├─ rp:update-epicize  → rescope the epic graph after work   │
+│  ├─ rp:update-documentation → align docs to code             │
+│  ├─ aw:bold-refactor   → architectural reconception → epic   │
+│  ├─ aw:bug-scan        → deep correctness bug hunt           │
+│  └─ aw:repo-eval       → multi-dimensional codebase scoring  │
 │  └───────────────────────────────────────────────────────────┘
 
 KNOWLEDGE INDEX (essential infrastructure, maintained automatically):
-  /knowledge-index runs at the start of every session that isn't truly
-  the first one on a project. This is non-negotiable — agents that skip
-  it duplicate prior work and miss available context.
-
-  Doc-producing skills (/ideate, /scout, /research, /deep-research,
-  /research-program, /architecture, /brief, /epicize, /refactor-design,
-  /feature, /extract-patterns, /expand) emit conformant frontmatter and
-  call /knowledge-index to regenerate the index. The index is fully
-  derived from frontmatter — never hand-edited.
-  Doc-maintaining skills (/update-documentation, /doc-review) call
-  /knowledge-index after creating, modifying, or fixing docs.
-  Skills that consume context (/design, /implement, /brief, etc.)
-  should check the index FIRST before researching from scratch or
-  duplicating work.
+  The navigator layer (docs/knowledge-index-nav.yaml) auto-loads at session start.
+  Doc-producing skills (rp:ideate, rp:scout, rp:research, rp:deep-research,
+  rp:research-program, rp:architecture, rp:brief, rp:expand) emit conformant
+  frontmatter and call rp:knowledge-index to regenerate the index.
+  Doc-maintaining skills (rp:update-documentation, rp:doc-review) call
+  rp:knowledge-index after creating, modifying, or fixing docs.
+  rp:knowledge-index also indexes substrate items in .work/ (linted separately
+  from docs). The index is fully derived from frontmatter — never hand-edited.
 ```
 
 ---
 
 ## Knowledge Index
 
-Every project accumulates knowledge — briefs, architecture docs, research findings. The knowledge index (`docs/knowledge-index.yaml`) tracks all of it so future sessions know what context is available.
+Every project accumulates knowledge — briefs, architecture docs, research findings, and substrate items. The knowledge index tracks all of it so future sessions know what context is available.
 
-**The knowledge index is essential infrastructure, not optional polish.** Skipping it leads to: duplicated research, contradicted prior decisions, agents flying blind on context that's already available, and architectural drift. Every project past day one should have a knowledge index, and every session past day one should consult it.
+**The knowledge index is essential infrastructure, not optional polish.** Skipping it leads to: duplicated research, contradicted prior decisions, agents flying blind on context that's already available, and architectural drift. Every project past day one should have one, and every session past day one should consult it.
 
-**How it works:**
-- `/knowledge-index` — regenerates the index from frontmatter and presents available knowledge. Two-layer output: terse `knowledge-index.yaml` (always loaded at session start) + rich `knowledge-index-detail.yaml` (on-demand). Inline lint pass catches drift.
-- The index is fully **derived from frontmatter**. Sibling skills write conformant frontmatter on the docs they produce; `/knowledge-index` regenerates. Nothing else writes to the index files.
-- Skills that consume context (`/design`, `/implement`, `/brief`, `/architecture`, etc.) check the index BEFORE doing any work that might already be done.
+**How it works** — `rp:knowledge-index` regenerates a three-layer model from frontmatter:
+- **Layer 1 — `docs/knowledge-index-nav.yaml`** (~5-8KB): auto-loaded at session start within the harness's 10KB hook-output cap. Surfaces corpus counts by `kind`, the 15 most-recently-updated docs, and docs flagged `nav_priority: high`.
+- **Layer 2 — `docs/knowledge-index.yaml`**: the terse full per-doc index, read on-demand.
+- **Layer 3 — `docs/knowledge-index-detail.yaml`**: the rich layer (summaries / decisions / key_findings / related), read on-demand.
+
+It also globs `.work/active/`, `.work/backlog/`, `.work/releases/`, and `.work/archive/` and indexes substrate items, which have a different frontmatter schema (`id`/`kind`/`stage`/`depends_on`) and are linted separately. An inline lint pass catches drift, broken supersession chains, and missing required fields; the navigator is warned at 8KB and errored at 10KB.
+
+**The index is fully derived from frontmatter.** Sibling skills write conformant frontmatter on the docs they produce; `rp:knowledge-index` regenerates. Nothing else writes to the index files — never hand-edit `knowledge-index*.yaml`.
 
 **The rules:**
-1. **Session start: load it.** The terse `knowledge-index.yaml` auto-loads. The agent's first action should not be searching the codebase — it should be checking what's already known.
-2. **Before researching: check it.** A `/research` invocation should not begin without confirming a relevant brief doesn't already exist.
-3. **Before designing: check it.** `/design` reads the index for blocking briefs before producing a design doc.
-4. **After writing a doc: regenerate it.** Every doc-producing skill calls `/knowledge-index` after writing. Hand-written planning docs trigger the same regeneration. Never hand-edit `knowledge-index.yaml` or `knowledge-index-detail.yaml` — they're derived artifacts.
+1. **Session start: load it.** The nav layer auto-loads. The agent's first action should be checking what's already known, not searching the codebase.
+2. **Before researching: check it.** A `rp:research` invocation should not begin without confirming a relevant brief doesn't already exist.
+3. **Before designing: check it.** `rp:epic-design` and `rp:feature-design` read the nav index for `blocks_phase`/`[needs-brief]` context before producing design content.
+4. **After writing a doc: regenerate it.** Every doc-producing skill calls `rp:knowledge-index` after writing.
 
-**Doc frontmatter convention:** Every indexable doc declares `description`, `type`, `updated`, `summary`, `kind` (often derived from `type`+`status`), and either `decisions:` (planning) or `key_findings:` (research). See `knowledge-index/SKILL.md` for the full schema and `knowledge-index/REDESIGN-SKETCH.md` for design rationale.
+**Doc frontmatter convention:** every indexable doc declares `description`, `type`, `updated`, `summary`, `kind` (often derived from `type`), and either `decisions:` (`kind: planning`) or `key_findings:` (`kind: research`). See `knowledge-index/SKILL.md` for the full schema.
 
 ---
 
-## When to Use `/brief` vs `/feature` vs `/expand`
+## When to Use `/brief` vs `/expand`
 
-These three skills all produce scoping documents but serve different purposes:
+Both produce scoping context, but for different purposes:
 
 | Situation | Skill | Why |
 |-----------|-------|-----|
-| A roadmap phase lists a **blocking brief** — domain knowledge is needed before building | `/brief` | Domain research for the knowledge layer. Produces a curated brief optimized for agent consumption. Updates the knowledge index. |
-| You need a **quick software extension** outside the core roadmap — self-contained, typically small | `/feature` | Software-dev scoped. Explores the codebase, interviews about requirements, produces a feature brief that `/design` consumes. Doesn't change the roadmap. |
-| You're adding a **new subsystem or capability** that changes the project's scope | `/expand` | Larger than a feature, smaller than re-running `/ideate`. Updates foundation docs (north star, architecture) and feeds into a roadmap update. |
+| An epic or feature is tagged `[needs-brief]` — domain knowledge is needed before design | `rp:brief` | Domain research for the knowledge layer. Produces a curated brief optimized for agent consumption. Updates the knowledge index. Gates the design pass. |
+| You're adding a **new subsystem or capability** that changes the project's scope | `rp:expand` | Larger than a single feature. Updates foundation docs (VISION, ARCHITECTURE) so the next epicize/design pass can build on them. |
 
 **Decision tree:**
-- Does this change the project's architecture or scope? → `/expand`
-- Does this need domain knowledge research (rules, APIs, protocols)? → `/brief`
-- Is this a self-contained software addition within existing architecture? → `/feature`
+- Does this change the project's architecture or scope? → `rp:expand` (then re-`rp:epicize` or `rp:update-epicize`).
+- Does designing/implementing an item need domain knowledge research (rules, APIs, protocols)? → `rp:brief`.
 
-If you're unsure, start with `/brief` — domain knowledge never hurts, and `/feature` can consume a brief's output.
+Small self-contained work is not a brief or an expansion — it's a feature or story item (create via `aw:scope`), or `aw:fix` for a verified bug.
 
 ---
 
@@ -181,15 +186,15 @@ Three scales of the same fractal pattern (same four-role architecture: orchestra
 
 | Situation | Skill | Shape | Cost (calibrated) |
 |-----------|-------|-------|-------------------|
-| Focused topic, one domain, clear question | `/research` | Orchestrator + 3-5 Sonnet sub-agents, synthesis in parent | ~$3-5 |
-| Topic spans 5+ orthogonal aspects, or decomposition is part of the work, or multi-angle synthesis matters | `/deep-research` | Lead + 3-7 Sonnet specialists (parallel, isolated) + spawned Opus Synthesis + spawned Opus Evaluator | ~$6 scoped, ~$12-15 default |
-| Megatopic spans multiple distinct domains (3+), each big enough to be its own campaign | `/research-program` | Planner + 3-7 Campaigns (each a full `/deep-research` tree) + Cross-Campaign Synthesizer + Program Evaluator | ~$35-75 |
+| Focused topic, one domain, clear question | `rp:research` | Orchestrator + 3-5 Sonnet sub-agents, synthesis in parent | ~$3-5 |
+| Topic spans 5+ orthogonal aspects, or decomposition is part of the work, or multi-angle synthesis matters | `rp:deep-research` | Lead + 3-7 Sonnet specialists (parallel, isolated) + spawned Opus Synthesis + spawned Opus Evaluator | ~$6 scoped, ~$12-15 default |
+| Megatopic spans multiple distinct domains (3+), each big enough to be its own campaign | `rp:research-program` | Planner + 3-7 Campaigns (each a full `rp:deep-research` tree) + Cross-Campaign Synthesizer + Program Evaluator | ~$35-75 |
 
-**Escalation ladder:** `/research` can escalate to `/deep-research` when it detects the topic is broad. `/deep-research` can escalate to `/research-program` when its Lead recognizes the seed is actually a megatopic. `/ideate`, `/brief`, and `/expand` can all call any of the three directly based on the shape of what they need. Escalation is always user-gated.
+**Escalation ladder:** `rp:research` can escalate to `rp:deep-research` when it detects the topic is broad. `rp:deep-research` can escalate to `rp:research-program` when its Lead recognizes the seed is actually a megatopic. `rp:ideate`, `rp:brief`, and `rp:expand` can all call any of the three directly based on the shape of what they need. Escalation is always user-gated.
 
-**Chain mode:** `/deep-research --continue-from <parent-campaign-dir>` extends a leaf of a prior campaign — loads parent context, scopes decomposition to the leaf, writes typed cross-references back, appends a child-pointer section to the parent's `parent.md`. Use when a finished campaign's output reveals one leaf turned out to be its own domain. Chains longer than 2-3 links typically mean the topic should have been `/research-program` from the start.
+**Chain mode:** `rp:deep-research --continue-from <parent-campaign-dir>` extends a leaf of a prior campaign — loads parent context, scopes decomposition to the leaf, writes typed cross-references back, appends a child-pointer section to the parent's `parent.md`. Use when a finished campaign's output reveals one leaf turned out to be its own domain. Chains longer than 2-3 links typically mean the topic should have been `rp:research-program` from the start.
 
-**Reuse check:** every scale's Phase 1 checks `knowledge-index.yaml` for existing work. Cite existing briefs and campaigns instead of re-running — saves $6-15 per cited campaign at program scale.
+**Reuse check:** every scale's Phase 1 checks the knowledge index for existing work. Cite existing briefs and campaigns instead of re-running — saves $6-15 per cited campaign at program scale.
 
 See [`research-skills-overview.md`](research-skills-overview.md) for the full family view (fractal pattern, composition points, isolation rules). Full architectures: [`deep-research-architecture.md`](deep-research-architecture.md), [`research-program-architecture.md`](research-program-architecture.md).
 
@@ -200,240 +205,190 @@ See [`research-skills-overview.md`](research-skills-overview.md) for the full fa
 Skills that spawn sub-agents follow the [Model Selection Pattern](model-selection-pattern.md) — four archetypes (orchestration, parallel-worker, synthesis, volume-extraction) with explicit model (Opus/Sonnet/Haiku) and effort recommendations. Each skill's SKILL.md declares its archetype mapping.
 
 **The short version:**
-- **Orchestration** (few calls, high stakes — e.g. `/architecture`, `/design`, `/deep-research` Lead) → Opus high
-- **Parallel workers** (many parallel, scoped — e.g. research sub-agents, deep-research specialists) → Sonnet medium
+- **Orchestration** (few calls, high stakes — e.g. `rp:architecture`, `rp:epic-design`, `rp:deep-research` Lead) → Opus high
+- **Parallel workers** (many parallel, scoped — e.g. research sub-agents, deep-research specialists, design Explore agents) → Sonnet medium
 - **Synthesis / judgment** (one call, integrates N inputs) → Opus high
-- **Volume / structured extraction** (many calls, well-defined task) → Haiku low
+- **Volume / structured extraction** (many calls, well-defined task — e.g. `rp:knowledge-index` regeneration) → Haiku/Sonnet low
 
-Cost impact (calibrated from demos 2026-04-15): a scoped `/deep-research` campaign costs ~$6 using the mix, a default campaign ~$12-15, vs ~$50-75 if everything ran on Opus. A 4-campaign `/research-program` lands at ~$35-60.
+Cost impact (calibrated from demos 2026-04-15): a scoped `rp:deep-research` campaign costs ~$6 using the mix, a default campaign ~$12-15, vs ~$50-75 if everything ran on Opus. A 4-campaign `rp:research-program` lands at ~$35-60.
 
 ---
 
 ## Step Details
 
-### 1. Define the Project (`/ideate`)
+### 1. Define the Project (`rp:ideate`)
 
-Interactive workshop. Explore the idea, refine it, produce a north star. Also identify what domains need research before architecture can be designed. Auto-calls `/scout` for breadth-first prior art discovery — finding adjacent projects, approaches, and lessons learned before committing to a direction.
+Interactive workshop. Explore the idea, refine it, produce the **foundation docs** the substrate expects. Auto-calls `rp:scout` for breadth-first prior art discovery — adjacent projects, approaches, and lessons — before committing to a direction.
 
-**Produces:** `north-star.md` (vision, principles, domain model, research plan) + `scout-landscape.md` (prior art).
+**Produces** (only docs that don't already exist; never overwrites):
+- `docs/VISION.md` — vision, problem, who it's for, non-goals
+- `docs/SPEC.md` — capabilities, domain model, constraints, non-functional requirements
+- `docs/ARCHITECTURE.md` — **high-level only**: 3-7 module names, data flow sketch, key dependencies, biggest risk
+- `docs/PRINCIPLES.md` — decision heuristics (optional; skipped if the user has none to surface)
+- `docs/research-plan.md` — domains needing `rp:research` / `rp:deep-research` / `rp:research-program` before architecture firms up
+- `scout-landscape.md` — prior art (from the auto-called scout)
 
-**Does NOT produce architecture.** Architecture requires domain research first. Don't design how to build something until you understand the domain it operates in.
+**Does NOT produce detailed architecture, epics, or substrate items.** Detailed architecture is `rp:architecture` after research lands; epics are `rp:epicize` after the substrate is bootstrapped.
 
-### 2. Research the Domain (`/research`)
+For established projects with existing nested docs (e.g. `docs/architecture/north-star-*.md`), don't run ideate — declare those as `foundation_docs:` in `.work/CONVENTIONS.md` instead.
 
-Deep investigation of each domain identified in step 1. Use for external systems, protocols, APIs, analytical methods, hardware, regulations — anything the project builds on.
+### 2. Research the Domain (`rp:research`)
 
-**Produces:** Domain briefs + auto-loading reference skills.
+Deep investigation of each domain in the research plan. Use for external systems, protocols, APIs, analytical methods, hardware, regulations — anything the project builds on.
 
-**Be aggressive about research.** It's far cheaper to spend a session researching than to discover mid-build that the domain works differently than assumed. If you're not sure whether something needs research, it does.
+**Produces:** domain briefs under `.research/` + an auto-loading reference skill (for `rp:research`).
 
-**Run `/research` multiple times** — once per domain. Don't try to research everything in one pass.
+**Be aggressive about research.** It's far cheaper to spend a session researching than to discover mid-build that the domain works differently than assumed. If you're not sure whether something needs research, it does. Run it once per domain — don't research everything in one pass. Escalate to `rp:deep-research` / `rp:research-program` per the scale table above.
 
-### 3. Design the Architecture (`/architecture`)
+### 3. Design the Architecture (`rp:architecture`)
 
-Technical design, informed by the north star AND domain briefs. Now you know enough to make real decisions.
+Technical design, informed by the foundation docs AND domain briefs. Now you know enough to make real decisions.
 
-**Produces:** `architecture.md` (modules, data flow, conventions, dependencies).
+**Produces:** `docs/architecture.md` (modules, data flow, conventions, dependencies).
 
-**Prerequisites:** North star and relevant domain briefs MUST exist. If you discover during architecture that a domain isn't understood, stop and run `/research` first.
+**Prerequisites:** foundation docs and relevant domain briefs MUST exist. If you discover during architecture that a domain isn't understood, stop and run `rp:research` first. Ground every decision in research — not "we'll use X" but "we'll use X because the brief confirmed it fits our constraints."
 
-**Ground every decision in research.** Not "we'll use X" but "we'll use X because the domain brief confirmed it fits our constraints."
+**After writing architecture.md, run `rp:doc-review`.** Catch contradictions between architecture and the foundation docs / briefs before any epics are built on top of them.
 
-**After writing architecture.md, run `/doc-review`.** Architecture is the first doc that must be consistent with both the north star and domain briefs. Catch contradictions before building a roadmap on top of them.
+### Foundation Docs & The Item Hierarchy
 
-### Document Types & Ownership
+There are no separate "design docs." Planning lives in two places: **foundation docs** (the durable description of present intent) and **substrate items** (the work). Each has one job; no duplication.
 
-Three planning doc types + one knowledge type. Each has one job. No duplication across types.
+**Foundation docs** (in `docs/`, declared in `.work/CONVENTIONS.md` `foundation_docs:`):
+- **VISION** — vision, principles, problem, who it's for, non-goals. Owns the "what and why."
+- **SPEC** — capabilities, domain model, constraints, non-functional requirements. Owns the contract surface.
+- **ARCHITECTURE** — modules, data flow, conventions, dependencies, cross-cutting design decisions. Owns "how the system is built." Maintained by `rp:update-documentation` as the project evolves. May be a single `architecture.md` or a nested set (e.g. `docs/architecture/north-star-*.md` + `architecture.md` + supplementary cross-cutting docs).
+- **PRINCIPLES** — optional decision heuristics.
 
-When content belongs in two places, put it in one and reference the other.
+Foundation docs follow the **rolling-foundation principle**: they describe present intent only. No "previously", "originally", or "in v1.x" prose — git is the audit trail. Historical decision records go to `docs/architecture/history/` with `kind: historical`.
 
-#### North Star (`type: north-star`)
+**Substrate items** (in `.work/active/{epics,features,stories}/`) replace the roadmap-as-document model:
+- **Epic** — a multi-feature architectural arc. Body is a brief + research references + the realized decomposition (written by `rp:epic-design`). Produced by `rp:epicize`.
+- **Feature** — one design + implement cycle (5-15 units). Body accumulates the **design itself** (interfaces, units, order, tests, risks) when `rp:feature-design` runs. Spawned by `rp:epic-design`.
+- **Story** — an independent implementation stride under a feature. Spawned by `rp:feature-design` when a feature is multi-stride or has internal parallelism.
+- **Release** — orchestration state for a version (`aw:release-deploy`); stage `planned → quality-gate → released`.
 
-**Owns:** Vision, principles, domain model — the "what and why."
-**Does NOT own:** File paths, phase status, technical implementation, module structure.
-**Produced by:** `/ideate`
+Frontmatter (`id`, `kind`, `stage`, `tags`, `parent`, `depends_on`, `release_binding`, `gate_origin`, `created`, `updated`) is validated by every skill that reads or writes items. `depends_on` is sequencing (can't start until listed items are `done`); `parent` is hierarchy. `release_binding` stays `null` until late-binding at release time. Gate-produced items carry `gate_origin`.
 
-**Required sections:**
-- **Vision** — 1-2 sentences
-- **Problem** — what's broken today
-- **Principles** — 5-7 rules that guide every decision
-- **Domain Model** — core concepts and their relationships
-- **Research Plan** — domains that need `/research` before `/architecture`, with status
-- **Related Documents** — links to scout landscape, architecture, roadmap
+**Briefs** (`type: brief`, `kind: research`, under `.research/` or `docs/briefs/`) own curated domain knowledge — facts, research findings, implementation context. Produced by `rp:research` (domain investigation) and `rp:brief` (item-specific context). Indexed by frontmatter, NOT reviewed by `rp:doc-review`.
 
-#### Architecture (`type: architecture`)
+### 4. Decompose into Epics (`rp:epicize`)
 
-**Owns:** How the system is built — modules, data flow, conventions, dependencies, cross-cutting design decisions.
-**Does NOT own:** Vision/principles (north star), phase status (roadmap).
-**Produced by:** `/architecture`. Maintained by `/update-documentation` after each phase.
+After foundation docs + research + `aw:convert` (substrate bootstrap), decompose the architecture into **epics**.
 
-**Required sections:**
-- **System Overview** — diagram
-- **Module Map** — file/directory → responsibility → external dependency
-- **Data Flow** — how data moves through the system
-- **Conventions** — code org, API patterns, error handling, testing
-- **Dependencies** — table
-- **What's Deferred** — and why
+**Produces:** EPIC items in `.work/active/epics/`, each at `stage: drafting`, with declared `depends_on` chains. Aim for 3-8 epics. Epics are containment shapes (split by capability), not temporal phases — no "Phase 1 / Phase 2." Research-thin epics get a `[needs-brief]` tag so the design pass knows a brief is required first. Epic bodies are briefs + research references, NOT designs.
 
-**Optional sections (as the project needs them):**
-- **Features** — what the tool can do today, organized by user-facing capability. Maintained by `/update-documentation`.
-- **Knowledge Store** — if the project has searchable knowledge (knowledge-store.md)
-- **Tool/Dependency Map** — cross-module dependencies (tool-use-map.md)
-- **Development Workflow** — local dev, CI, deployment model
-- **Other cross-cutting design docs** — whatever the project needs
+`rp:epicize` does adaptive grounding: heavy when a `.research/` corpus + knowledge index exist; foundation-doc-only otherwise. After epicizing, the epics are ready for `rp:epic-design` (or an `aw:autopilot` goal).
 
-All architecture-type docs live in `docs/architecture/`. There can be multiple files — one main `architecture.md` plus supplementary docs like `knowledge-store.md`, `tool-use-map.md`, etc. All typed as `architecture` in the knowledge index.
+### 5. Brief (`rp:brief`) — when `[needs-brief]`
 
-#### Roadmap (`type: roadmap`)
+If an epic or feature carries the `[needs-brief]` tag, write the brief before designing it. Briefs are curated domain knowledge optimized for agent consumption — not raw research, not architecture, not a tutorial. They answer: "what does the builder need to know to implement this correctly?"
 
-**Owns:** Phases, status, dependencies, blocking briefs, decisions, open questions — the "when and in what order."
-**Does NOT own:** Module internals, domain model, architecture details.
-**Produced by:** `/epicize`
+`rp:epic-design` and `rp:feature-design` halt at their Phase 0 knowledge-index check when they see a `[needs-brief]` tag and direct the user to run `rp:brief <topic>` first. This is the gate that enforces "if an item lists a blocking brief, write it before building." For broad topics, `rp:brief` escalates to `rp:deep-research`; for multi-domain programs, to `rp:research-program`.
 
-**Required sections:**
-- **Acceptance gate** — how a phase is considered done (PR + CI + tests)
-- **Phase table** — each phase with: blocking briefs, read before building, build, output, done-when (automated vs manual)
-- **Quality checkpoints** — every 2-4 phases
-- **Security review** — pre-deploy
-- **Dependency graph** — ASCII diagram
-- **Decisions (locked)** — choices made and rationale
-- **Open questions** — unresolved items
+### 6. Decompose the Epic (`rp:epic-design`)
 
-#### Briefs (`type: brief`)
+Designs an epic at `stage: drafting`. Grounds itself in the knowledge index + research corpus + patterns + system-design moves, maps the codebase with parallel Explore sub-agents, surfaces high-level design ambiguities (resolved with the user, or with judgment under autopilot), and runs a pre-mortem.
 
-**Owns:** Curated domain knowledge — facts, research findings, implementation context.
-**Does NOT own:** Design decisions, system architecture, phase status.
-**Produced by:** `/research` (domain investigation), `/brief` (phase-specific context)
-**Checked by:** `knowledge/lint` (staleness, orphans, contradictions) — NOT `/doc-review`
+**Produces:** child FEATURE items in `.work/active/features/` with `parent` + `depends_on` metadata, and a `## Decomposition` section written **into the epic body** (replacing the provisional sketch). Aim for 2-6 child features per epic. Advances the epic `drafting → implementing`. NEVER writes a `docs/designs/epic-*.md` file — the decomposition lives in the item body.
 
-### 4. Plan the Build (`/epicize`)
+### 7. Design the Feature (`rp:feature-design`)
 
-Produces a roadmap where each phase is a self-contained build spec, completable in one session.
+The feature-level entry point in the design family. Routes by tag: greenfield → this skill; `[refactor]` → `aw:refactor-design`; `[perf]` → `aw:perf-design`; `[e2e-test]`/`[testing]` → `aw:e2e-test-design`.
 
-**After writing roadmap.md, run `/doc-review`.** The roadmap references everything — architecture, briefs, phase numbers, blocking dependencies. Verify it all agrees before building starts. This is the last consistency gate before implementation.
+Grounds itself (knowledge index, parent epic body, foundation docs, research corpus, patterns), maps the codebase, surfaces feature-specific ambiguities, enumerates 2-3 architectural options, designs the trickiest unit first, runs a pre-mortem, and designs the test approach per unit.
 
-**Every phase has:**
-- **Blocking briefs** — domain knowledge that must be written before the phase begins
-- **Read before building** — docs and code to load into context
-- **Build** — what to implement (specific files, endpoints, features)
-- **Output** — files produced
-- **Tests** — acceptance criteria, split into automated and manual
-- **Dependencies** — what must exist before this phase starts
+**Produces:** the design written **into the feature item body** — `## Architectural choice`, `## Implementation Units` (exact file paths + language-specific signatures + testable acceptance criteria), `## Implementation Order`, `## Testing`, `## Risks`. Spawns child STORY items when the feature is multi-stride or has internal parallelism. Advances the feature `drafting → implementing`. NEVER writes a `docs/designs/<feature>.md` file.
 
-Status tracking: DONE / NEXT / blank.
+### 8. Build (`aw:implement` or `aw:implement-orchestrator`)
 
-### 5. Brief-Driven Development (`/brief`)
+Implement the design embedded in the item body. Output is code AND tests — tests are the contract.
 
-Before each implementation phase, **write the brief that unblocks it.** Briefs are curated domain knowledge optimized for agent consumption — not raw research, not architecture, not tutorials. They answer: "what does the builder need to know to implement this phase correctly?"
+- **`aw:implement`** — inline single-stride implementation for tiny deliveries (≤ ~50 LoC, ≤ 2 files, no coordination). Reads the design from the item body, writes code, runs build + tests, advances `implementing → review`, and records implementation notes in the item body.
+- **`aw:implement-orchestrator`** — the **default** path. Builds a `depends_on` graph, bundles related work, chooses wave width and worktree isolation, and dispatches implementation sub-agents (including large non-overlapping write paths when ownership and verification make that safe). Advances parents whose children all reach `stage: review`.
 
-**The rule:** If a roadmap phase lists a blocking brief, run `/brief` before the phase begins. The skill reads the roadmap phase, researches the domain, and produces a structured brief.
+A feature is done when its work passes review and reaches `stage: done` — and ultimately when its PR merges with CI green (see PR & CI Checkpoints).
 
-**`/research` vs `/brief`:** Research investigates broadly and produces a reference. Brief takes research (or does its own) and distills it into implementation-ready context for a specific phase. Research feeds briefs; briefs feed builds.
+### 9. Review (`aw:review`)
 
-### 6. Design (`/design`)
+Reviews an item at `stage: review`. Reads the item's design + implementation notes, runs a code review of the changes, classifies findings (blockers / important / nits), and **files findings as substrate items** with appropriate tags rather than gating on human acknowledgment. Advances the item `review → done` if approved, or back to `implementing` if changes are needed. Autonomous-safe — `aw:autopilot` calls it directly to drain `stage: review` items.
 
-Produces a detailed design document from the roadmap phase spec. Contains:
-- Exact file paths
-- Full interfaces and types in the project's language
-- Function signatures
-- Implementation notes for non-obvious logic
-- Acceptance criteria (testable assertions, not subjective)
-- Implementation order (resolves dependencies)
+### Autopilot (`aw:autopilot`)
 
-**The design doc is the bridge between the roadmap (what to build) and implementation (building it).** An implementer agent can write code from it without asking questions.
+The queue driver. Reads `.work/active/`, picks ready items (every `depends_on` terminal) by `depends_on` count then `created`, and delegates:
+- `drafting` epic → `epic_design` (resolved via `.work/CONVENTIONS.md` `design_skill_routing`, default `epic-design`)
+- `drafting` feature → tag-routed (`refactor-design` / `perf-design` / `e2e-test-design`) else `feature_design` (default `feature-design`)
+- `implementing` non-epic → `implement-orchestrator`
+- `review` → `review`
 
-### 7. Build (`/implement` or `/implement-orchestrator`)
+It commits each transition, rebuilds the queue from disk, and repeats until the scope is **complete**, **blocked**, or **interrupted**. A review circuit-breaker escalates items that bounce twice. In `--all` mode it runs a conservative `refactor-design` discovery pass every 5 items advanced to `done`. It never invokes `bold-refactor` (too aggressive for autonomous driving). Projects layered with research-pipeline set `design_skill_routing` to the `research-pipeline:` design skills so the research-grounded, `[needs-brief]`-gated versions win on the autopilot path.
 
-Implement the design document.
+### Quality Checkpoint (`rp:quality-checkpoint`)
 
-- **`/implement`** — single agent, best for phases with <20 files
-- **`/implement-orchestrator`** — Opus orchestrator spawns parallel Sonnet agents, best for large phases or parallelizable work
+Run before binding a release. Orchestrates a sequential gate sweep on one shared bundle (a bound version, or `--pending` for all unbound `stage: done` items), then surfaces a consolidated blocking set. It invokes, **in order**:
 
-Output includes code AND tests. Tests are the contract — a phase is done when its tests pass.
+1. `aw:gate-security`
+2. `aw:gate-tests` (with the spec-driven coverage extension policy from `gate-tests-extension.md` appended)
+3. `aw:gate-cruft`
+4. `aw:gate-docs` (with the cascading-consistency extension policy from `gate-docs-extension.md` appended)
+5. `rp:doc-review` (the narrative cascading pass, running alongside gate-docs)
+6. `aw:gate-patterns`
+7. `aw:gate-infra`
 
-### 8. PR + CI
+Each gate **emits findings as substrate items**, not a pass/fail report — Critical/High land at `stage: implementing` (release blockers), Mediums at `drafting`, Lows at backlog. The orchestrator never acts on findings or substitutes its own judgment; it sequences, injects the extension policies, and reports. Gates are idempotent (skip already-tracked findings), so re-running after an `aw:autopilot` drain only emits net-new items. A clean bundle (zero `implementing`/`drafting` gate items) is ready for `aw:release-deploy`.
 
-All code goes through a PR. The phase is done when:
+### Release (`aw:release-deploy <version>`)
 
-1. Automated tests pass
-2. Docker build succeeds (if applicable)
-3. Human confirms manual checks (if any)
-4. PR is opened, CI passes, and PR is merged to main
+Cuts a release in three movements: **bind** items to the version, **gate** the bundle, **ship** when readiness criteria are met.
 
-**A phase is not done until its PR is merged.** Working locally is not enough.
+Reads `.work/CONVENTIONS.md` for the release mapping (`branch-held` / `tag-based` / `release-branch` / `none`) and `gates_for_release` (default order: **security → tests → cruft → docs → patterns → infra**). Interactively binds items, advances the release `planned → quality-gate`, runs the configured gates in CONVENTIONS order, waits until all bound + gate-produced items reach `stage: done`, ships per the mapping, archives bound items via `git mv` to `.work/releases/<version>/`, and advances the release to `released`. Idempotent — safe to re-run after fixing gate findings.
 
-### 9. Update Documentation (`/update-documentation`)
+### Ongoing / As-Needed
 
-After each phase, sync all docs to the code changes just made. Catches drift between what was planned and what was built.
+- **`aw:scope`** — promote a backlog idea or fresh request into the active tier as an epic/feature/story with declared dependencies.
+- **`aw:park`** — capture an idea to `.work/backlog/` without derailing current work.
+- **`aw:fix`** — diagnose and repair a verified bug as a single-stride story (reproduce → failing test → minimal fix → confirm), landed at `stage: review`. Not for unverified hunches, refactors, or features.
+- **`rp:expand`** — extend project scope by updating foundation docs for a new subsystem or capability.
+- **`rp:update-epicize`** — rescope the epic graph (splits / merges / archive moves) after a batch of work lands and reality diverges from the plan.
+- **`rp:update-documentation`** — align all docs to code after a change. If it touches foundation docs, it triggers `rp:doc-review` for cross-doc consistency. At release time, `aw:gate-docs` enforces the same rolling-foundation principle.
+- **`aw:bold-refactor`** — find beautiful cross-cutting simplifications; produces a refactor EPIC with `[refactor]`-tagged child features. User-invocable only.
+- **`aw:bug-scan`** — deep multi-angle correctness bug hunt; standalone scored report, or gate mode emitting `gate_origin: bugs` items.
+- **`aw:repo-eval`** — multi-dimensional codebase scoring (architecture, code quality, testing, docs, CI/CD, error handling, security, DX, maintainability).
 
-**If planning docs were modified** (architecture, roadmap, north star, cross-cutting designs), `/update-documentation` triggers `/doc-review` to check cross-doc consistency. Changes to one planning doc can contradict another — doc-review catches that.
+### Doc Review: Cascading Passes (`rp:doc-review`)
 
-### Quality Checkpoints (every 2-4 phases)
-
-After 2-4 implementation phases, pause and run a quality pass. Two equivalent paths:
-
-**Path A (preferred): `/quality-checkpoint`** — orchestrates the four sub-skills below on a shared scope (defaults to the latest completed roadmap phase), produces a consolidated summary, and asks what to act on.
-
-**Path B: run sub-skills individually** — when you only need one, or want full control over scope per sub-skill:
-
-- **`/doc-review`** — audit planning docs for consistency (run first — doc issues reveal code issues)
-- **`/refactor-design`** — find duplication, missing abstractions. Produces a refactor plan. Implement it.
-- **`/extract-patterns`** — document reusable code patterns for consistency.
-- **`/test-quality`** — spec-driven test gap analysis. Writes missing tests.
-
-**Also run `/doc-review` after major design changes**, not just at quality checkpoints. If you changed the architecture, added a module, or resolved an open question — check that all docs agree.
-
-**`/doc-review` runs at three points in the pipeline:**
-1. **After `/architecture`** — verify architecture matches north star + domain briefs
-2. **After `/epicize`** — verify roadmap matches architecture + north star + briefs
-3. **Every 2-4 implementation phases** — catch drift introduced during building
-4. **When triggered by `/update-documentation`** — if planning docs were modified
-
-### Doc Review: Cascading Passes (`/doc-review`)
-
-`/doc-review` uses cascading passes to check consistency at multiple levels. This is especially important for multi-module projects where module docs can drift from system-level docs.
+`rp:doc-review` uses cascading passes to check consistency at multiple levels — important for multi-module projects where module docs drift from system-level docs.
 
 ```
 Pass 1: System-Level
-  north-star ↔ architecture ↔ roadmap ↔ cross-cutting designs (knowledge-store, tool-use-map)
-  → Are these internally consistent?
+  VISION ↔ SPEC ↔ ARCHITECTURE ↔ cross-cutting designs
+  → Are these internally consistent? Do they match the code?
 
 Pass 2+: System + Module (one pass per module, discovered dynamically)
-  All of Pass 1 + module's north star
-  → Does the module's scope match the roadmap phases?
+  All of Pass 1 + the module's docs
+  → Does the module's scope match its epics/features?
   → Does the module's architecture match the system architecture?
-  → Does the module reference cross-cutting systems correctly?
-  → Are MCP primitives, frontmatter specs, and phase numbers consistent?
+  → Are cross-cutting systems referenced correctly?
 ```
 
-**Module discovery is dynamic.** The skill finds modules by scanning the knowledge index and `docs/*/architecture/` directories. No hardcoded module list — works for any project with any number of modules.
+Module discovery is dynamic (scans the knowledge index + `docs/*/architecture/`). It also verifies `[needs-brief]` briefs exist on disk and infrastructure references are accurate. Arguments: no args = full cascade; a module name = system + that module; `--system-only` = system-level only. Runs after `rp:architecture`, after `rp:epicize`, during the quality checkpoint, and when triggered by `rp:update-documentation`.
 
-**Arguments:**
-- No args: full cascade (system + all modules)
-- Module name: system + that module only
-- `--system-only`: system-level only, skip module passes
+### Pre-Deploy Security Review (`rp:security-review`)
 
-### Pre-Deploy Security Review
-
-Before any production deployment:
-
-- **`/security-review`** — comprehensive audit. Discovers stack, lets you choose focus domains (auth, injection, secrets, dependencies, API, infra, crypto, data protection, error handling). Researches current best practices. Produces a scored markdown report with severity-classified findings.
-- **Address all Critical and High findings before deploying.** Medium findings should be tracked. Low/Info are best-effort.
-- The security report feeds into `/design` for remediation planning.
-
-### Cleanup (as needed)
-
-- **`/cruft-cleaner`** — remove dead code, stale comments, AI-accumulated bloat. Run when the codebase feels heavy.
-- **`/bold-refactor`** — find beautiful cross-cutting simplifications. Run when you suspect the architecture can be fundamentally simplified.
+Standalone comprehensive audit (distinct from the release-time `aw:gate-security`). Discovers the stack, lets you choose focus domains (auth, injection, secrets, dependencies, API, infra, crypto, data protection, error handling), researches current best practices, and produces a scored markdown report with severity-classified findings. Address all Critical and High findings before deploying; track Mediums.
 
 ---
 
 ## Working Principles
 
+- **Items, not docs, track work.** Substrate items in `.work/` are the source of truth for work decomposition. The roadmap-as-document pattern is retired.
+- **Rolling-foundation: docs describe present intent.** No "previously", no "originally", no "in v1.x" prose. Git is the audit trail. Historical decision records go to `docs/architecture/history/`.
+- **Each planning doc has one job.** VISION owns the why, SPEC owns the contract, ARCHITECTURE owns the how, epics own work decomposition, the feature body owns its design. Don't duplicate.
+- **Late-binding releases.** Bind items to a version only when running `aw:release-deploy`. Don't pre-bind.
 - **Data-driven over hand-curated.** When there's a data source, build a pipeline. Don't manually curate what can be automated.
 - **Repeatable processes.** Pipelines should re-run (new data, new releases, meta shifts). One-off scripts become recurring commands.
 - **Auto-generate, then enrich.** Generate what you can from existing data, layer in external sources, leave TODOs only for things requiring human judgment.
-- **Don't hand-write what can be researched.** Use `/research`, web search, API exploration, and data analysis before asking for manual input.
+- **Don't hand-write what can be researched.** Use `rp:research`, web search, API exploration, and data analysis before asking for manual input.
 
 ---
 
@@ -443,10 +398,10 @@ Before any production deployment:
 
 This rule applies to (non-exhaustive list):
 
-- `/doc-review`'s auto-fix loop (re-audit dispatched as Sonnet Agent every iteration)
-- `/deep-research`'s evaluator pass (Opus Agent, isolated context)
-- `/research-program`'s program-level evaluator
-- `/security-review`'s severity verification
+- `rp:doc-review`'s auto-fix loop (re-audit dispatched as Sonnet Agent every iteration)
+- `rp:deep-research`'s evaluator pass (Opus Agent, isolated context)
+- `rp:research-program`'s program-level evaluator
+- `rp:security-review`'s severity verification
 - Any future loop skill that converges on quality criteria
 
 ### Why this is structural, not stylistic
@@ -481,7 +436,7 @@ Skill rules that say "re-run the audit" without enforcing structural separation 
 
 ## Thinking Layer
 
-The pipeline's thinking-heavy skills (`/research`, `/deep-research`, `/research-program`, `/ideate`, `/architecture`, `/brief`, `/epicize`) load a first-principles thinking primer before starting work. The primer provides 10 concrete thinking moves organized in four phases:
+The pipeline's thinking-heavy skills (`rp:research`, `rp:deep-research`, `rp:research-program`, `rp:ideate`, `rp:architecture`, `rp:brief`, `rp:epicize`) load a first-principles thinking primer before starting work. The primer provides 10 concrete thinking moves organized in four phases:
 
 1. **Open** — decompose the problem, question deeply, doubt what you know
 2. **Challenge** — invert the problem, seek falsification, trace consequences
@@ -490,16 +445,16 @@ The pipeline's thinking-heavy skills (`/research`, `/deep-research`, `/research-
 
 **The Asymmetry Principle:** The cost of not going deep enough is much higher than the cost of going too deep. When in doubt, go deeper.
 
-**For `/deep-research` specifically**, the thinking layer is load-bearing across three phases:
+**For `rp:deep-research` specifically**, the thinking layer is load-bearing across three phases:
 - **Decomposition** (Open + Synthesize) — faceted decomposition is the highest-leverage decision in a campaign; a bad tree wastes specialists × token budget on wrong questions
 - **Stopping decisions** (Challenge + Verify) — falsify your confidence that each leaf is truly a leaf; test the decomposition by trying to find what's missing
 - **Synthesis** (Challenge + Synthesize) — invert the campaign ("what would make these briefs useless?"), find leverage in cross-references, check for contradictions rather than smoothing them over
 
-See [`docs/first-principles.md`](first-principles.md) for the full primer and per-skill emphasis table.
+See [`first-principles.md`](first-principles.md) for the full primer and per-skill emphasis table.
 
 ## System Design Layer
 
-The pipeline's design-heavy skills (`/architecture`, `/design`, `/implement`, `/brief`) load a system design primer before starting work. The primer provides 15 concrete design moves organized across five concerns:
+The pipeline's design-heavy skills (`rp:architecture`, `rp:epic-design`, `rp:feature-design`, `rp:brief`, `rp:expand`) load a system design primer before starting work. The primer provides 15 concrete design moves organized across five concerns:
 
 1. **Structure** — start monolith, invert at real boundaries, minimize irreversible decisions
 2. **Interfaces** — contracts before implementations, match API to consumer, evolve additively
@@ -509,15 +464,15 @@ The pipeline's design-heavy skills (`/architecture`, `/design`, `/implement`, `/
 
 **The Earn-Your-Complexity Principle:** 12 of the 15 moves are design-in (cheap to include from the start, expensive to retrofit). 3 are earn-in (add only with measured evidence). When in doubt, keep it simple.
 
-The system design primer complements the first-principles thinking primer: first-principles teaches *how to think*; system-design teaches *how to design*. Skills that do both (like `/architecture`) load both.
+The system design primer complements the first-principles thinking primer: first-principles teaches *how to think*; system-design teaches *how to design*. Skills that do both (like `rp:architecture`) load both. Epic-design emphasizes Structure moves (epic boundaries are the highest-leverage decision); feature-design emphasizes Interface and Data moves.
 
-See [`docs/system-design.md`](system-design.md) for the full primer and per-skill emphasis table.
+See [`system-design.md`](system-design.md) for the full primer and per-skill emphasis table.
 
 ---
 
 ## Infrastructure Safety Practices
 
-These apply whenever a project deploys to shared cloud infrastructure (GCP, AWS, etc.). The goal: **never destroy or interfere with resources you don't own.**
+These apply whenever a project deploys to shared cloud infrastructure (GCP, AWS, etc.). The goal: **never destroy or interfere with resources you don't own.** At release time, `aw:gate-infra` audits the bundle for violations of these rules and emits findings as items.
 
 ### Terraform Rules
 
@@ -647,14 +602,14 @@ Merge to main:
 | No direct pushes to main | Yes |
 | No force pushes to main | Yes |
 
-### What CI Checks Per Phase
+### What CI Checks Per Item
 
-Each roadmap phase ships tests. CI runs them all, not just the new phase's tests. The full suite is the regression gate.
+Each feature/story ships tests. CI runs them all, not just the new item's tests — the full suite is the regression gate. An item isn't truly done until its PR merges with CI green; reaching `stage: done` locally is not enough.
 
 | Check | When | Why |
 |-------|------|-----|
 | Build/compile | Every PR | Catch type errors, syntax issues |
-| Unit tests | Every PR | Phase acceptance + regression |
+| Unit tests | Every PR | Item acceptance + regression |
 | Docker build | Every PR | Verify the deployable image works |
 | Terraform plan | Infra PRs only | Review before apply |
 | Lint (if configured) | Every PR | Code quality |
@@ -663,6 +618,7 @@ Each roadmap phase ships tests. CI runs them all, not just the new phase's tests
 
 ## Git Practices
 
+- **Stage transitions are commits.** Every `drafting → implementing → review → done` advance commits the item file (and any code) — git is the substrate's audit trail.
 - **Commits are small and focused.** One logical change per commit.
 - **PRs before merge.** No direct pushes to main. Code review required.
 - **Don't commit generated files.** Data caches, build outputs, `.env` files, `.tfstate` — all gitignored.
@@ -672,32 +628,47 @@ Each roadmap phase ships tests. CI runs them all, not just the new phase's tests
 
 ## Skill Reference
 
+Namespace: `rp` = `research-pipeline:`, `aw` = `agile-workflow:`.
+
 | Skill | When | What it produces |
 |-------|------|-----------------|
-| `/knowledge-index` | Start of every session | Shows all available project knowledge (briefs, docs) |
-| `/ideate` | Step 1 (project start) | North star + research plan |
-| `/scout` | Auto-called during /ideate + standalone + optionally from /expand | Landscape brief + research recommendations |
-| `/research` | Step 2 (domain research) + before any phase using unfamiliar tech | Domain brief + auto-loading reference skill |
-| `/deep-research` | Step 2 alternative for complex topics — parallel-agent campaign. Also callable from `/research`, `/ideate`, `/brief`, `/expand`. Use `--continue-from` for chain mode (extending a leaf of a prior campaign). | N cross-referenced briefs + parent synthesis + quality report |
-| `/research-program` | Step 2 alternative for megatopic-scale initiatives spanning multiple domains (3+ campaigns). Escalation target from `/deep-research` when seed is truly megatopic. Also callable from `/ideate`, `/brief`, `/expand`. | Program directory (program plan + super-parent + N campaigns + program evaluation) |
-| `/architecture` | Step 3 (after north star + domain briefs) | Architecture doc: modules, data flow, conventions |
-| `/epicize` | Step 4 (after architecture) | Phased roadmap with blocking briefs, I/O/Tests |
-| `/brief` | Step 5 (per phase, when blocking brief listed) | Curated domain brief optimized for the builder |
-| `/update-epicize` | After building phases, when scope or blockers have shifted | Revised roadmap reflecting what was learned |
-| `/design` | Step 6 (per phase) | Design doc: interfaces, types, file paths, acceptance criteria |
-| `/implement` | Step 7 (per phase, <20 files) | Code + tests |
-| `/implement-orchestrator` | Step 7 (per phase, 20+ files) | Code + tests (parallel agents) |
-| `/update-documentation` | Step 9 (after each phase) | Updated docs synced to code |
-| `/quality-checkpoint` | Quality checkpoint (every 2-4 phases) | Orchestrator — runs the four below on a shared scope and produces a consolidated summary |
-| `/doc-review` | Quality checkpoint + after major design changes | Doc consistency report |
-| `/refactor-design` | Quality checkpoint (every 2-4 phases) | Refactor plan |
-| `/extract-patterns` | Quality checkpoint | Pattern documentation |
-| `/test-quality` | Quality checkpoint | Spec-driven tests |
-| `/security-review` | Pre-deploy | Scored security report |
-| `/cruft-cleaner` | As needed | Cleanup report + fixes |
-| `/bold-refactor` | As needed | Architectural simplification plan |
-| `/feature` | As needed | Feature brief for quick extensions outside roadmap |
-| `/expand` | As needed | Scope expansion doc for subsystems |
-| `/repo-eval` | As needed | Multi-dimensional codebase scoring |
-| `/e2e-test-design` | As needed | End-to-end test suite design |
-| `/release` | As needed | Changelog + release notes |
+| `rp:knowledge-index` | Start of every session; after any doc/item change | Three-layer index (nav + terse + detail) derived from frontmatter; lint pass |
+| `rp:init-project` | Brand-new project lacking docs/ scaffolding | Copies the canonical docs/ + rules template; points at `aw:convert` then `rp:ideate` |
+| `rp:ideate` | Project start | Foundation docs (VISION, SPEC, ARCHITECTURE high-level, optional PRINCIPLES, research-plan) + scout auto-call |
+| `rp:scout` | Auto-called during ideate + standalone + from expand | Landscape brief (prior art) + research recommendations |
+| `rp:research` | Domain research; before any work using unfamiliar tech | Domain brief + auto-loading reference skill |
+| `rp:deep-research` | Topic spans 5+ orthogonal facets; `--continue-from` for chain mode | N cross-referenced briefs + parent synthesis + quality report |
+| `rp:research-program` | Megatopic spanning 3+ distinct domains | Program directory (plan + super-parent + N campaigns + program evaluation) |
+| `rp:architecture` | After foundation docs + domain briefs | `architecture.md` — modules, data flow, conventions, dependencies |
+| `aw:convert` | After architecture, before epicize | Bootstraps `.work/`, CONVENTIONS.md, AGENTS.md section, work-view; or syncs an existing substrate |
+| `rp:epicize` | After architecture + substrate bootstrap | EPIC items in `.work/active/epics/` with `depends_on` + `[needs-brief]` tags |
+| `rp:brief` | An epic/feature is tagged `[needs-brief]` | Curated domain brief; gates the design pass |
+| `rp:update-epicize` | After a batch of work, when scope shifted | Rescoped epic graph (splits/merges/archive moves) |
+| `rp:epic-design` | An epic at `stage: drafting` | Child FEATURE items + `## Decomposition` in the epic body; advances epic → implementing |
+| `rp:feature-design` | A greenfield feature at `stage: drafting` | Design written into the feature body (units/order/tests/risks) + child STORY items; advances → implementing |
+| `aw:refactor-design` | A `[refactor]` feature at `stage: drafting`; or discovery scan | Refactor plan in the feature body + child stories; or emitted items |
+| `aw:perf-design` | A `[perf]` feature at `stage: drafting`; or discovery profiling | Perf plan + benchmark scaffolds in the feature body; or emitted items |
+| `aw:e2e-test-design` | A `[e2e-test]`/`[testing]` feature; `--bootstrap`/`--audit` | Service-mocked e2e design in the feature body + child stories |
+| `aw:implement` | Tiny inline delivery (≤~50 LoC, ≤2 files) | Code + tests; advances item implementing → review |
+| `aw:implement-orchestrator` | Default implementation path; any non-tiny work | Code + tests via bundled/parallel sub-agents; advances parents when children reach review |
+| `aw:review` | An item at `stage: review` | Verdict + findings filed as items; advances review → done or back to implementing |
+| `rp:update-documentation` | After a non-trivial code change | Docs synced to code; triggers `rp:doc-review` if foundation docs changed |
+| `rp:doc-review` | After architecture/epicize; quality checkpoint; major design changes | Cascading consistency report; verifies docs match code + briefs exist |
+| `rp:quality-checkpoint` | Before binding a release | Orchestrates the gate sweep (security → tests → cruft → docs + doc-review → patterns → infra); consolidated blocking set; findings emit as items |
+| `aw:gate-security` | Release-deploy / quality-checkpoint | Security findings as `gate_origin: security` items |
+| `aw:gate-tests` | Release-deploy / quality-checkpoint | Spec-derived coverage-gap findings as `gate_origin: tests` items |
+| `aw:gate-cruft` | Release-deploy / quality-checkpoint | Dead-code / bloat findings as `gate_origin: cruft` items |
+| `aw:gate-docs` | Release-deploy / quality-checkpoint | Rolling-foundation drift findings as `gate_origin: docs` items |
+| `aw:gate-patterns` | Release-deploy / quality-checkpoint (last) | Reusable patterns extracted to `.agents/skills/patterns/`; `gate_origin: patterns` tracking item |
+| `aw:gate-infra` | Release-deploy / quality-checkpoint | Infra-safety findings (Terraform drift, secrets, missing CI gates) as `gate_origin: infra` items |
+| `aw:release-deploy` | Cut a release | Binds items, runs gates in CONVENTIONS order, ships, archives bound items to `.work/releases/<version>/` |
+| `aw:autopilot` | Drain the ready queue autonomously | Routes drafting → design, implementing → orchestrator, review → review; commits transitions until done/blocked |
+| `aw:scope` | Promote backlog/fresh ideas into tracking | Epic/feature/story items with declared dependencies |
+| `aw:park` | Capture an idea without derailing | Backlog item at `.work/backlog/<id>.md` |
+| `aw:fix` | A verified bug | Single-stride story (failing test → minimal fix) at `stage: review` |
+| `rp:expand` | Scope/foundation change for a new subsystem | Updated foundation docs |
+| `aw:bold-refactor` | Suspect a fundamental simplification (user-invocable only) | Refactor EPIC with `[refactor]` child features |
+| `aw:bug-scan` | Deep correctness bug hunt | Scored report (standalone) or `gate_origin: bugs` items (gate mode) |
+| `aw:repo-eval` | Holistic codebase evaluation | Verified 1-10 scorecard across 9 dimensions + prioritized recommendations |
+| `rp:test-quality` | Spec-driven coverage analysis (standalone) | Tests derived from contracts/specs, not from existing code |
+| `rp:security-review` | Pre-deploy standalone audit | Scored security report with severity-classified findings |
