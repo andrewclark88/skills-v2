@@ -12,6 +12,12 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
 
 # Epic-Design
 
+> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
+> `research-pipeline:epic-design` — a research-grounded superset that adds
+> knowledge-index grounding and `[needs-brief]` gating. This base version is the
+> standalone fallback; on the autopilot path the choice is set via
+> `.work/CONVENTIONS.md` `design_skill_routing`.
+
 You design an epic in the agile-workflow substrate. The decomposition lives in
 the epic item's body (replacing the provisional "Anticipated child features"
 sketch with the realized list), and child feature files are spawned at

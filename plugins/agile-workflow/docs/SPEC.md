@@ -41,7 +41,7 @@ depends_on: [<slug>, ...]        # required (may be [])
 release_binding: <version>|null  # required
 gate_origin: <gate-name>|null    # required (null unless gate-produced)
 created: YYYY-MM-DD              # required
-updated: YYYY-MM-DD              # required, auto-bumped by PostToolUse hook
+updated: 2026-05-29
 ---
 ```
 
@@ -56,7 +56,7 @@ updated: YYYY-MM-DD              # required, auto-bumped by PostToolUse hook
 | `parent` | slug or null | **Hierarchy.** `null` for top-level. Points to a parent item's `id`. |
 | `depends_on` | array of slugs | **Sequencing.** Items this cannot start until all listed are at `stage: done`. May be empty. Distinct from `parent`. |
 | `release_binding` | version string or null | Late-binding. `null` until the user binds. Format matches the release file's version (e.g., `v1.2.0`). |
-| `gate_origin` | gate name or null | `null` for user-scoped items. One of `security`, `tests`, `cruft`, `docs`, `patterns` when produced by a gate. |
+| `gate_origin` | gate name or null | `null` for user-scoped items. One of `security`, `tests`, `cruft`, `docs`, `patterns`, `infra` when produced by a gate. Projects may define additional gate names (e.g. `bugs`, `repo-eval`). |
 | `created` | ISO date | `YYYY-MM-DD`. Set on creation; never modified. FIFO tie-break in autopilot. |
 | `updated` | ISO date | `YYYY-MM-DD`. Auto-bumped by PostToolUse hook on every item edit. |
 
@@ -113,11 +113,24 @@ skill reads this at session start (via the SessionStart hook or directly).
 <only if the project deviates from the master>
 
 ## Gate config
-gates_for_release: [security, tests, cruft, docs, patterns]
+gates_for_release: [security, tests, cruft, docs, patterns, infra]
+
+## Design-skill routing (optional)
+design_skill_routing:
+  epic_design: epic-design
+  feature_design: feature-design
 ```
 
-The default `gates_for_release` order is fixed: **security → tests → cruft
-→ docs → patterns**. Override only if the project has a justified reason.
+The default `gates_for_release` order is **security → tests → cruft → docs →
+patterns → infra**. Override only if the project has a justified reason.
+
+`design_skill_routing` is optional. It maps autopilot's design dispatch for
+`kind: epic` (`epic_design`) and plain features (`feature_design`) to a concrete,
+optionally namespaced skill. When absent, autopilot uses its built-in defaults
+(`epic-design`, `feature-design`). Projects layered with the `research-pipeline`
+plugin set these to `research-pipeline:epic-design` /
+`research-pipeline:feature-design` so the research-grounded,
+`[needs-brief]`-gated versions win on the autopilot path.
 
 ### AGENTS.md section
 

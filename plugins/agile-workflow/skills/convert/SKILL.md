@@ -183,8 +183,12 @@ Run an interactive interview via AskUserQuestion. Five questions, in order:
 3. **Slug conventions** — defaults to kebab-case with parent-prefix for children.
 4. **Stage overrides** — none by default. Discouraged.
 5. **Gate config** — defaults to
-   `gates_for_release: [security, tests, cruft, docs, patterns]`. User can reorder
-   or omit.
+   `gates_for_release: [security, tests, cruft, docs, patterns, infra]`. User can
+   reorder or omit.
+6. **Design-skill routing** — if the `research-pipeline` plugin is installed, set
+   `design_skill_routing: { epic_design: research-pipeline:epic-design, feature_design: research-pipeline:feature-design }`
+   so autopilot dispatches the research-grounded (`[needs-brief]`-gated) design
+   skills. Otherwise omit it (autopilot uses the base `epic-design`/`feature-design`).
 
 ### Phase 4: Create substrate skeleton
 

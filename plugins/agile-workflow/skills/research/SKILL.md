@@ -15,6 +15,11 @@ allowed-tools: Read, Write, Glob, Grep, WebSearch, WebFetch, Agent, AskUserQuest
 
 # Research
 
+> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
+> `research-pipeline:research` — a research-grounded superset (knowledge-index +
+> `.research` corpus aware, three-scale family with `/deep-research` +
+> `/research-program`). This base version is the standalone fallback.
+
 You research external libraries, APIs, SDKs, and patterns, then produce two outputs:
 a research document with your findings and an auto-loading reference skill that future
 agents use when working with the recommended technology.

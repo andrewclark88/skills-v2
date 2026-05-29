@@ -14,6 +14,12 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
 
 # Feature-Design
 
+> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
+> `research-pipeline:feature-design` — a research-grounded superset that adds
+> knowledge-index grounding and `[needs-brief]` gating. This base version is the
+> standalone fallback; on the autopilot path the choice is set via
+> `.work/CONVENTIONS.md` `design_skill_routing`.
+
 You design a feature in the agile-workflow substrate. The design lives in the
 feature item's body — there is no separate `docs/designs/<name>.md`. As the design
 takes shape, child stories are spawned with declared `depends_on` chains. When the
