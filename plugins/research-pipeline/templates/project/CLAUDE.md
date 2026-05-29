@@ -8,10 +8,10 @@ The terse `docs/knowledge-index.yaml` auto-loads at session start (terse layer o
 When you've added or modified docs, run `/knowledge-index` to regenerate both layers from frontmatter. **Do not hand-edit `knowledge-index.yaml` or `knowledge-index-detail.yaml`** — they're derived artifacts.
 
 ## Frontmatter convention
-Every doc this project produces (north-star, architecture, roadmap, brief, design, etc.) ships with structured frontmatter:
+Every doc this project produces (VISION / north-star, architecture, brief, program synthesis, etc.) ships with structured frontmatter:
 
 - `description:` — "when do I read this?" hook (becomes consumer_hint in the terse index)
-- `type:` — north-star | architecture | roadmap | brief | program-parent | program-report | design | features | ideate | workon
+- `type:` — north-star | architecture | brief | program-parent | program-report | features
 - `summary:` — 1-2 sentences on what's in the doc
 - `decisions:` — required for `kind: planning` (5-9 highest-leverage commitments)
 - `key_findings:` — required for `kind: research`
@@ -21,11 +21,10 @@ Every doc this project produces (north-star, architecture, roadmap, brief, desig
 See the `research-pipeline:knowledge-index` skill for the full schema and field semantics.
 
 ## Build process
-Follow the global methodology in the `research-pipeline:build-process` skill. Project knowledge lives under `docs/`:
+Follow the global methodology in the `research-pipeline:build-process` skill. Work is tracked as items in `.work/` (created by `/agile-workflow:convert`), not as roadmap docs; per-feature designs live in the item body. Project knowledge lives under:
 
-- `docs/architecture/` — north star, conventions, roadmap
-- `docs/briefs/` — domain briefs from `/research` and `/brief`
-- `docs/designs/` — phase implementation specs from `/design`
-- `docs/programs/` — `/research-program` output
+- `docs/architecture/` — foundation docs (VISION / SPEC / ARCHITECTURE), conventions; `history/` for frozen records
+- `docs/briefs/` — curated domain briefs from `/brief`
+- `.research/` — `/research` / `/deep-research` / `/research-program` outputs (created by those skills)
 
 Parent `CLAUDE.md` files ship the pipeline and shared key rules — do not duplicate them here. This file is for project-specific context only.
