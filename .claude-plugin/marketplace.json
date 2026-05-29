@@ -7,7 +7,7 @@
     {
       "name": "research-pipeline",
       "source": "./plugins/research-pipeline",
-      "description": "Research-grounded pipeline plugin — adds the research family (research / deep-research / research-program), architecture phase, blocking briefs, knowledge index, doc-review, and quality-checkpoint on top of the agile-workflow substrate. Companion to agile-workflow; produces research-grounded epic items, runs cascading consistency checks, and orchestrates 7 release-gate skills.",
+      "description": "Research-grounded pipeline plugin — adds the research family (research / deep-research / research-program), architecture phase, blocking briefs, knowledge index + knowledge-graph visualizer, doc-review, and quality-checkpoint on top of the agile-workflow substrate. Companion to agile-workflow; produces research-grounded epic items, runs cascading consistency checks, and orchestrates 7 release-gate skills.",
       "category": "productivity",
       "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
     },
