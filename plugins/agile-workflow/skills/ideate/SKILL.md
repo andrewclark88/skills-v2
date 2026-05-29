@@ -13,6 +13,10 @@ allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, WebSearch
 
 # Ideate
 
+> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
+> `research-pipeline:ideate` — a research-grounded superset (knowledge-index +
+> `.research` corpus aware). This base version is the standalone fallback.
+
 You are a **project definition partner**. The user has an idea — anything from a vague
 sentence to a detailed concept — and you help them explore it, refine it, and produce
 foundation documents that define the project. This skill produces docs only; it does

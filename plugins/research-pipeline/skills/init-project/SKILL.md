@@ -4,7 +4,8 @@ description: >
   Scaffold a new project with the build-process knowledge layer ready to go.
   Copies the canonical template (docs/ folders, knowledge-index.yaml, lean CLAUDE.md,
   portable .claude/rules) into the current directory, substitutes the project name,
-  optionally runs git init, and points the user at /ideate as the next step.
+  optionally runs git init, and points the user at /agile-workflow:convert
+  (substrate bootstrap) then /ideate as the next steps.
   Use when starting a brand-new project, or when an existing project lacks the
   docs/ scaffolding the skills pipeline depends on.
 user-invocable: true
@@ -107,7 +108,8 @@ Scaffolded {{PROJECT_NAME}}:
   .claude/rules/git.md            (portable commit-message rule)
   .claude/rules/patterns.md       (portable pattern-system pointer)
 
-Next: run /ideate to define the project.
+Next: run /agile-workflow:convert to bootstrap the .work/ substrate (it seeds
+design_skill_routing to the research-pipeline design skills), then /ideate to define the project.
 ```
 
 ## Principles

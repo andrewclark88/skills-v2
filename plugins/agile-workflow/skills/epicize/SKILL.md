@@ -13,6 +13,10 @@ allowed-tools: Read, Write, Glob, Grep, Bash, AskUserQuestion
 
 # Epicize
 
+> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
+> `research-pipeline:epicize` — a research-grounded superset (knowledge-index +
+> `.research` corpus aware). This base version is the standalone fallback.
+
 You read the project's foundation docs and produce **multiple epics** at
 `.work/active/epics/`, each at `stage: drafting`, with declared `depends_on` chains
 where one epic's output feeds another.

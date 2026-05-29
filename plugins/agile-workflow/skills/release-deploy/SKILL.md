@@ -4,7 +4,7 @@ description: >
   Cut a release in the agile-workflow substrate. Interactively binds items to a
   version, advances the release stage planned -> quality-gate, runs all configured
   gates in CONVENTIONS.md order (default: security -> tests -> cruft -> docs ->
-  patterns), waits until all bound items + gate-produced items reach stage:done,
+  patterns -> infra), waits until all bound items + gate-produced items reach stage:done,
   ships per release mapping (tag-based / branch-held / release-branch), archives
   bound items via git mv to releases/<version>/, advances release to released.
   Idempotent — safe to re-run after fixing gate findings.
@@ -33,7 +33,7 @@ Its stage advances `planned → quality-gate → released` as the release procee
 
 Read `.work/CONVENTIONS.md`:
 - Release mapping: `branch-held | tag-based | release-branch | none`
-- Gate config: `gates_for_release: [...]` (default if absent: `[security, tests, cruft, docs, patterns]`)
+- Gate config: `gates_for_release: [...]` (default if absent: `[security, tests, cruft, docs, patterns, infra]`)
 
 If the mapping is `none`, halt: "Release mapping is `none`. This project doesn't
 ship versioned releases. Update CONVENTIONS.md or use `/agile-workflow:review`

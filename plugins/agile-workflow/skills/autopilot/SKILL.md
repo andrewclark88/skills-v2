@@ -124,12 +124,16 @@ this caller note in every delegated prompt:
 > ambiguities with judgment, log rationale in the item body, and do not ask
 > strategic questions unless a hard halt condition applies.
 
-Routing:
+Routing (resolve the design skill via `.work/CONVENTIONS.md` `design_skill_routing`
+when present — `epic_design` for epics, `feature_design` for plain features — else
+use the built-in defaults below; the tag-routed skills are always the agile-workflow
+versions):
 
-- `stage: drafting`, `kind: epic` -> `epic-design`
+- `stage: drafting`, `kind: epic` -> `design_skill_routing.epic_design` (default `epic-design`)
 - `stage: drafting`, feature with `tags: [refactor]` -> `refactor-design`
 - `stage: drafting`, feature with `tags: [perf]` -> `perf-design`
-- `stage: drafting`, other feature -> `feature-design`
+- `stage: drafting`, feature with `tags: [e2e-test]` or `tags: [testing]` -> `e2e-test-design`
+- `stage: drafting`, other feature -> `design_skill_routing.feature_design` (default `feature-design`)
 - `stage: implementing`, epic -> skip direct implementation; children are the
   work targets
 - `stage: implementing`, non-epic -> `implement-orchestrator <scope>`
