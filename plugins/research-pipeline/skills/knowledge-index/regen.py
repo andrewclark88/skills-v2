@@ -378,7 +378,7 @@ def main():
 
     print("📋 Knowledge Index Lint")
     print("=" * 40)
-    print(f"Project: ds-engine")
+    print(f"Project: {REPO.name}")
     print(f"Total docs found: {len(files)}")
     print(f"Substrate items found: {len(substrate_files)}")
     print(f"Schema version: {schema_version}")

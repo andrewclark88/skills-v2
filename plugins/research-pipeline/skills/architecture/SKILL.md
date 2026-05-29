@@ -117,9 +117,14 @@ Write `architecture.md`. **Required: emit standard frontmatter at the top** so `
 
 ```markdown
 ---
-description: {one-line summary of the architecture — what the system is and how it's organized}
+description: {one-line "when do I read this?" hook}
 type: architecture
 updated: {today's date, YYYY-MM-DD}
+summary: |
+  {2-4 sentences — what the system is and how it's organized}
+decisions:
+  - {key architectural commitment this doc locks in}
+  - {key architectural commitment this doc locks in}
 ---
 
 # Architecture: {Project Name}

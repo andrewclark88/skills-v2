@@ -258,7 +258,7 @@ re-run instruction.
   frontmatter is the state.
 - Gates produce items, not blocking errors. The release ships when all items
   (bound + gate-produced) are `done`.
-- Don't bypass gates. If `gates_for_release` lists 5 gates, run all 5. If a gate
+- Don't bypass gates. If `gates_for_release` lists N gates, run all N. If a gate
   fails to produce items, that's a finding (or "no new findings"), not a reason
   to skip.
 - Don't ship if any bound item is not `done`. Halt and surface the pending list.

@@ -112,11 +112,16 @@ Every brief produced by `/brief` MUST start with YAML frontmatter that includes 
 
 ```yaml
 ---
-description: {one-line summary}
+description: {one-line "when do I read this?" hook}
 type: brief
 research_method: /brief
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, optional}
+summary: |
+  {2-4 sentences — what this brief covers and why it matters}
+key_findings:
+  - {key finding}
+  - {key finding}
 ---
 ```
 

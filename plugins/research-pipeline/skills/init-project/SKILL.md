@@ -101,9 +101,9 @@ Print a short summary:
 Scaffolded {{PROJECT_NAME}}:
   CLAUDE.md                       (lean project CLAUDE.md)
   docs/knowledge-index.yaml       (empty, ready for /ideate)
-  docs/architecture/              (north star, roadmap, conventions go here)
+  docs/architecture/              (vision, architecture, conventions go here)
   docs/briefs/                    (domain briefs from /research + /brief)
-  docs/designs/                   (phase specs from /design)
+  docs/designs/                   (ad-hoc design notes; substrate designs live in the item body)
   docs/programs/                  (/research-program output)
   .claude/rules/git.md            (portable commit-message rule)
   .claude/rules/patterns.md       (portable pattern-system pointer)
