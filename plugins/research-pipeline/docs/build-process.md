@@ -60,7 +60,7 @@ PROJECT START (truly new project — no foundation docs yet)
 │
 ├─ 4. Decompose into Epics     rp:epicize
 │     └─ emits EPIC items to .work/active/epics/ at stage:drafting, with depends_on chains
-│     └─ tags research-thin epics [needs-brief]
+│     └─ tags research-thin epics [needs-research] (campaign needed) / [needs-brief] (curation needed)
 │     └─ NOT a roadmap.md — epics are containment shapes, not temporal slots
 │
 │  ┌── PER EPIC ───────────────────────────────────────────────┐

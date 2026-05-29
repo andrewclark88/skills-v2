@@ -6,8 +6,8 @@ description: >
   the project's .research/ corpus), light foundation-docs-only
   otherwise. Defers per-feature acceptance criteria and implementation detail to
   /epic-design and /feature-design downstream. Emits epic items with depends_on chains
-  for autopilot draining. Tags epics with [needs-brief] when downstream design requires
-  a research brief.
+  for autopilot draining. Tags research-thin epics [needs-research] (a research campaign
+  is needed first) or [needs-brief] (a curated brief is needed before design).
 user-invocable: true
 allowed-tools: Read, Write, Glob, Grep, Bash, AskUserQuestion, Task
 model: opus
