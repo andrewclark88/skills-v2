@@ -100,14 +100,22 @@ Requires interactive mode; refuse to run under an active autopilot run or goal.
 
 Read `docs/knowledge-index-nav.yaml` if it exists (or run `/knowledge-index` if missing).
 Identify briefs whose `blocks_phase` matches this epic's id (or matches a likely child
-feature scope). These are load-bearing context. If the epic carries a `[needs-brief]`
-tag:
+feature scope). These are load-bearing context.
+
+If the epic carries a `[needs-research]` tag:
+
+- Halt and direct the user to run the appropriate research-family skill
+  (`/research`, `/deep-research`, or `/research-program`) for the uncovered domain first
+- Resume epic-design after the research lands (re-tag `[needs-brief]` if curation is
+  still needed)
+
+If the epic carries a `[needs-brief]` tag:
 
 - Halt and direct user to invoke `/brief <topic>` for the missing research first
 - Resume epic-design after the brief is written
 
-This is the gate that enforces our build-process rule "if a roadmap phase lists a
-blocking brief, write it before building."
+This is the gate that enforces the build-process rule "if an epic/feature is tagged
+`[needs-research]`/`[needs-brief]`, do that pass before design work proceeds."
 
 ### Phase 1: Read the epic
 

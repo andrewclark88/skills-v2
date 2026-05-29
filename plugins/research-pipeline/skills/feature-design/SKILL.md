@@ -116,7 +116,10 @@ For each feature in the target set:
 
 Read `docs/knowledge-index-nav.yaml` (or run `/knowledge-index` if missing). Identify
 briefs whose `blocks_phase` matches this feature's parent epic (or this feature
-specifically if tagged). If the feature carries `[needs-brief]` tag:
+specifically if tagged). If the feature carries a `[needs-research]` tag, halt and
+direct the user to run the research family (`/research` / `/deep-research` /
+`/research-program`) for the uncovered domain first. If the feature carries a
+`[needs-brief]` tag:
 
 - Halt and direct user to invoke `/brief <topic>` for the missing research first
 - Resume feature-design after the brief is written

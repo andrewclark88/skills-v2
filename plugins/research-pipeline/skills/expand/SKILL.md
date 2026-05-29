@@ -1,12 +1,12 @@
 ---
 name: expand
 description: >
-  Expand a project's scope by updating its foundation documents. Reads existing
-  north-star.md (or north-star-<project>.md), architecture.md, and roadmap.md,
-  understands the codebase state, then interviews the user about the expansion.
-  Updates foundation docs and roadmap so design can consume them in the next
-  phase. Use when adding a major capability, new subsystem, or architectural
-  shift — not for small one-offs (use feature for those).
+  Expand a project's scope by updating its foundation documents. Reads the existing
+  foundation docs (VISION/SPEC/ARCHITECTURE, or north-star/architecture), understands
+  the codebase + substrate state, then interviews the user about the expansion.
+  Updates the foundation docs and seeds/updates epic items in .work/ so epic-design
+  can consume them next. Use when adding a major capability, new subsystem, or
+  architectural shift — not for small one-offs (those are a feature/story item).
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, WebSearch
@@ -20,8 +20,8 @@ a working codebase. The user wants to significantly extend the project's scope �
 subsystem, major capability, architectural shift, or new domain area. You help them think
 it through and update the foundation docs so the next design phase can build on them.
 
-This is NOT for small additions (use **feature** for those) or starting from scratch
-(use **ideate** for that).
+This is NOT for small additions (those are just a feature/story item — use **scope**
+or **fix**) or starting from scratch (use **ideate** for that).
 
 **Read `${CLAUDE_PLUGIN_ROOT}/docs/system-design.md` for design patterns.** 15 moves across 5 concerns. Emphasis for `/expand`: Structure moves (Invert at Real Boundaries, Minimize Irreversible Decisions) and Interface's Contracts Before Implementations. Expansion creates new subsystems and surfaces — decide where the real boundaries sit and define their contracts before building.
 
@@ -44,10 +44,10 @@ Scope decisions touch foundation docs — the orchestrator warrants Opus. Codeba
 
 Before discussing the expansion, deeply understand the current project.
 
-1. Read all foundation docs: **`north-star.md`** (or **`north-star-<project>.md`** /
-   per-module north stars), **`architecture.md`**, **`roadmap.md`**, and any
-   domain-specific architecture docs (data-layer, UX, contract, etc.) the
-   project has produced.
+1. Read all foundation docs: **`VISION.md`** / **`SPEC.md`** / **`ARCHITECTURE.md`**
+   (or a project's `north-star*.md` + `architecture.md`), and any domain-specific
+   architecture docs (data-layer, UX, contract, etc.) the project has produced. Also
+   skim the active substrate (`.work/bin/work-view --kind epic`) to see in-flight scope.
 2. Use the Explore agent (`model: "sonnet"` for most cases, `"opus"` for large or complex codebases) to map the current codebase: directory structure,
    modules, key abstractions, what's been built so far
 3. Read **patterns** if they exist — understand established conventions
@@ -99,13 +99,13 @@ Before updating docs, map how the expansion affects what exists.
    requirements?
 3. **Vision impact** — does the project's purpose or audience change, or just its
    capabilities?
-4. **Roadmap impact** — how many phases does this add? Where does it fit relative
-   to existing planned work?
+4. **Substrate impact** — how many new epics/features does this add? Where do they
+   fit in the `depends_on` graph relative to existing in-flight work?
 
 **AskUserQuestion checkpoint:** Present the impact assessment:
 - Which foundation docs need updating and how significantly
 - Whether this is additive (extend existing docs) or transformative (restructure sections)
-- Proposed new roadmap phases
+- Proposed new epics (and their dependency edges)
 - Any trade-offs or decisions the user needs to make
 
 Iterate until the user approves the direction.
@@ -124,15 +124,15 @@ Update each affected document. For each one:
    level of detail
 
 **What to update per doc type:**
-- **`north-star.md`** — extend scope, add new capabilities to the project
-  definition / vision, update principles or success criteria if they've changed.
-  (If the project uses per-module north stars like `north-star-<module>.md`,
-  update the relevant ones.)
-- **`architecture.md`** — add new modules / components, update data flow,
-  document new boundaries and integration points, add new technical constraints
-  and interfaces.
-- **`roadmap.md`** — add new phases with `Input` / `Output` / `Tests`,
-  declare blocking briefs if any, reorder if needed.
+- **Vision doc** (`VISION.md` / `north-star*.md`) — extend scope, add new capabilities
+  to the project definition / vision, update principles or success criteria if they've
+  changed. (Update per-module vision docs if the project uses them.)
+- **`ARCHITECTURE.md`** — add new modules / components, update data flow, document new
+  boundaries and integration points, add new technical constraints and interfaces.
+- **Epics in `.work/active/epics/`** — instead of roadmap phases, seed (or hand off to
+  `/epicize` for) new epic items at `stage: drafting` with `depends_on` edges, tagged
+  `[needs-research]`/`[needs-brief]` if the new scope is research-thin. `/epic-design`
+  then decomposes them into features.
 - **Domain-specific architecture docs** — update or create as needed (e.g.,
   `architecture/north-star-data.md`, `architecture/dag-design.md`,
   `design/<topic>.md`, contract docs, etc.).
@@ -143,8 +143,8 @@ After updating, present each changed document to the user for review.
 
 **AskUserQuestion checkpoint:** Present a summary:
 - Documents updated (list with one-line description of what changed)
-- New roadmap phases added
-- Next step: "Run design on phase N to start implementing the expansion"
+- New epics seeded in `.work/active/epics/` (with their dependency edges)
+- Next step: "Run `/epic-design` on the new epic(s) to decompose into features"
 
 Commit the updated foundation docs.
 
@@ -172,8 +172,8 @@ decisions:
 
 - NEVER rewrite foundation docs from scratch — extend them. The project's history
   and decisions matter.
-- NEVER use this for small additions — that's feature's job
+- NEVER use this for small additions — those are just a feature/story item
 - NEVER skip reading the existing codebase — the expansion must fit what's built
-- NEVER add vague roadmap entries — each phase needs enough detail for design to work from
+- NEVER seed vague epics — each epic needs enough detail for epic-design to decompose from
 - NEVER change existing doc content that isn't affected by the expansion
 - NEVER skip the impact assessment — understand what changes before changing it

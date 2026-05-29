@@ -182,8 +182,8 @@ Iterate until approved, then write to disk.
 
 After writing the brief, **run `/knowledge-index`** to regenerate the index from frontmatter.
 
-Do NOT hand-edit `docs/knowledge-index.yaml` — it's a derived artifact (per the redesign at
-`${CLAUDE_PLUGIN_ROOT}/skills/knowledge-index/REDESIGN-SKETCH.md`). Frontmatter is the only source of truth;
+Do NOT hand-edit `docs/knowledge-index.yaml` — it's a derived artifact (see
+`${CLAUDE_PLUGIN_ROOT}/skills/knowledge-index/SKILL.md` for the schema). Frontmatter is the only source of truth;
 your job is to write conformant frontmatter on the brief, then run `/knowledge-index`.
 
 Required frontmatter on the brief (see `${CLAUDE_PLUGIN_ROOT}/skills/knowledge-index/SKILL.md` for the full
