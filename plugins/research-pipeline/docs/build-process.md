@@ -122,7 +122,8 @@ PROJECT START (truly new project — no foundation docs yet)
 │  ├─ rp:update-documentation → align docs to code             │
 │  ├─ aw:bold-refactor   → architectural reconception → epic   │
 │  ├─ aw:bug-scan        → deep correctness bug hunt           │
-│  └─ aw:repo-eval       → multi-dimensional codebase scoring  │
+│  ├─ aw:repo-eval       → multi-dimensional codebase scoring  │
+│  └─ rp:knowledge-graph → corpus graph + index-integrity lint │
 │  └───────────────────────────────────────────────────────────┘
 
 KNOWLEDGE INDEX (essential infrastructure, maintained automatically):
@@ -152,6 +153,8 @@ Every project accumulates knowledge — briefs, architecture docs, research find
 It also globs `.work/active/`, `.work/backlog/`, `.work/releases/`, and `.work/archive/` and indexes substrate items, which have a different frontmatter schema (`id`/`kind`/`stage`/`depends_on`) and are linted separately. An inline lint pass catches drift, broken supersession chains, and missing required fields; the navigator is warned at 8KB and errored at 10KB.
 
 **The index is fully derived from frontmatter.** Sibling skills write conformant frontmatter on the docs they produce; `rp:knowledge-index` regenerates. Nothing else writes to the index files — never hand-edit `knowledge-index*.yaml`.
+
+**Visualize + lint it with `rp:knowledge-graph`.** It renders the index as an interactive browser graph (nodes = docs colored by group; edges = typed `related[]` + directory-containment; supersession chains) and doubles as an integrity linter: it classifies unresolved `related[]` targets (`unindexed` on disk → fix the index / `broken` → fix the slug / `out-of-scope` → expected) and surfaces orphans (docs with no edges). Sibling to `agile-workflow:board` — board shows the work substrate, knowledge-graph shows the knowledge corpus.
 
 **The rules:**
 1. **Session start: load it.** The nav layer auto-loads. The agent's first action should be checking what's already known, not searching the codebase.
@@ -672,3 +675,4 @@ Namespace: `rp` = `research-pipeline:`, `aw` = `agile-workflow:`.
 | `aw:repo-eval` | Holistic codebase evaluation | Verified 1-10 scorecard across 9 dimensions + prioritized recommendations |
 | `rp:test-quality` | Spec-driven coverage analysis (standalone) | Tests derived from contracts/specs, not from existing code |
 | `rp:security-review` | Pre-deploy standalone audit | Scored security report with severity-classified findings |
+| `rp:knowledge-graph` | Visualize / audit the knowledge corpus | Interactive browser graph (typed + containment edges) + index-integrity QA (unindexed / broken / orphan / superseded) |

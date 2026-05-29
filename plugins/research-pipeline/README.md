@@ -14,6 +14,7 @@ This plugin is **additive**: it does not modify `agile-workflow`. It layers rese
 | **Substrate planning** | `/epicize`, `/epic-design`, `/feature-design`, `/update-epicize`, `/brief` |
 | **Quality** | `/doc-review` (cascading), `/quality-checkpoint` (orchestrates 7 gates), `/test-quality`, `/security-review` |
 | **Lifecycle** | `/init-project`, `/expand`, `/update-documentation`, `/knowledge-index` |
+| **Knowledge viz** | `/knowledge-graph` (interactive corpus graph + index-integrity linter; sibling to `agile-workflow:board`) |
 | **Auto-loaded** | `/engineering-principles` (code-design), `/build-process` (methodology) |
 
 ## Skill catalog
