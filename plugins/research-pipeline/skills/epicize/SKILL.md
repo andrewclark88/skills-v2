@@ -160,19 +160,23 @@ Aim for **3-8 epics** for a typical project. Fewer than 3 means you should consi
 whether this project even needs epic-level decomposition (maybe just go straight to
 features). More than 8 means slicing too thin — collapse some.
 
-### Phase 3: Identify research-blocked epics (OURS — tag with [needs-brief])
+### Phase 3: Identify research-blocked epics (OURS — tag [needs-research] / [needs-brief])
 
-For each epic candidate, ask: does designing/implementing this require a research
-brief that doesn't yet exist?
+For each epic candidate, ask: does designing/implementing this require research that
+doesn't yet exist? Two tiers:
 
-- If a child feature would use a library/API/protocol that has NO research brief in
-  the corpus → tag the epic `[needs-brief]`
-- If a child feature would touch a domain (e.g. PII handling, scheduling, distributed
-  state) that has thin research → tag `[needs-brief]`
-- If the epic is well-covered by existing briefs → no tag
+- If a child feature would touch a domain with NO research at all — a genuinely new
+  subsystem or domain area that warrants a research campaign → tag the epic
+  `[needs-research]` (downstream runs `/research`, `/deep-research`, or
+  `/research-program` before any brief).
+- If a child feature would use a library/API/protocol, or touch a domain (PII handling,
+  scheduling, distributed state) that has thin or uncurated research → tag the epic
+  `[needs-brief]` (downstream runs `/brief` to curate before design).
+- If the epic is well-covered by existing briefs → no tag.
 
-Epics tagged `[needs-brief]` will signal to downstream `/epic-design` and
-`/feature-design` that a `/brief` pass is required before design work proceeds.
+These tags signal downstream `/epic-design` and `/feature-design` to run the
+research/brief pass first: `[needs-research]` → research family → then `[needs-brief]`
+curation if still needed → then design.
 
 ### Phase 4: Propose dependencies
 
