@@ -41,9 +41,7 @@ ${CLAUDE_PLUGIN_ROOT}/templates/project/
 ├── docs/
 │   ├── knowledge-index.yaml        # empty valid scaffold
 │   ├── architecture/README.md
-│   ├── briefs/README.md
-│   ├── designs/README.md
-│   └── programs/README.md
+│   └── briefs/README.md
 └── .claude/
     └── rules/
         ├── git.md
@@ -85,7 +83,7 @@ For each file in `${CLAUDE_PLUGIN_ROOT}/templates/project/`:
 2. Substitute `{{PROJECT_NAME}}` and `{{DATE}}` placeholders.
 3. Write to the corresponding path under the current directory.
 
-Create any missing directories (`docs/architecture/`, `docs/briefs/`, `docs/designs/`, `docs/programs/`, `.claude/rules/`).
+Create any missing directories (`docs/architecture/`, `docs/briefs/`, `.claude/rules/`). Per-feature designs live in `.work/` substrate item bodies, and `/research`-family outputs live under `.research/` — neither is scaffolded here (the substrate is created by `/agile-workflow:convert`; `.research/` by the research skills).
 
 **If a project `CLAUDE.md` already exists** with meaningful content, do not overwrite it silently. Show the user the existing content and the template content side-by-side, and ask which to keep (or whether to merge).
 
