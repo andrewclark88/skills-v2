@@ -30,6 +30,10 @@
  <span class="sep"></span>
  <input id="search" placeholder="🔎 find a doc…" autocomplete="off">
  <button id="bFit">fit</button>
+ <span class="sep"></span><span class="muted">Z:</span><select id="zaxis" title="what the vertical axis encodes">
+  <option value="kind">kind</option><option value="group">group</option><option value="status">status</option>
+  <option value="recency">recency</option><option value="indeg">in-degree</option>
+  <option value="community">community</option><option value="flat">flat (free 3D)</option></select>
  <span class="sep"></span><span class="muted">edges:</span>
  <label class="chk"><input type="checkbox" id="ecRef" checked>reference</label>
  <label class="chk"><input type="checkbox" id="ecSup" checked>supersession</label>
@@ -42,7 +46,7 @@
 <div id="layers"></div>
 <div id="legend"></div>
 <div id="panel"><button id="closeP">✕</button><div id="pbody"></div></div>
-<div class="hint">left-drag rotate · right-drag pan · scroll zoom · click a node</div>
+<div class="hint">left-drag rotate · right-drag pan · scroll zoom · <b>space</b> = toggle drag · click a node</div>
 <script>
 const DATA = __DATA__;
 const NODE = {}; DATA.nodes.forEach(n=>NODE[n.id]=n);
@@ -63,9 +67,11 @@ const maxIndeg = Math.max(1, ...DATA.nodes.map(n=>n.indeg));
 // ---- build graph data (reuses the DATA contract) ----
 const gnodes = DATA.nodes.map(n=>({ id:n.id, label:n.label, kind:n.kind, group:n.group,
   color:n.orphan?'#5a5a66':n.color, indeg:n.indeg, outdeg:n.outdeg, status:n.status,
-  summary:n.summary, superseded:n.superseded, val:1+6*Math.sqrt(n.indeg/maxIndeg), fy:yOf(n.kind) }));
+  summary:n.summary, superseded:n.superseded, updated:n.updated, community:n.community,
+  val:1+6*Math.sqrt(n.indeg/maxIndeg), fy:yOf(n.kind) }));
 DATA.ghosts.forEach(g=>gnodes.push({ id:g.id, label:g.label, kind:'(missing)', group:'(missing)',
   color:g.color, ghost:true, dclass:g.dclass, indeg:0, outdeg:0, val:1, fy:yOf('(missing)') }));
+const realNodes = gnodes.filter(n=>!n.ghost);
 const idset = new Set(gnodes.map(n=>n.id));
 const glinks = DATA.edges.filter(e=>idset.has(e.source)&&idset.has(e.target))
   .map(e=>({ source:e.source, target:e.target, ecat:e.ecat, dclass:e.dclass }));
@@ -133,8 +139,10 @@ bindEc('ecRef','reference'); bindEc('ecSup','supersession'); bindEc('ecCon','con
 // ---- controls: fit, drag-mode toggle, auto-spin ----
 document.getElementById('bFit').onclick=()=>Graph.zoomToFit(700,40);
 let dragPan=false;
-document.getElementById('bDrag').onclick=function(){ dragPan=!dragPan; this.textContent='drag: '+(dragPan?'pan':'rotate');
-  const c=Graph.controls(); if(c&&c.mouseButtons){ c.mouseButtons.LEFT = dragPan?2:0; /*0=ROTATE,2=PAN in OrbitControls*/ } };
+function setDrag(pan){ dragPan=pan; document.getElementById('bDrag').textContent='drag: '+(pan?'pan':'rotate');
+  const c=Graph.controls(); if(c&&c.mouseButtons){ c.mouseButtons.LEFT = pan?2:0; c.mouseButtons.RIGHT = pan?0:2; } }
+document.getElementById('bDrag').onclick=()=>setDrag(!dragPan);
+document.addEventListener('keydown',e=>{ if(e.code==='Space' && (document.activeElement||{}).id!=='search'){ e.preventDefault(); setDrag(!dragPan); } });
 let spin=true; const spinBtn=document.getElementById('bSpin');
 spinBtn.onclick=function(){ spin=!spin; this.classList.toggle('active',spin); };
 let ang=0; (function rotate(){ if(spin){ ang+=0.0016; const r=Graph.cameraPosition(); const dist=Math.hypot(r.x,r.z)||600;
@@ -148,6 +156,37 @@ document.getElementById('layers').innerHTML='<div class="lh">kind layers (top �
   + '<div class="ax">vertical axis = doc kind · horizontal = force layout</div>';
 document.getElementById('legend').innerHTML=DATA.groups.map(g=>'<span class="lg"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</span>').join('')
   +'<span class="lg"><i style="background:#b07aa1"></i>supersession</span><span class="lg"><i style="background:#2f9e80"></i>containment</span><span class="lg"><i style="background:#ff0033"></i>broken</span>';
+
+// ---- selectable vertical (Z) axis ----
+// init keeps #17's baked fy exactly; switching axis recomputes fy ON THE NODE OBJECTS and reheats
+// (the scene is already rendered by then, so meshes persist — this is NOT the broken #18 path,
+//  which set fy only after an all-fy:0 initial graphData).
+function dateNum(s){ if(!s) return NaN; const m=String(s).match(/(\d{4})-(\d{2})-(\d{2})/); if(m) return (+m[1])*372+(+m[2])*31+(+m[3]); const d=Date.parse(s); return isNaN(d)?NaN:d/8.64e7; }
+const AXES={
+  kind:{label:'kind',cat:true,val:n=>n.kind||'(none)',order:KIND_ORDER},
+  group:{label:'group',cat:true,val:n=>n.group||'(none)'},
+  status:{label:'status',cat:true,val:n=>n.status||'(none)'},
+  community:{label:'community',cat:true,val:n=>n.community==null?'(none)':'c'+n.community},
+  recency:{label:'recency',cat:false,val:n=>dateNum(n.updated),hi:'newest',lo:'oldest / undated'},
+  indeg:{label:'in-degree',cat:false,val:n=>n.indeg,hi:'most-referenced',lo:'least'},
+  flat:{label:'flat (free 3D)',cat:false,val:n=>0}
+};
+function fyAssign(key){ const ax=AXES[key]||AXES.kind;
+  if(key==='flat'){ gnodes.forEach(n=>{ delete n.fy; }); return '<div class="lh">flat / free 3D</div><div class="ax">no vertical encoding — physics uses all axes</div>'; }
+  if(ax.cat){ const vals=[...new Set(realNodes.map(ax.val))];
+    const ord=(ax.order?ax.order.filter(v=>vals.includes(v)):[]).concat(vals.filter(v=>!(ax.order||[]).includes(v)).sort());
+    const idx={}; ord.forEach((v,i)=>idx[v]=i); const m=(ord.length-1)/2;
+    realNodes.forEach(n=>n.fy=(idx[ax.val(n)]-m)*GAP);
+    gnodes.filter(n=>n.ghost).forEach(n=>n.fy=-(m+1.3)*GAP);
+    return '<div class="lh">'+esc(ax.label)+' layers (top → bottom)</div>'+ord.slice().reverse().map(v=>'▸ '+esc(v)).join('<br>')+'<div class="ax">vertical = '+esc(ax.label)+' · horizontal = force layout</div>'; }
+  const xs=realNodes.map(ax.val).filter(isFinite); const mn=Math.min.apply(0,xs), mx=Math.max.apply(0,xs), TOT=4*GAP;
+  realNodes.forEach(n=>{ const v=ax.val(n); n.fy=(isFinite(v)&&mx>mn)?((v-mn)/(mx-mn))*TOT-TOT/2:-TOT/2; });
+  gnodes.filter(n=>n.ghost).forEach(n=>n.fy=-TOT/2-GAP);
+  return '<div class="lh">'+esc(ax.label)+'</div><div class="ax">↑ '+esc(ax.hi)+' · ↓ '+esc(ax.lo)+'</div>';
+}
+function applyAxis(key){ document.getElementById('layers').innerHTML=fyAssign(key); Graph.d3ReheatSimulation(); setTimeout(()=>Graph.zoomToFit(600,80), 800); }
+if(!DATA.meta.has_communities){ const o=document.querySelector('#zaxis option[value="community"]'); if(o) o.remove(); }
+document.getElementById('zaxis').addEventListener('change',e=>applyAxis(e.target.value));
 
 setTimeout(()=>Graph.zoomToFit(800,60), 1200);
 </script></body></html>
