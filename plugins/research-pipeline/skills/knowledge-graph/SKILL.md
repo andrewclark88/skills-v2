@@ -69,15 +69,6 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/knowledge-graph/render.py" "$PWD"
 - First positional arg = project root (defaults to CWD).
 - Optional second arg = output HTML path (defaults to a temp file; the path is printed).
 - `--communities` — compute Louvain communities (pure-stdlib; off by default).
-- `--3d` — emit a **3D** view (`3d-force-graph`/three.js) instead of the 2D cytoscape graph, from the
-  same `DATA`. The **vertical (Z) axis is selectable** via a toolbar dropdown — `kind` (default:
-  historical → research → brief → architecture → planning), `group`, `status`, `recency` (by
-  `updated`), `in-degree`, `community` (only when rendered with `--communities`), or `flat` (free
-  3D) — so the third dimension always carries the signal you choose; x/z stay force-driven. Left-drag
-  orbits, right-drag pans, scroll zooms; **space** (or a toolbar button) toggles left-drag between
-  rotate and pan. Includes search-to-focus, hover cards, a click→detail panel (in/out links), and
-  edge-type toggles. Use for spatial exploration; the 2D view remains the surface for QA/audit
-  (table + lenses).
 - `--print-data` — dump the `DATA` JSON to stdout (used by the test suite).
 - Requires `python3` + PyYAML (already a knowledge-index dependency).
 
