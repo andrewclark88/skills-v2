@@ -1,0 +1,31 @@
+schema_version: 2
+generated_at: 2026-01-01T00:00:00Z
+generated_from: frontmatter
+total_docs: 6
+documents:
+  - path: docs/a.md
+    title: "Doc A"
+    type: architecture
+    kind: planning
+    updated: 2026-01-01
+    nav_priority: high
+  - path: docs/b.md
+    title: "Doc B"
+    type: brief
+    kind: research
+  - path: docs/c.md
+    title: "Doc C orphan"
+    type: note
+    kind: planning
+  - path: .research/programs/x/super-parent.md
+    title: "Program X root"
+    type: research
+    kind: research
+  - path: .research/programs/x/sub1.md
+    title: "Sub 1"
+    type: research
+    kind: research
+  - path: .research/programs/x/sub2.md
+    title: "Sub 2"
+    type: research
+    kind: research

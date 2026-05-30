@@ -1,0 +1,27 @@
+schema_version: 2
+generated_from: frontmatter
+documents:
+  docs/a.md:
+    summary: "A summary."
+    decisions:
+      - "Decision one"
+    key_findings:
+      - "Finding one"
+    related:
+      - slug: docs/b.md
+        relationship: extends
+      - slug: docs/missing.md            # does not exist on disk -> broken
+        relationship: references
+      - slug: docs/unindexed-on-disk.md  # exists on disk, not in index -> unindexed
+        relationship: references
+  docs/b.md:
+    summary: "B summary."
+    status: superseded
+    supersession_note: "Superseded by A"
+    related:
+      - slug: docs/a.md
+        relationship: superseded-by       # -> ecat supersession
+  .research/programs/x/sub1.md:
+    related:
+      - slug: src/foo.py                  # outside scope -> out-of-scope
+        relationship: implements
