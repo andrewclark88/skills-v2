@@ -304,7 +304,7 @@ def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communitie
     }
 
 
-def render(root: Path, out: Path, want_communities: bool):
+def render(root: Path, out: Path, want_communities: bool, want_3d: bool = False):
     terse, detail = load_index(root)
     nodes = build_nodes(terse, detail)
     edges, dangling = build_edges(detail, nodes, root)
@@ -313,7 +313,8 @@ def render(root: Path, out: Path, want_communities: bool):
     has_comm = compute_communities(nodes, edges) if want_communities else False
     data = assemble_data(root, terse, nodes, edges, dangling, adjacency, has_comm)
 
-    template = (Path(__file__).parent / "template.html").read_text()
+    tpl = "template-3d.html" if want_3d else "template.html"
+    template = (Path(__file__).parent / tpl).read_text()
     stats = data["stats"]
     build_stats = (f'<b>{stats["nodes"]}</b> docs · <b>{stats["related"]}</b> related · '
                    f'<b>{stats["containment"]}</b> containment · <b>{stats["groups"]}</b> groups · '
@@ -346,7 +347,7 @@ def main(argv):
         print(json.dumps(data, sort_keys=True))
         return
 
-    data, stats = render(root, out, want_communities="--communities" in flags)
+    data, stats = render(root, out, want_communities="--communities" in flags, want_3d="--3d" in flags)
     qa = data["qa"]
     print(f"nodes={stats['nodes']} related_edges={stats['related']} "
           f"containment_edges={stats['containment']} groups={stats['groups']}")
