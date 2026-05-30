@@ -74,6 +74,9 @@ answers from each feature body and no longer has to use judgment on those points
 goal is driving this session, refuse to run and report that the flag is for
 interactive alignment only.
 
+Do not run cross-model advisory review in `--only-questions` mode — the user is the
+alignment signal.
+
 ## Model Assignment
 
 Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
@@ -179,6 +182,8 @@ These are specific to the feature in front of you — not generic prompts about 
 
 Aim for the smallest set of questions that meaningfully resolve direction — typically 2-5. Zero is fine if upstream pinned every directional choice.
 
+**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the feature has large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Use one focused `peer` pass only when a different model class is available (host Claude → Codex via `peeragent:peer`). Ask the peer for missing questions, risks, ambiguous constraints, and alternatives for this feature's design — **not** for a verdict. Feed it the research grounding loaded in Phase 0/2 (the relevant `.research/` briefs and knowledge-index entries) so it stress-tests the design against what we actually researched, not just the foundation docs. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note that the advisory pass was skipped — this is **non-blocking**, never halt the queue for an advisory failure. Summarize useful output under `## Other agent review` in the feature body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
+
 If this skill is running **as a delegation from an active autopilot run or harness goal**, resolve each question with judgment (prioritize: consistent with foundation docs > simpler option > defers irreversible decisions) and log under `## Design decisions` in the feature body.
 
 In every other invocation — including direct user invocation under harness auto mode — ask the user via `AskUserQuestion` before locking in, then write answers under `## Design decisions` in the feature body. Harness-level "work without pausing" reminders do NOT suppress these checkpoints.
@@ -266,6 +271,11 @@ updated: YYYY-MM-DD
 ## Implementation
 <reference to the parent feature's ## Implementation Units section, specific units this story covers>
 ```
+
+**Cycle check (mandatory):** before adding any `depends_on` entry, run
+`.work/bin/work-view --blocking <story-id>` to confirm the new edge does not
+create a dependency cycle the autopilot can't drain. Cycle prevention is
+mandatory for `depends_on`.
 
 ### Phase 8: Write design INTO feature body
 
