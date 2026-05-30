@@ -1,0 +1,153 @@
+<!doctype html><html><head><meta charset="utf-8"><title>knowledge graph 3D — __ROOT__</title>
+<script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js"></script>
+<style>
+ :root{--bg:#0b0e13;--fg:#cdd6e0;--mut:#8b98a8;--bd:#222;--accent:#2d6cdf}
+ *{box-sizing:border-box}
+ body{margin:0;font:13px -apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);overflow:hidden}
+ #bar{position:absolute;top:0;left:0;right:0;z-index:10;padding:7px 12px;background:#0b0e13cc;border-bottom:1px solid var(--bd);display:flex;gap:10px;align-items:center;flex-wrap:wrap;backdrop-filter:blur(4px)}
+ #bar b{color:#fff} .muted{color:var(--mut)}
+ input,button{background:#1c222c;color:var(--fg);border:1px solid #333;border-radius:5px;padding:4px 8px;font-size:12px}
+ button{cursor:pointer} button:hover{border-color:#444} button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+ #search{width:210px} #search:focus{outline:none;border-color:var(--accent)}
+ label.chk{display:inline-flex;align-items:center;gap:3px;cursor:pointer;user-select:none;font-size:11px;color:var(--mut)}
+ .sep{width:1px;height:18px;background:var(--bd);margin:0 2px}
+ #g{position:absolute;inset:0}
+ #layers{position:absolute;left:10px;top:90px;z-index:9;background:#0b0e13aa;border:1px solid var(--bd);border-radius:7px;padding:8px 10px;font-size:11px;line-height:1.7;pointer-events:none}
+ #layers .lh{color:#fff;font-weight:600;margin-bottom:3px} #layers .ax{color:var(--mut);font-size:10px;margin-top:4px}
+ #legend{position:absolute;left:10px;bottom:10px;z-index:9;background:#0b0e13aa;border:1px solid var(--bd);border-radius:7px;padding:7px 10px;font-size:11px;max-width:260px;max-height:40vh;overflow:auto}
+ .lg{display:inline-block;margin:1px 9px 1px 0;white-space:nowrap} .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:3px;vertical-align:middle}
+ #panel{position:absolute;right:0;top:0;bottom:0;width:330px;z-index:9;background:#0b0e13e6;border-left:1px solid var(--bd);overflow:auto;padding:54px 12px 12px;transform:translateX(100%);transition:transform .2s} #panel.open{transform:none}
+ #panel h3{margin:10px 0 4px;font-size:12px;color:#fff} #panel h3 span{font-weight:400;color:var(--mut)}
+ .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;margin:2px 4px 2px 0}
+ .kv{color:var(--mut);font-size:11px;margin:1px 0} .kv b{color:var(--fg)}
+ .sum{color:#bcd;font-size:12px;line-height:1.45;margin:6px 0}
+ ul.lst{list-style:none;margin:3px 0;padding:0} ul.lst li{padding:2px 0;font-size:11px;border-bottom:1px solid #161b22}
+ .lnk{cursor:pointer;color:#9cf;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .lnk:hover{color:#fff} .rel{color:var(--mut);font-size:10px}
+ #closeP{position:absolute;top:8px;right:10px;background:transparent;border:0;color:var(--mut);font-size:16px}
+ .hint{position:absolute;right:12px;bottom:10px;z-index:9;color:#56607010;font-size:11px;color:var(--mut);background:#0b0e13aa;border:1px solid var(--bd);border-radius:6px;padding:5px 8px}
+</style></head><body>
+<div id="bar"><b>knowledge graph · 3D</b> <span class="muted">__BUILD_STATS__</span>
+ <span class="sep"></span>
+ <input id="search" placeholder="🔎 find a doc…" autocomplete="off">
+ <button id="bFit">fit</button>
+ <span class="sep"></span><span class="muted">edges:</span>
+ <label class="chk"><input type="checkbox" id="ecRef" checked>reference</label>
+ <label class="chk"><input type="checkbox" id="ecSup" checked>supersession</label>
+ <label class="chk"><input type="checkbox" id="ecCon" checked>containment</label>
+ <span class="sep"></span>
+ <button id="bDrag" title="toggle left-drag between rotate and pan">drag: rotate</button>
+ <button id="bSpin" class="active">spin</button>
+</div>
+<div id="g"></div>
+<div id="layers"></div>
+<div id="legend"></div>
+<div id="panel"><button id="closeP">✕</button><div id="pbody"></div></div>
+<div class="hint">left-drag rotate · right-drag pan · scroll zoom · click a node</div>
+<script>
+const DATA = __DATA__;
+const NODE = {}; DATA.nodes.forEach(n=>NODE[n.id]=n);
+const GH = {}; DATA.ghosts.forEach(g=>GH[g.id]=g);
+const ADJ = DATA.adjacency;
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---- vertical layering by kind (the meaningful 3rd dimension) ----
+const KIND_ORDER = ['historical','research','brief','architecture','planning'];  // bottom -> top
+const present = [...new Set(DATA.nodes.map(n=>n.kind))];
+const extra = present.filter(k=>!KIND_ORDER.includes(k)).sort();
+const ORDER = ['(missing)'].concat(KIND_ORDER).concat(extra);   // ghosts sink to the bottom
+const GAP = 170;
+const mid = (ORDER.length-1)/2;
+function yOf(kind){ const i=ORDER.indexOf(kind); return ((i<0?ORDER.length:i)-mid)*GAP; }
+const maxIndeg = Math.max(1, ...DATA.nodes.map(n=>n.indeg));
+
+// ---- build graph data (reuses the DATA contract) ----
+const gnodes = DATA.nodes.map(n=>({ id:n.id, label:n.label, kind:n.kind, group:n.group,
+  color:n.orphan?'#5a5a66':n.color, indeg:n.indeg, outdeg:n.outdeg, status:n.status,
+  summary:n.summary, superseded:n.superseded, val:1+6*Math.sqrt(n.indeg/maxIndeg), fy:yOf(n.kind) }));
+DATA.ghosts.forEach(g=>gnodes.push({ id:g.id, label:g.label, kind:'(missing)', group:'(missing)',
+  color:g.color, ghost:true, dclass:g.dclass, indeg:0, outdeg:0, val:1, fy:yOf('(missing)') }));
+const idset = new Set(gnodes.map(n=>n.id));
+const glinks = DATA.edges.filter(e=>idset.has(e.source)&&idset.has(e.target))
+  .map(e=>({ source:e.source, target:e.target, ecat:e.ecat, dclass:e.dclass }));
+const OBJ = {};  // id -> live node object (gets x/y/z from engine)
+
+const ecOff = new Set();
+function linkVisible(l){ return !ecOff.has(l.ecat); }
+function linkColor(l){ return l.dclass==='broken'?'#ff0033': l.dclass==='unindexed'?'#ff9f1c':
+  l.ecat==='supersession'?'#b07aa1': l.ecat==='containment'?'#2f9e80':'#5566aa'; }
+
+const Graph = ForceGraph3D({ controlType:'orbit' })(document.getElementById('g'))
+  .backgroundColor('#0b0e13')
+  .graphData({nodes:gnodes, links:glinks})
+  .nodeColor(n=>n.color)
+  .nodeOpacity(0.92)
+  .nodeVal('val')
+  .nodeLabel(n=> '<div style="background:#000d;border:1px solid #444;border-radius:6px;padding:6px 9px;max-width:320px;color:#fff">'
+    +'<b>'+esc(n.label)+'</b><div style="color:#9fb;font-size:11px">'+esc(n.kind)+(n.status?' · '+esc(n.status):'')
+    +(n.ghost?' · '+esc(n.dclass):' · in '+n.indeg+'/out '+n.outdeg)+'</div>'
+    +(n.summary?'<div style="color:#cdd;font-size:11px;margin-top:4px">'+esc(n.summary.slice(0,180))+'</div>':'')+'</div>')
+  .linkColor(linkColor)
+  .linkOpacity(0.35)
+  .linkVisibility(linkVisible)
+  .linkWidth(l=> l.ecat==='supersession'?1.1:0.4)
+  .linkDirectionalArrowLength(l=> l.ecat==='supersession'?3:0).linkDirectionalArrowRelPos(1)
+  .onNodeClick(focusNode);
+Graph.d3Force('charge').strength(-120);
+// keep nodes in their kind-plane: y is pinned via fy, x/z are force-driven
+DATA.nodes.forEach(()=>{}); // (fy already set on node objects)
+setTimeout(()=>{ Graph.graphData().nodes.forEach(n=>OBJ[n.id]=n); }, 0);
+
+// ---- camera focus + detail panel ----
+function focusNode(n){ if(typeof n==='string') n=OBJ[n]; if(!n) return;
+  const d=90, r=1+d/Math.hypot(n.x||1,n.y||1,n.z||1);
+  Graph.cameraPosition({x:(n.x||0)*r,y:(n.y||0)*r,z:(n.z||0)*r}, n, 700);
+  showCard(n.id); }
+function chip(t,c){ return '<span class="pill" style="background:'+c+'33;color:'+c+'">'+esc(t)+'</span>'; }
+function showCard(id){ const n=NODE[id]; const P=document.getElementById('panel'), B=document.getElementById('pbody');
+  P.classList.add('open');
+  if(!n){ const g=GH[id]; B.innerHTML='<h3>'+esc(g?g.label:id)+'</h3>'+chip(g?g.dclass:'?', '#ff9f1c')+'<div class="kv">'+esc(id)+'</div>'; return; }
+  const a=ADJ[id]||{in:[],out:[]};
+  const links=arr=>arr.length?'<ul class="lst">'+arr.map(x=>'<li class="lnk" data-go="'+esc(x.id)+'"><span class="rel">'+esc(x.ecat==='containment'?'contains':x.rel)+' › </span>'+esc(NODE[x.id]?NODE[x.id].label:x.id)+'</li>').join('')+'</ul>':'<div class="kv">— none —</div>';
+  let h='<h3>↑ In-links <span>('+a.in.length+')</span></h3>'+links(a.in);
+  h+='<h3 style="border-top:1px solid #1c2330;padding-top:8px">'+esc(n.label)+'</h3>';
+  h+='<div>'+chip(n.kind,n.color)+(n.status?chip(n.status,'#76b7b2'):'')+(n.superseded?chip('superseded','#b07aa1'):'')+(n.orphan?chip('orphan','#888'):'')+'</div>';
+  h+='<div class="kv"><b>path</b> '+esc(n.id)+'</div>'+(n.updated?'<div class="kv"><b>updated</b> '+esc(n.updated)+'</div>':'');
+  if(n.summary) h+='<div class="sum">'+esc(n.summary)+'</div>';
+  if(n.decisions&&n.decisions.length) h+='<h3>Decisions</h3><ul class="lst">'+n.decisions.map(d=>'<li>'+esc(d)+'</li>').join('')+'</ul>';
+  if(n.key_findings&&n.key_findings.length) h+='<h3>Key findings</h3><ul class="lst">'+n.key_findings.map(d=>'<li>'+esc(d)+'</li>').join('')+'</ul>';
+  h+='<h3>↓ Out-links <span>('+a.out.length+')</span></h3>'+links(a.out);
+  B.innerHTML=h; B.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>focusNode(el.getAttribute('data-go')));
+}
+document.getElementById('closeP').onclick=()=>document.getElementById('panel').classList.remove('open');
+
+// ---- search ----
+document.getElementById('search').addEventListener('keydown',e=>{ if(e.key!=='Enter')return;
+  const q=e.target.value.trim().toLowerCase(); if(!q)return;
+  const hit=DATA.nodes.find(n=>n.label.toLowerCase()===q)||DATA.nodes.find(n=>n.label.toLowerCase().includes(q)||n.id.toLowerCase().includes(q));
+  if(hit) focusNode(hit.id); });
+
+// ---- edge toggles ----
+function bindEc(id,cat){ document.getElementById(id).addEventListener('change',e=>{ if(e.target.checked)ecOff.delete(cat); else ecOff.add(cat); Graph.linkVisibility(linkVisible); }); }
+bindEc('ecRef','reference'); bindEc('ecSup','supersession'); bindEc('ecCon','containment');
+
+// ---- controls: fit, drag-mode toggle, auto-spin ----
+document.getElementById('bFit').onclick=()=>Graph.zoomToFit(700,40);
+let dragPan=false;
+document.getElementById('bDrag').onclick=function(){ dragPan=!dragPan; this.textContent='drag: '+(dragPan?'pan':'rotate');
+  const c=Graph.controls(); if(c&&c.mouseButtons){ c.mouseButtons.LEFT = dragPan?2:0; /*0=ROTATE,2=PAN in OrbitControls*/ } };
+let spin=true; const spinBtn=document.getElementById('bSpin');
+spinBtn.onclick=function(){ spin=!spin; this.classList.toggle('active',spin); };
+let ang=0; (function rotate(){ if(spin){ ang+=0.0016; const r=Graph.cameraPosition(); const dist=Math.hypot(r.x,r.z)||600;
+  Graph.cameraPosition({x:dist*Math.sin(ang),z:dist*Math.cos(ang)}); } requestAnimationFrame(rotate); })();
+// stop spin as soon as the user interacts
+['mousedown','wheel','touchstart'].forEach(ev=>document.getElementById('g').addEventListener(ev,()=>{ if(spin){spin=false;spinBtn.classList.remove('active');} },{passive:true}));
+
+// ---- layer legend + group legend ----
+document.getElementById('layers').innerHTML='<div class="lh">kind layers (top → bottom)</div>'
+  + ORDER.slice().reverse().filter(k=>k!=='(missing)'||DATA.ghosts.length).map(k=>'▸ '+esc(k)).join('<br>')
+  + '<div class="ax">vertical axis = doc kind · horizontal = force layout</div>';
+document.getElementById('legend').innerHTML=DATA.groups.map(g=>'<span class="lg"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</span>').join('')
+  +'<span class="lg"><i style="background:#b07aa1"></i>supersession</span><span class="lg"><i style="background:#2f9e80"></i>containment</span><span class="lg"><i style="background:#ff0033"></i>broken</span>';
+
+setTimeout(()=>Graph.zoomToFit(800,60), 1200);
+</script></body></html>
