@@ -3,14 +3,17 @@
 
 This is a deterministic ADAPTER: it reads the project's terse index (node metadata) + detail index
 (typed related[] edges, summaries, decisions, supersession) and emits ONE `DATA` view-model object
-serialized into a self-contained cytoscape.js HTML. All interaction (search, expand-on-demand, stable
-layout, detail card, table, QA lenses, edge toggles) lives in template.html, which reads `DATA` and
-nothing else. render.py contains no view logic and no runtime sub-agents.
+serialized into a self-contained HTML. The DATA contract is renderer-agnostic; two views consume it:
+the default 3D view (template-3d.html, 3d-force-graph/three.js) and the 2D view (template.html,
+cytoscape.js — search/expand DOI + QA lenses + table). render.py contains no view logic and no
+runtime sub-agents.
 
-Usage: render.py [PROJECT_ROOT] [OUT_HTML] [--communities] [--print-data]
+Usage: render.py [PROJECT_ROOT] [OUT_HTML] [--2d] [--communities] [--print-data]
   PROJECT_ROOT defaults to the current working directory.
   OUT_HTML defaults to a temp file path (printed on completion).
-  --communities  compute Louvain communities (pure-stdlib; off by default).
+  --2d           emit the 2D cytoscape view (search/expand DOI + QA lenses + table). Default is 3D.
+  --communities  compute Louvain communities (pure-stdlib; off by default). Enables the 3D
+                 community Z-axis option.
   --print-data   dump the DATA JSON to stdout (for tests) instead of/in addition to writing HTML.
 
 QA classes for an unresolved related[] target:
@@ -304,7 +307,7 @@ def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communitie
     }
 
 
-def render(root: Path, out: Path, want_communities: bool, want_3d: bool = False):
+def render(root: Path, out: Path, want_communities: bool, want_3d: bool = True):
     terse, detail = load_index(root)
     nodes = build_nodes(terse, detail)
     edges, dangling = build_edges(detail, nodes, root)
@@ -347,7 +350,7 @@ def main(argv):
         print(json.dumps(data, sort_keys=True))
         return
 
-    data, stats = render(root, out, want_communities="--communities" in flags, want_3d="--3d" in flags)
+    data, stats = render(root, out, want_communities="--communities" in flags, want_3d="--2d" not in flags)
     qa = data["qa"]
     print(f"nodes={stats['nodes']} related_edges={stats['related']} "
           f"containment_edges={stats['containment']} groups={stats['groups']}")
