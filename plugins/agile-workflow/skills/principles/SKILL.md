@@ -233,7 +233,11 @@ function processOrder(input: any) {
 
 # Part II — Substrate-Execution Principles
 
-These three principles govern how work moves through the substrate. They shape stage transitions, item bodies, foundation-doc evolution, and release binding. The agent applies these whenever operating on `.work/` or `docs/`.
+These principles govern how work moves through the substrate. They shape stage
+transitions, item bodies, foundation-doc evolution, release binding, and agent
+dispatch. The agent applies these whenever operating on `.work/` or `docs/`,
+and whenever choosing discovery or implementation dispatch during substrate
+work.
 
 ## 5. Item-IS-the-Work
 
@@ -367,6 +371,46 @@ Items advance stages when work actually completes. Releases bind items only when
 
 ---
 
+## 8. Agent Dispatch Economy
+
+Sub-agents are for breadth, isolation, independent judgment, or parallel
+implementation with clear write ownership. They are not a replacement for
+reading, and they are not automatically better than local read-oriented tools.
+
+Before spawning read-only Explore/discovery agents, do a local scope-size probe:
+
+- List likely roots with `rg --files`, Glob, manifests, route maps, package
+  metadata, or `.work/bin/work-view`.
+- Search obvious symbols, ids, and terms with `rg`/Grep.
+- Read the item body, relevant foundation docs, `AGENTS.md` / `CLAUDE.md`, and
+  2-5 representative source or test files.
+- Name the unknowns that remain. If you cannot name a distinct unknown, do not
+  spawn an agent just to feel thorough.
+
+For implementation waves, the same sizing note feeds write-ownership and
+dependency-layer decisions before choosing fan-out width.
+
+Choose the lightest mechanism that will produce better evidence:
+
+| Scope signal | Dispatch choice |
+|---|---|
+| Known file(s), one module, or a handful of obvious integration points | Read directly with Read/Grep/Glob; skip Explore. |
+| One bounded area but uncertain patterns or call sites | Use one focused Explore agent, then spot-check key files yourself. |
+| Several independent surfaces with different questions | Use parallel Explore agents, one per surface/question. |
+| Implementation work with independent write ownership | Fan out by ownership and dependency layer; do not use item count alone as the parallelism signal. |
+| Deep audit/review where fresh context is the point | Spawn the dedicated audit/review sub-agent described by that skill. |
+
+Parallel Explore only pays for itself when the prompts are genuinely different.
+Three agents asking the same broad question usually return duplicated shallow
+maps. Prefer one precise prompt or direct reading.
+
+Record the dispatch rationale in run notes or the item body when it affects
+scope, bundling, or wave width: "direct-read only", "one Explore for breadth",
+or "parallel Explore across X/Y/Z surfaces". This makes the orchestration call
+auditable later.
+
+---
+
 # Part III — Caller Awareness
 
 **The rule:** If an active agile-workflow autopilot run or harness goal is
@@ -446,7 +490,80 @@ User-invocable-only skills (`convert`, `epicize`, `ideate`, `bold-refactor`,
 
 ---
 
-# Part IV — Skill invocation patterns
+# Part IV — Cross-Model Advisory Review
+
+Cross-model review is an advisory signal, not a stage transition. Use it only
+when a different model class is available through an installed peer mechanism
+such as `peeragent:peer` or `peeragent:peer-review`. If the peer would be the
+same model class as the host, do not use `peer` or `peer-review`; instead spawn a
+**fresh sub-agent at the highest model class available to the host** (a Sonnet host
+spawns a fresh Sonnet reviewer; an **Opus host spawns a new Opus reviewer**) — never
+review inline in the host's own context, which is anchored on the work it just
+produced. Label it a same-class fresh-context pass, not cross-model review. If the
+peer's model class is uncertain, skip peeragent and use the fresh sub-agent.
+
+Explicit user instructions and project-level `AGENTS.md` / `CLAUDE.md` review
+rules override this policy. If they require review, follow them. If they opt out
+or restrict external model egress, do not invoke peeragent.
+
+Default judgment:
+
+- Small, low-risk work: skip cross-model review.
+- Small/medium work with real uncertainty: optionally use one focused `peer`
+  pass.
+- Large, risky, or architectural design points under autopilot: use one focused
+  `peer` pass when no prior `--only-questions` / `## Design decisions`
+  alignment exists.
+- Reviewing a completed **feature or epic** at `stage: review` (the `review`
+  skill's deep lane): run the lens review in a fresh context — a different-class
+  `peer-review` when reachable, otherwise a fresh top-class sub-agent. **Stories
+  skip this** entirely; they fast-advance on `implement`'s verification.
+- End of an autopilot run, after the scoped queue appears drained and before
+  reporting `complete`: run a final `peer-review` loop when a different model
+  class is available, then fix or file accepted findings before completion.
+- Completed substantial artifacts, or explicit user requests for review: use
+  `peer-review` only when the full iterative loop is appropriate.
+
+For autopilot-driven design work, the default peer ask is **question/risk
+augmentation before decisions are locked**, not validation after the host has
+already decided. Ask the other model for missing questions, risks, ambiguous
+constraints, and alternatives. The host still chooses, verifies against
+foundation docs and code, and records the rationale.
+
+Design-time advisory peer failures are non-blocking under autopilot. If the
+peer wrapper is missing, the executable cannot be resolved, the invocation
+fails, or the call would use the same model class, continue with host judgment
+and log the reason briefly. Do not halt the queue for an advisory review
+failure.
+
+The final autopilot completion review is stricter: it must succeed through a
+different-model `peer-review` loop or a same-model local fallback before the
+run reports `complete`. If the selected final-review path fails, the run is
+blocked on final review rather than complete.
+
+When invoked, summarize the result in the item body without dumping transcripts:
+
+```markdown
+## Other agent review
+- Invoked because: <large/risky/autopilot/no prior alignment>
+- Reviewer: <agent/model class, if known>
+- Mode: peer advisory | peer-review
+- Questions/risks considered:
+  - <summary>
+- Accepted:
+  - <decision or adjustment>
+- Rejected:
+  - <point> — <reason>
+```
+
+Limit autopilot to one advisory pass per item per design stage. Do not run a
+multi-pass `peer-review` loop inside routine autopilot design unless the user or
+project instructions explicitly require it. The final completion review at the
+end of autopilot is separate from these design-time advisory passes.
+
+---
+
+# Part V — Skill invocation patterns
 
 Three arg shapes recur across the plugin. New skills should pick the one that
 fits their role rather than inventing a fresh shape.
@@ -463,7 +580,7 @@ fits their role rather than inventing a fresh shape.
 
 ## Discovery + emit verbs (scan code, produce items)
 
-`refactor-design`, `perf-design`, `bold-refactor`, `repo-eval`, and the gate
+`refactor-design`, `perf-design`, `bold-refactor`, and the gate
 family (`gate-cruft`, `gate-security`, `gate-tests`, `gate-docs`,
 `gate-patterns`)
 
