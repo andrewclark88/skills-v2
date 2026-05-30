@@ -82,7 +82,7 @@ alignment signal.
 Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
 
 - **Designer (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Typically 3 parallel in default mode; 1 in --only-questions mode.
+- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Count is set by the Phase 3 scope-size probe (zero for small/bounded features, one for medium, parallel for broad/cross-cutting); at most one in --only-questions mode.
 
 Design decisions cascade through implementation — the orchestrator warrants Opus. Explore sub-agents do scoped codebase mapping where Sonnet is sufficient.
 
@@ -158,13 +158,24 @@ Read:
 
 ### Phase 3: Map the codebase
 
-Spawn 3 parallel Explore sub-agents via `Task` tool with `model: "sonnet"` (Opus for large or complex codebases). Send all in one message and wait for all.
+Run a **read-first scope-size probe** before spawning Explore agents:
 
+1. Use Glob / `rg --files` to identify likely directories, entry points, and existing tests.
+2. Use Grep / `rg` for feature terms, route names, exported types, and nearby helpers.
+3. Read 2-5 representative source/test files yourself.
+
+Then choose the dispatch size to match the feature:
+
+- **Small/bounded feature** (known module or a few obvious files): skip Explore — direct reading is enough.
+- **Medium/unclear feature** (one area, uncertain patterns): spawn **one** read-only Explore agent with a combined brief.
+- **Broad/cross-cutting feature** (distinct structure, interface, and test questions across separate areas): spawn parallel read-only Explore sub-agents (`Task`, `model: "sonnet"`; Opus for large/complex codebases), sending all in one message.
+
+Explore prompts when dispatched:
 1. **Codebase Structure**: "Map the directory layout, module structure, and entry points relevant to feature `<feature-id>`. List source files and their primary exports."
 2. **Interface & Type Inventory**: "List exported interfaces, types, and function signatures in the feature's area. Include file paths and full signatures."
 3. **Test Structure**: "What testing patterns, test helpers, fixtures, and test file organization exist in this area?"
 
-After results, **read 2-3 key source files yourself** to verify findings.
+Whatever the dispatch size, **read the key source files yourself** to verify findings before designing.
 
 ### Phase 4: Re-align to project standards
 
@@ -238,10 +249,12 @@ Tests derive from the spec/design + acceptance criteria, NOT just from code bran
 
 ### Phase 7: Decide child-story spawning
 
-**When to spawn child stories:**
-- Feature is multi-stride (multiple implementation passes needed)
-- Has internal parallelism (units that can be implemented independently)
-- Pure-refactor clusters benefit from independent review
+**When to spawn child stories — they pay for themselves when at least one is true:**
+- **Parallelizable**: three or more chunks can be implemented by independent agents simultaneously — `/agile-workflow:implement-orchestrator` wants stories as fan-out targets.
+- **Non-trivial dependencies**: A blocks B blocks C — declaring `depends_on:` at the story level makes the chain visible without reading the full design body.
+- **Multi-session work**: a feature that won't fit in one stride needs resume points; a story gives a fresh agent a smaller surface than the entire feature design.
+- **Heterogeneous acceptance**: different chunks have different test surfaces (UI works / IPC errors / DB schema) — gates score per-story, which is cleaner when surfaces genuinely differ.
+- Pure-refactor clusters benefit from independent review.
 
 **When NOT to spawn (story would be pure overhead):**
 - Single-stride feature where design IS the work
