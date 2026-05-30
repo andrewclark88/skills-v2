@@ -65,7 +65,7 @@ to use judgment on those points.
 Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
 
 - **Epic-design architect (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Typically 3 parallel, dispatched in a single message.
+- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Count is set by the Phase 3 scope-size probe (skip for small/bounded epics, one for medium, parallel for broad/cross-cutting), dispatched in a single message.
 
 Epic-level decomposition decisions cascade into every child feature's design. The orchestrator warrants Opus. Explore sub-agents do scoped codebase mapping where Sonnet is sufficient.
 
@@ -164,10 +164,15 @@ Read:
 
 ### Phase 3: Map the codebase
 
-Spawn parallel read-only Explore sub-agents. Send all in one message and wait for all.
+Run a **read-first scope-size probe** first: use Glob / `rg --files` and Grep / `rg` to find the epic's directories, entry points, types, and existing tests, then read 2-5 representative files yourself. Then choose the dispatch size:
+
+- **Small/bounded epic** (maps to a known area): the direct reading above is enough — skip Explore.
+- **Medium epic** (one area, uncertain patterns): spawn **one** read-only Explore over the epic's area.
+- **Broad/cross-cutting epic** (distinct questions across separate areas): spawn parallel read-only Explore sub-agents, all in one message.
 
 - **Claude Code:** Task/Explore with Sonnet minimum, Opus for large or complex codebases.
 
+When Explore is dispatched, the briefs:
 1. **Existing surface in this epic's area** — what modules, components, or integration points already exist that this epic will extend or touch? Report file paths and brief responsibility per finding.
 2. **Cross-cutting touchpoints** — what areas does this epic interact with (auth, persistence, transport, UI shell, etc.)? Each touchpoint is a candidate for a dedicated feature OR a constraint on existing features.
 3. **Already-scoped sibling work** — features and stories under sibling epics in `.work/active/`. Report any overlap or shared types that imply a dependency edge from this epic's children to a sibling epic.

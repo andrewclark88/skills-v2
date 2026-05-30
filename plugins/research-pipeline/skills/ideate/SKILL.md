@@ -88,6 +88,15 @@ Use `AskUserQuestion` to surface:
 
 Capture into draft VISION.md content. Reference any inherited VISION.md content — probe for gaps and confirm before adding.
 
+### Phase 1.5: Maximalist vs Minimalist contrast (NATHAN's pattern)
+
+Before refining scope, generate two concrete versions of the project and present the contrast:
+
+- **Maximalist:** "If you had unlimited time, budget, and team — what would this be at its most ambitious?" The full vision: every feature, every audience.
+- **Minimalist:** "What's the smallest version that still proves the core idea is worth pursuing?"
+
+Then ask via `AskUserQuestion`: "Where between these two should we land, and why?" Push back respectfully if the user lands too close to maximalist — the cuts reveal what they actually value. When they stake out a position, summarize it back: "So you're building something closer to the minimalist version, but you want X and Y from the maximalist. Right?" This contrast sharpens the scope workshop in Phase 3 and the research-domain triage in Phase 6.
+
 ### Phase 2: Auto-call /scout (OURS — load-bearing)
 
 If `/scout` is installed (research-pipeline plugin), invoke via `Skill` tool with the project topic:
