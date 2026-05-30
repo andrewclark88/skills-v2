@@ -106,7 +106,7 @@ const cy = cytoscape({ container:document.getElementById('cy'), elements:els, wh
   style:[
     {selector:'node',style:{'background-color':'data(color)','width':'data(sz)','height':'data(sz)','label':'data(label)',
       'font-size':7,'color':'#9aa7b6','text-opacity':0,'min-zoomed-font-size':6,'text-wrap':'ellipsis','text-max-width':90,'text-valign':'bottom','text-margin-y':2}},
-    {selector:'node:parent',style:{'background-opacity':0.06,'border-width':1,'border-color':'#2a3340','label':'data(label)','font-size':11,'color':'#5b6675','text-valign':'top','text-opacity':1,'text-margin-y':-2,'padding':'8px'}},
+    {selector:'node:parent',style:{'events':'no','background-opacity':0.06,'border-width':1,'border-color':'#2a3340','label':'data(label)','font-size':11,'color':'#5b6675','text-valign':'top','text-opacity':1,'text-margin-y':-2,'padding':'8px'}},
     {selector:'node[?nav]',style:{'border-width':2,'border-color':'#fff'}},
     {selector:'node[?orphan]',style:{'background-opacity':0.35,'border-width':1,'border-color':'#3a3a44','border-style':'dashed'}},
     {selector:'node[?superseded]',style:{'border-width':3,'border-color':'#b07aa1'}},
