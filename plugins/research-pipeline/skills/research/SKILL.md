@@ -63,7 +63,7 @@ This skill handles two types of research:
 ## Phase 1: Scope the Research
 
 1. Read **CLAUDE.md** and project docs — understand the stack, constraints, what's known
-2. Explore the codebase — find how the project currently handles the area being researched
+2. Map how the project currently handles the area being researched with a **read-first triage**: dependency manifests, imports, config files, existing wrappers, and representative call sites via Read/Glob/Grep. Spawn an Explore sub-agent only when the integration surface is still broad or unclear after that probe (Sonnet minimum, Opus for large/complex codebases).
 3. **Assess breadth.** Is this a focused single-domain topic, or does it span 5+ orthogonal aspects? If the topic is genuinely broad (multiple perspectives, requires decomposition, multi-angle synthesis matters), suggest `/deep-research` instead. If the topic spans multiple distinct domains each big enough to be its own campaign (3+), suggest `/research-program`. Let the user decide. See [build-process.md § When to Use /research vs /deep-research vs /research-program](${CLAUDE_PLUGIN_ROOT}/docs/build-process.md).
 4. Define research questions:
    - What specific problem does this knowledge solve for the project?
