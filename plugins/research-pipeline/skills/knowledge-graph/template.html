@@ -24,7 +24,7 @@
  #legend{padding:5px 12px;background:var(--bg2);border-bottom:1px solid var(--bd);font-size:11px;line-height:1.8}
  .lg{margin-right:11px;white-space:nowrap} .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:3px;vertical-align:middle}
  #stage{position:absolute;top:var(--top);bottom:0;left:0;right:360px}
- #cy{width:100%;height:100%}
+ #cy{width:100%;height:100%;cursor:grab} #cy:active{cursor:grabbing}
  #empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut);pointer-events:none;text-align:center}
  #empty .big{font-size:22px;color:#fff} #empty kbd{background:#1c222c;border:1px solid #333;border-radius:4px;padding:1px 6px}
  #minimap{position:absolute;right:368px;bottom:8px;width:200px;height:140px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;z-index:5;overflow:hidden}
@@ -102,6 +102,7 @@ DATA.edges.forEach(e => els.edges.push({ data:{
   id:e.id, source:e.source, target:e.target, rel:e.rel, ekind:e.ekind, ecat:e.ecat, dclass:e.dclass } }));
 
 const cy = cytoscape({ container:document.getElementById('cy'), elements:els, wheelSensitivity:0.25,
+  userPanningEnabled:true, boxSelectionEnabled:false, autoungrabify:false,
   style:[
     {selector:'node',style:{'background-color':'data(color)','width':'data(sz)','height':'data(sz)','label':'data(label)',
       'font-size':7,'color':'#9aa7b6','text-opacity':0,'min-zoomed-font-size':6,'text-wrap':'ellipsis','text-max-width':90,'text-valign':'bottom','text-margin-y':2}},
