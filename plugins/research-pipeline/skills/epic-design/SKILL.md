@@ -55,8 +55,9 @@ full autopilot.
 | `epic-design --only-questions --all` | Question-only pass over every epic at `stage: drafting` in `.work/active/epics/`, iterated in dependency order |
 
 `--only-questions` mode requires interactive mode — refuse to run when an active
-autopilot run or harness goal is driving the session. When the design family runs
-later, captured answers are inherited from each epic body, so autopilot no longer has
+autopilot run or harness goal is driving the session. Do not run cross-model
+advisory review in this mode — the user is the alignment signal. When the design
+family runs later, captured answers are inherited from each epic body, so autopilot no longer has
 to use judgment on those points.
 
 ## Model Assignment
@@ -223,6 +224,8 @@ Read the epic and the candidate decomposition you've sketched, and derive specif
 These are product/architecture/scope questions specific to the epic in front of you — not generic prompts about boundaries, naming, or sizing. Skip anything you can answer from the epic body, foundation docs, research briefs, or codebase. Skip anything that's safely a downstream feature-design call (function signatures, exact file paths, per-unit test approach).
 
 Aim for the smallest set of questions that meaningfully resolve direction — typically 2-5. Zero is fine if the epic body, foundation docs, and research briefs already pin every directional choice.
+
+**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the epic carries large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Epic boundaries are the highest-leverage, hardest-to-reverse decisions, so a different-model sanity check pays off here. Use one focused `peer` pass only when a different model class is available (host Claude → Codex via `peeragent:peer`). Ask for missing questions, risks, ambiguous constraints, and alternative decompositions — **not** a verdict. Feed it the research grounding loaded in Phase 0/2 (relevant `.research/` briefs and knowledge-index entries) so it stress-tests the decomposition against what we actually researched. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note the advisory pass was skipped — **non-blocking**, never halt the queue. Summarize useful output under `## Other agent review` in the epic body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
 
 If this skill is running **as a delegation from an active autopilot run or harness goal**, resolve each question with judgment (prioritize: consistent with foundation docs > simpler option > defers irreversible decisions) and log under `## Design decisions` in the epic body:
 
