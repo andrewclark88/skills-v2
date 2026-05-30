@@ -1,16 +1,17 @@
 ---
 name: knowledge-graph
 description: >
-  Render the project's knowledge index as an interactive, search-first browser graph + integrity QA.
-  Reads docs/knowledge-index.yaml (nodes) + docs/knowledge-index-detail.yaml (typed related[] edges,
+  Render the project's knowledge index as an interactive browser graph + integrity QA. Reads
+  docs/knowledge-index.yaml (nodes) + docs/knowledge-index-detail.yaml (typed related[] edges,
   summaries, decisions, supersession), adds directory-containment edges for research trees, and emits
-  a self-contained cytoscape.js HTML. The graph opens in "type to explore" mode (Search → Show Context
-  → Expand on Demand) with a stable, persisted layout — not a hairball. Doubles as a knowledge-index
-  LINTER: classifies unresolved related[] targets (unindexed-on-disk / broken-ref / out-of-scope) and
-  surfaces orphans + superseded chains, embedded directly in the graph and as one-click QA lenses plus
-  a sortable table. Sibling to agile-workflow:board (board = work substrate; this = knowledge corpus).
-  Use when the user asks to "visualize the knowledge graph", "show the doc graph", "graph the research",
-  "find orphan docs", or "audit the knowledge index integrity".
+  a self-contained HTML. DEFAULT is a 3D view (3d-force-graph/three.js) where docs are stacked into
+  vertical layers by a selectable dimension (kind / group / status / recency / in-degree / community);
+  pass --2d for the cytoscape.js view (search-first "type to explore" DOI navigation + QA lenses +
+  sortable table). Doubles as a knowledge-index LINTER: classifies unresolved related[] targets
+  (unindexed-on-disk / broken-ref / out-of-scope) and surfaces orphans + superseded chains. Sibling to
+  agile-workflow:board (board = work substrate; this = knowledge corpus). Use when the user asks to
+  "visualize the knowledge graph", "show the doc graph", "graph the research", "find orphan docs", or
+  "audit the knowledge index integrity".
 user-invocable: true
 allowed-tools: Bash, Read
 model: haiku
@@ -24,33 +25,43 @@ calls, no sub-agents.
 
 ## What it produces
 
-A self-contained HTML (cytoscape.js, opened in the browser) built on the **DOI model** (van Ham &
-Perer — *Search → Show Context → Expand on Demand*). It opens **empty** with a "🔎 type to explore"
-prompt rather than dumping the whole corpus:
+A self-contained HTML opened in the browser. `render.py` is a deterministic adapter that emits one
+renderer-agnostic `DATA` view-model; two views consume it.
 
-- **Search-first** — type a doc title; matching nodes + their N-hop neighborhood appear (depth 1/2/3
-  selectable). The rest stays hidden, so there's no hairball. **Show all** renders the full corpus.
-- **Expand on demand** — click a node to grow its neighborhood; **already-placed nodes don't move**.
-  Right-click for a radial menu (open / expand / dependents / pin / hide).
-- **Stable layout** — positions persist to `localStorage` per project; reopening restores the same
-  arrangement. Newly-revealed nodes get a local layout; existing ones stay put. Toggle organic
-  (fcose) vs. hierarchy (dagre).
-- **Nodes** = indexed docs, colored by group, **sized by in-link degree** (how referenced),
-  white-bordered if `nav_priority: high`, dashed if orphan, purple-ringed if superseded.
-- **Edges** = typed `related[]` (reference vs. supersession) + directory-**containment**. Each edge
-  category has an independent **show/hide toggle** in the toolbar.
-- **Right panel — Detail | Table | QA** (brushing & linking; selecting in any one syncs the others):
-  - **Detail** — click a node for its card: kind/status, summary, decisions, key_findings, with
-    **in-links above / out-links below** (Roam-style), each clickable to re-focus.
-  - **Table** — every doc as a sortable row (title / kind / status / in / out / flags); click a row to
-    focus the node. The audit surface.
-  - **QA** — one-click **lenses** (highlight-mode) for each integrity class + a "next" stepper that
-    centers each finding in turn:
-    - 🟠 **unindexed** — a `related[]` target on disk but not in the index → repair/re-index it.
-    - 🔴 **broken** — a `related[]` target that doesn't exist on disk → fix the slug.
-    - ⚫ **out-of-scope** — target outside the indexed roots (e.g. `src/`); expected, not a defect.
-    - ⚪ **orphans** — docs with zero edges (after containment); a cross-reference gap worth backfilling.
-    - 🟣 **superseded** — docs carrying a `supersession_note`.
+### Default: 3D view (`3d-force-graph` / three.js)
+
+Docs are stacked into **vertical layers by a selectable dimension** so the third dimension carries
+real signal (not random physics); x/z are force-driven within each layer.
+
+- **"Z:" dropdown** — choose what the vertical axis encodes: **kind** (default: historical → research
+  → brief → architecture → planning, bottom→top), **group**, **status**, **recency** (by `updated`),
+  **in-degree**, **community** (shown only with `--communities`), or **flat** (free 3D). Switching
+  re-sorts the layers live and updates the legend.
+- **Navigation** — left-drag orbits, right-drag pans, scroll zooms; **space** toggles left-drag
+  between rotate and pan. A gentle auto-spin stops on first interaction. **Search** flies the camera
+  to a doc; **click** a node for its detail panel (kind/status, summary, decisions, key_findings,
+  clickable in/out links). **Edge-type toggles** (reference / supersession / containment) in the
+  toolbar. Nodes colored by group, sized by in-link degree; broken refs appear as red links to
+  bottom-layer ghost nodes.
+
+### `--2d`: cytoscape.js view (DOI navigation + QA audit surface)
+
+The search-first 2D graph — best for integrity auditing. Built on the **DOI model** (van Ham & Perer
+— *Search → Show Context → Expand on Demand*): opens **empty** with a "🔎 type to explore" prompt.
+
+- **Search-first / expand-on-demand** — type a doc title → matching nodes + N-hop neighborhood (depth
+  1/2/3); click to grow; **already-placed nodes don't move**. **Show all** for the full corpus.
+- **Stable layout** persisted to `localStorage`; organic (fcose) / hierarchy (dagre) toggle.
+- **Detail | Table | QA** right panel (brushing & linking): a sortable table of every doc, and
+  one-click QA **lenses** + a "next" stepper for each integrity class.
+
+### QA / linter classes (reported on stdout for both views)
+
+- 🟠 **unindexed** — a `related[]` target on disk but not in the index → repair/re-index it.
+- 🔴 **broken** — a `related[]` target that doesn't exist on disk → fix the slug.
+- ⚫ **out-of-scope** — target outside the indexed roots (e.g. `src/`); expected, not a defect.
+- ⚪ **orphans** — docs with zero edges (after containment); a cross-reference gap worth backfilling.
+- 🟣 **superseded** — docs carrying a `supersession_note`.
 
 ## Workflow
 
@@ -63,18 +74,18 @@ renders — nodes just have empty summaries/decisions.)
 ### Step 2: Render
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/knowledge-graph/render.py" "$PWD"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/knowledge-graph/render.py" "$PWD" --communities
 ```
+
+This renders the **3D view by default**. Add `--communities` to enable the community Z-axis option
+(cheap; recommended). Use `--2d` when the user wants the cytoscape DOI/QA audit surface instead.
 
 - First positional arg = project root (defaults to CWD).
 - Optional second arg = output HTML path (defaults to a temp file; the path is printed).
-- `--communities` — compute Louvain communities (pure-stdlib; off by default).
-- `--3d` — emit a **3D** view (`3d-force-graph`/three.js) instead of the 2D cytoscape graph, from the
-  same `DATA`. Nodes are stacked into **vertical layers by `kind`** (historical → research → brief →
-  architecture → planning, bottom→top) so the third dimension carries real signal; x/z are
-  force-driven. Left-drag orbits, right-drag pans, scroll zooms; a gentle auto-spin stops on first
-  interaction. Includes search-to-focus, hover cards, a click→detail panel (in/out links), and
-  edge-type toggles. Use for spatial exploration; the 2D view remains the surface for QA/audit.
+- `--2d` — emit the **2D cytoscape** view (search-first DOI navigation + QA lenses + sortable table)
+  instead of the default 3D view. Best for integrity auditing.
+- `--communities` — compute Louvain communities (pure-stdlib; off by default). Enables the 3D
+  **community** Z-axis option.
 - `--print-data` — dump the `DATA` JSON to stdout (used by the test suite).
 - Requires `python3` + PyYAML (already a knowledge-index dependency).
 
@@ -89,8 +100,9 @@ open "<printed-path>"        # macOS
 ```
 
 Tell the user: whether it opened automatically, the HTML path (so they can re-open without
-re-rendering), that it opens in **type-to-explore** mode (search a doc or click **show all**), and
-that re-running regenerates from the current index.
+re-rendering), that the **3D view is the default** (orbit with left-drag, **space** toggles
+rotate/pan, the **"Z:"** dropdown changes the vertical dimension) and that `--2d` gives the
+search-first cytoscape audit view, and that re-running regenerates from the current index.
 
 ## Notes
 
@@ -99,10 +111,10 @@ that re-running regenerates from the current index.
   `/research-pipeline:knowledge-index` re-run or a frontmatter fix.
 - **Orphans are a curation signal, not an error.** A planning doc with zero `related[]` edges is valid
   but disconnected — flag it; don't auto-edit.
-- **Layout is persisted** to the browser's `localStorage` (keyed by project name). The **relayout**
-  button clears it and re-runs from scratch.
+- **2D layout is persisted** to the browser's `localStorage` (keyed by project name); the **relayout**
+  button clears it. The 3D layout re-settles each load (positions aren't persisted).
 - **Determinism.** Same index → byte-identical HTML (`generated_at` is read from the index, not the
-  wall clock). The DATA-contract renderer is covered by `tests/test_render.py`
+  wall clock). The DATA-contract adapter is covered by `tests/test_render.py`
   (`python3 -m pytest .../knowledge-graph/tests/ -q`).
-- Throwaway HTML: it pulls cytoscape + extensions from a CDN (needs network) and is safe to
-  delete/regenerate.
+- Throwaway HTML: it pulls its graph library from a CDN — `3d-force-graph`/three.js (3D, default) or
+  cytoscape.js + extensions (`--2d`) — so it needs network, and is safe to delete/regenerate.

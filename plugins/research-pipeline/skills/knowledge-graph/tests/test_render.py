@@ -127,3 +127,19 @@ def test_html_render_substitutes_all_placeholders(tmp_path):
     assert "__ROOT__" not in html
     assert "__BUILD_STATS__" not in html
     assert "const DATA =" in html
+
+
+def test_default_is_3d(tmp_path):
+    out = tmp_path / "kg.html"
+    subprocess.run([sys.executable, str(RENDER), str(FIXTURE), str(out)], check=True,
+                   capture_output=True, text=True)
+    assert "3d-force-graph" in out.read_text()
+
+
+def test_2d_flag_renders_cytoscape(tmp_path):
+    out = tmp_path / "kg2d.html"
+    subprocess.run([sys.executable, str(RENDER), str(FIXTURE), str(out), "--2d"], check=True,
+                   capture_output=True, text=True)
+    html = out.read_text()
+    assert "cytoscape" in html
+    assert "3d-force-graph" not in html
