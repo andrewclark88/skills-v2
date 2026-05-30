@@ -66,6 +66,8 @@ judgment on those points.
 `--only-questions` requires interactive mode — if an active autopilot run or
 harness goal is driving this session, refuse to run and report that the flag is
 for interactive alignment only.
+Do not run cross-model advisory review in `--only-questions` mode — the user is
+the alignment signal.
 
 ## Workflow — `--only-questions` mode
 
@@ -83,9 +85,10 @@ For each feature in the target set:
    `docs/ARCHITECTURE.md`) and `AGENTS.md` / `CLAUDE.md`. Treat AGENTS as
    canonical when both exist. Be efficient: skim, don't exhaustively re-read
    across iterations within one session.
-3. **Map the codebase lightly** — one Task-tool Explore sub-agent is enough
-   to surface the area the feature touches. Skip the full three-agent
-   parallel sweep used in the default mode; you're not designing units.
+3. **Map the codebase lightly** — start with direct Read/Glob/Grep over the
+   obvious area. Use one Task-tool Explore sub-agent only if local reading
+   leaves a real unknown; skip the full three-agent parallel sweep used in
+   the default mode because you're not designing units.
 4. **Run Phase 4.6 (UI surface fallback)** when `ux-ui-design` is installed
    — same rules as default mode (inheritance check, mock only when
    upstream coverage is missing). Most ask-questions runs find the parent
@@ -151,18 +154,36 @@ Read:
 
 ### Phase 3: Map the codebase
 
-Spawn parallel read-only Explore sub-agents. Send all in one message and wait for all.
+Run a read-first scope-size probe before spawning Explore agents:
 
+1. Use Glob/`rg --files` to identify likely directories, entry points, and
+   existing tests.
+2. Use Grep/`rg` for feature terms, route names, exported types, and nearby
+   helpers.
+3. Read 2-5 representative source/test files yourself.
+
+Then choose the dispatch size:
+
+- **Small/bounded feature** — known module or a few obvious files: skip Explore
+  and use direct reading.
+- **Medium/unclear feature** — one area but uncertain patterns: spawn one
+  read-only Explore agent with a combined brief.
+- **Broad/cross-cutting feature** — distinct structure, interface, and test
+  questions across separate areas: spawn parallel read-only Explore sub-agents.
+
+For Explore:
 - **Claude Code / Anthropic:** Task/Explore with Sonnet minimum, Opus for large
   or complex codebases.
 - **Codex / OpenAI:** `explorer` sub-agents with `reasoning_effort: medium`;
   use `high` for large or complex codebases.
 
+Possible prompts:
 1. **Codebase Structure** — directory layout, modules, entry points, exports
 2. **Interface & Type Inventory** — exported interfaces, types, signatures with file paths
 3. **Test Structure** — test patterns, helpers, fixtures, organization
 
-After results, **read 2-3 key source files yourself** to verify findings.
+After direct reading or Explore results, **read 2-3 key source files yourself**
+to verify findings.
 
 ### Phase 4: Re-align to project standards
 
@@ -189,6 +210,23 @@ already pin. Skip anything that's safely an implementation-time call.
 
 Aim for the smallest set of questions that meaningfully resolve direction
 — typically 2-5. Zero is fine if everything's already pinned.
+
+**Cross-model advisory review under autopilot.** If this skill is running as a
+delegation from active autopilot, the feature has large/risky architectural
+decisions, and the body does not already contain useful `## Design decisions`
+from a prior `--only-questions` pass, apply the cross-model advisory review
+policy from `principles/SKILL.md` before resolving the questions yourself.
+
+Use one focused `peer` pass only when a different model class is available.
+Ask for missing questions, risks, ambiguous constraints, and alternatives for
+this feature's design — not for a final verdict. Do not run the multi-pass
+`peer-review` loop during routine autopilot design. If peeragent is
+unavailable, the peer would use the same model class, or the invocation fails,
+continue with host judgment and note that the advisory pass was skipped.
+
+Summarize the useful output under `## Other agent review` in the feature body
+and fold accepted questions/risks into the decisions you log. Do not paste the
+peer transcript into the item.
 
 If this skill is running **as a delegation from an active autopilot run or
 harness goal**, resolve each question with judgment (prioritize: consistent

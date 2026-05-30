@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased
+
+- **Review skill progressive disclosure** - Split the review skill into a
+  substrate-first core plus references for target resolution, review lenses,
+  deep-review mechanics, and substrate side effects. The core now explicitly
+  supports standalone branch/PR/commit reviews without `.work` mutations and
+  keeps deep-review mode adaptable across contracts, data, concurrency, release,
+  and product/UX dimensions.
+- **work-view single-pass parsing** - Rewrote `work-view.sh` frontmatter
+  parsing to a single `awk` pass over the whole tree instead of spawning an
+  `awk` (plus `tr`) per field per file. The old path forked ~4,900 short-lived
+  processes for a default table view of a 617-item substrate; the rewrite forks
+  ~3. Measured on a 617-item repo: default table view drops from ~7.9s to
+  ~0.12s (66x), and `--count`/`--ready`/filtered views all drop to ~0.1s. The
+  `sys`-time-dominated profile (process fork/exec + redundant file reads)
+  collapses accordingly. Output is now deterministically sorted by path; all
+  filters and output modes are otherwise byte-for-byte identical to before.
+- **Dual Codex/Claude hook set** - Replaced the eager SessionStart queue dump
+  with prompt-gated context injection. Actionable workflow prompts can now get a
+  compact queue snapshot plus once-per-session principles capsules; idle chat and
+  explainer prompts stay silent. Capsule state lives in the host plugin data
+  directory when available, with non-worktree fallbacks, so normal project
+  worktrees stay clean.
+- **Substrate maintainer hook** - Expanded the PostToolUse hook from `updated:`
+  bumping to deterministic touched-item validation: required frontmatter, valid
+  kind/stage, filename/id match, parent/dependency existence, and dependency
+  cycles reachable from the touched item.
+
 ## v0.7.7 - Skill metadata hotfix
 
 - **Codex skill loading** - Shortened long agile-workflow skill frontmatter
