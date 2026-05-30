@@ -1,7 +1,7 @@
 {
   "name": "research-pipeline",
   "description": "Research-grounded pipeline plugin — adds the research family, architecture phase, blocking briefs, knowledge index, doc-review, and quality-checkpoint to projects using the agile-workflow substrate. Companion to nklisch/skills agile-workflow.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": {
     "name": "andrewclark88"
   },
