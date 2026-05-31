@@ -1,5 +1,5 @@
 {
-  "description": "research-pipeline hooks: knowledge-index navigator on SessionStart + docs/ updated: auto-bump on PostToolUse. Both flag-gated by docs/knowledge-index-nav.yaml or docs/knowledge-index.yaml presence; inert in non-knowledge-indexed repos.",
+  "description": "research-pipeline hooks: knowledge-index navigator + cross-model peer-review preflight on SessionStart + docs/ updated: auto-bump on PostToolUse. Nav is flag-gated by docs/knowledge-index-nav.yaml presence; the peer-preflight is gated by peeragent being installed; both inert otherwise.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,11 @@
           {
             "type": "command",
             "command": "bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/scripts/session-start-nav.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/scripts/session-start-peer-preflight.sh\"",
             "timeout": 10
           }
         ]
