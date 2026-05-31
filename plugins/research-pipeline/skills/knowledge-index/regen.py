@@ -263,14 +263,20 @@ def lint_substrate_item(path, fm):
     if stage and stage not in SUBSTRATE_STAGES:
         warnings.append(f"{rel}: stage `{stage}` not in known substrate stages {sorted(SUBSTRATE_STAGES)}")
 
-    # Backlog items have a leaner schema — they only require id/created (kind/stage unknown
-    # until /scope promotes them). Don't error on missing kind/stage for backlog items.
+    # Backlog items have a leaner schema (lenient per Nathan's SPEC.md): pre-scope, they
+    # only require id + created. kind/stage/updated are unknown or unset until /scope
+    # promotes them, and kind may be an informal value (e.g. `bug`/`idea`). Drop the
+    # kind/stage/updated errors for backlog items — both missing-field and invalid-value.
     is_backlog = "/backlog/" in rel
-    if is_backlog and stage is None:
-        # Suppress the missing-stage error for backlog items (lenient schema per Nathan's SPEC.md).
-        errors = [e for e in errors if "missing required field `stage`" not in e]
-    if is_backlog and kind is None:
-        errors = [e for e in errors if "missing required field `kind`" not in e]
+    if is_backlog:
+        errors = [
+            e
+            for e in errors
+            if "missing required field `stage`" not in e
+            and "missing required field `kind`" not in e
+            and "missing required field `updated`" not in e
+            and "not a substrate kind" not in e
+        ]
 
     # List-typed fields should be lists when present
     for f in ("tags", "depends_on"):
