@@ -12,7 +12,8 @@ This repo contains agent skills distributed via skilltap, the Claude Code plugin
 |---|---|---|---|
 | `plugins/agile-workflow/` | `agile-workflow` | supported | **Substrate-driven** work tracking. Items as files in `.work/` with YAML frontmatter, late-binding releases, gates that produce items, autopilot queue runner. See `plugins/agile-workflow/docs/VISION.md`. |
 | `plugins/ux-ui-design/` | `ux-ui-design` | supported | HTML/CSS/JS mockup-first UI/UX design. Throwaway single-file mockups in `.mockups/`. Loose integration with agile-workflow. |
-| `plugins/skill-authoring/` | `skill-authoring` | supported | Create, evaluate, and refine agent skills. |
+| `plugins/nates-toolkit/` | `nates-toolkit` | supported | Project-agnostic utility skills (no workflow lock-in): repo-eval, agent-reflection, skill-auditor, write-tool-skill, plainspeak. Supersedes the retired `skill-authoring` plugin. |
+| (external) | `peeragent` | supported | Cross-agent task delegation + peer-review (git-subdir from `nklisch/peeragent`). |
 | `plugins/workflow/` | `workflow` | **DEPRECATED — no longer supported** | Doc-driven software workflow with design docs as artifacts in `docs/designs/`. Kept in tree so existing installs don't break. No new features or fixes will land. New projects should use `agile-workflow`; existing `workflow` projects migrate via `/agile-workflow:convert`. |
 
 ### workflow is deprecated

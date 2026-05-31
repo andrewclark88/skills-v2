@@ -14,7 +14,7 @@ Full methodology: [`plugins/research-pipeline/docs/build-process.md`](plugins/re
 |-------|-----------|---------------|
 | **Two first-party plugins** | `research-pipeline` (research family, architecture, brief, knowledge-index, knowledge-graph, doc-review, quality-checkpoint, init-project, plus merged `epicize`/`epic-design`/`feature-design`) + extensions to `agile-workflow` (new `gate-infra` + gate-docs/gate-tests policy extensions) | [`plugins/research-pipeline/`](plugins/research-pipeline/) |
 | **Forked agile-workflow plugin** | Nathan Klisch's substrate-driven work-tracking + autopilot + late-binding releases (skills-v2 defaults the release gate set to 6: the 5 base gates + `gate-infra`) — the foundation everything else builds on | [`plugins/agile-workflow/`](plugins/agile-workflow/) |
-| **Optional Nathan plugins** | `ux-ui-design` (mockup-first UI), `skill-authoring` (write your own skills) | [`plugins/ux-ui-design/`](plugins/ux-ui-design/), [`plugins/skill-authoring/`](plugins/skill-authoring/) |
+| **Optional Nathan plugins** | `ux-ui-design` (mockup-first UI), `nates-toolkit` (project-agnostic utilities — repo-eval, agent-reflection, skill-auditor, write-tool-skill, plainspeak), `peeragent` (cross-agent delegation + peer-review) | [`plugins/ux-ui-design/`](plugins/ux-ui-design/), [`plugins/nates-toolkit/`](plugins/nates-toolkit/) |
 | **Project template** | Canonical scaffold dropped into new projects — `docs/` folders + `.work/` substrate seed + `knowledge-index.yaml` + lean `CLAUDE.md` + portable `.claude/rules` | [`plugins/research-pipeline/templates/project/`](plugins/research-pipeline/templates/project/) (applied by `/research-pipeline:init-project`) |
 | **Research skills family** | Three scales of the same fractal pattern: `/research` (question) → `/deep-research` (domain) → `/research-program` (megatopic) | [`plugins/research-pipeline/docs/research-skills-overview.md`](plugins/research-pipeline/docs/research-skills-overview.md) |
 | **Thinking layer** | First-principles primer loaded by thinking-heavy skills | [`plugins/research-pipeline/docs/first-principles.md`](plugins/research-pipeline/docs/first-principles.md) |
@@ -431,7 +431,8 @@ skills-v2 is distributed as a Claude Code plugin marketplace. Install via the pl
 /plugin install agile-workflow@andrewclark88-skills-v2
 /plugin install research-pipeline@andrewclark88-skills-v2
 /plugin install ux-ui-design@andrewclark88-skills-v2     # optional
-/plugin install skill-authoring@andrewclark88-skills-v2  # optional
+/plugin install nates-toolkit@andrewclark88-skills-v2    # optional
+/plugin install peeragent@andrewclark88-skills-v2        # optional
 ```
 
 Both `agile-workflow` and `research-pipeline` ship hooks. Once installed:
@@ -466,7 +467,7 @@ skills-v2/
 │   ├── agile-workflow/                        ← Nathan's plugin, extended (gate-infra added)
 │   ├── research-pipeline/                     ← our plugin (research + planning + grounding)
 │   ├── ux-ui-design/                          ← Nathan's plugin (optional)
-│   └── skill-authoring/                       ← Nathan's plugin (optional)
+│   └── nates-toolkit/                          ← Nathan's plugin (optional; supersedes skill-authoring)
 └── (plugin manifests, hooks, scripts under each plugin/)
 ```
 
