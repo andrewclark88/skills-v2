@@ -128,6 +128,24 @@ Ask: "Are these the right questions? Anything to add or exclude?"
 
 **Use Agent subagents (`model: "sonnet"`)** for parallel investigation when multiple areas need research.
 
+### 2e. Attest load-bearing sources (ARD citation chain)
+
+As you consult sources, attest the ones that back a **load-bearing** claim — a number, an API shape, a specification rule, a comparative or composed-effort claim. Not every page you skim; only sources a reader would need to verify. (This is ARD's thin-attestation discipline: attest what the synthesis leans on.)
+
+For each such source, write an attestation from the template at `${CLAUDE_PLUGIN_ROOT}/templates/attestation.md` to:
+
+```
+.research/attestation/<handle>.md
+```
+
+- **`<handle>`** — a stable kebab id for the source (`rfc6749`, `hono-v4-docs`, `postgres-mvcc`). It MUST equal the `[handle]` you cite with in the brief.
+- Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
+- Body: a **Summary** (paraphrase, ~100-300 words — your words, no project framing) and **Key passages** (verbatim quotes for the load-bearing claims only, each with a source-internal anchor: §/p./¶/timecode).
+
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `oauth-standards`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}` citations, so renumbering breaks every existing citation. A new source gets the next free `N`.
+
+If a topic is small enough that nothing is genuinely load-bearing (no numbers, no API shapes, no rules to verify), it's fine to produce no attestations — the brief is then `verification_status: legacy-unattested` (see Phase 4).
+
 ## Phase 3: Evaluate and Synthesize
 
 **For technology:** Score each option against project-specific criteria. Present recommendation.
@@ -147,12 +165,17 @@ sources disagree or are incomplete.
 
 Write to the canonical research tier: `.research/briefs/<topic-slug>/parent.md` (the same tree `/deep-research` and the design skills read; consumers and `/knowledge-index` resolve briefs from there). **Required: emit standard frontmatter at the top** so `/knowledge-index` regeneration picks it up.
 
+**Cite load-bearing claims** with the `[handle]{N}` wire-form inline in the body — `handle` is the attestation handle from Phase 2e, `N` is its entry number in the corpus `INDEX.md`. Example: "OAuth refresh tokens SHOULD rotate on use `[rfc6749]{3}`." The `## Sources` section stays as the human-readable list; the `[handle]{N}` citations are the machine-checkable chain `/citation-lint` verifies. Cite the same claims you attested — don't cite a handle you didn't write an attestation for.
+
 **For technology research:**
 ```markdown
 ---
 description: {one-line "when do I read this?" hook — frame as the question this doc answers}
 type: brief
+slug: {topic-slug}
 research_method: /research
+verification_status: attested   # attested = went through the Phase 2e attestation + Phase 4d citation-lint chain
+provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 summary: |
   {2-4 sentences — what was researched and the key recommendation}
@@ -191,7 +214,10 @@ key_findings:
 ---
 description: {one-line "when do I read this?" hook — frame as the question this doc answers}
 type: brief
+slug: {topic-slug}
 research_method: /research
+verification_status: attested   # attested = went through the Phase 2e attestation + Phase 4d citation-lint chain
+provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, if this brief gates a specific phase — optional}
 summary: |
@@ -239,7 +265,10 @@ Required frontmatter on the brief:
 description: <one-line "when do I read this?" hook — frame as the question this doc answers>
 type: brief
 kind: research
+slug: <topic-slug>
 research_method: /research
+verification_status: attested   # attested | legacy-unattested (absent ⇒ legacy-unattested)
+provenance: source-direct   # required for [handle]{N} citations to resolve (lint checks the calling brief too)
 updated: <YYYY-MM-DD>
 summary: |
   <1-2 sentences on what's in the brief>
@@ -248,6 +277,22 @@ key_findings:
 status: draft
 ---
 ```
+
+### 4d. Lint the citation chain
+
+Before finalizing, run the **mechanical** citation check via the `citation-lint` skill on the brief you just wrote:
+
+```
+/citation-lint .research/briefs/<topic-slug>/parent.md
+```
+
+It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance, and flags thin attestations + suspicious unsourced-claim patterns. On a **broken chain** (high severity — e.g. a `[handle]` with no attestation), fix it before finalizing: write the missing attestation, correct the handle, or remove the claim. Re-run until clean.
+
+Note: the lint checks `provenance` on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: source-direct`. A brief that cites `[handle]{N}` without its own `provenance` field gets a (low-severity) `missing-provenance` finding. Numbered `## Sources` lists can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it or move the source list below the citations.
+
+This is the syntactic half. It pairs with Phase 5 (the independent semantic evaluation): **4d proves the citations point at real, attested sources; Phase 5 judges whether the claims are actually supported.** Run both.
+
+If the brief is genuinely `verification_status: legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — that's fine; record the status honestly rather than manufacturing citations.
 
 ## Phase 5: Independent groundedness check
 
@@ -279,6 +324,9 @@ On `NEEDS-REVISION`, fix the flagged claims (re-fetch sources, add citations, or
 - **NEVER recommend without evaluating alternatives** (technology research).
 - **NEVER skip the health check** — a superior but abandoned library is a liability.
 - **NEVER produce a brief without source citations.** Every claim must be verifiable.
+- **NEVER cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
+- **NEVER renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **NEVER mark a brief `verification_status: attested` if `/citation-lint` reports broken chains.** Fix them, or record `legacy-unattested` honestly.
 - **NEVER produce generic findings.** Ground everything in this project's specific needs.
 - **NEVER skip AskUserQuestion checkpoints.** Wrong research direction wastes effort.
 - **NEVER forget to run `/knowledge-index`** after writing the brief. Future sessions depend on the regenerated index.
@@ -288,7 +336,9 @@ On `NEEDS-REVISION`, fix the flagged claims (re-fetch sources, add citations, or
 
 - All research questions answered with evidence
 - Domain brief written with source citations
+- Load-bearing claims attested (Phase 2e) and cited `[handle]{N}`; corpus `INDEX.md` updated
 - Reference skill written (technology research only)
+- Citation chain clean — `/citation-lint` reports no broken chains (Phase 4d); `verification_status` set accordingly
 - Knowledge index updated
 - User confirmed findings at Phase 3 checkpoint
 - Independent groundedness check passed (Phase 5) — or its findings acknowledged as recorded limitations
