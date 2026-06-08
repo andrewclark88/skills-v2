@@ -135,7 +135,7 @@ type: brief
 slug: {topic-slug}
 research_method: /brief
 verification_status: attested   # attested = went through the Phase 2b attestation + Phase 4b citation-lint chain; omit ⇒ legacy-unattested
-provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
+provenance: agent-synthesis   # the brief is a synthesis artifact (only the attestation files are source-direct); provenance must be PRESENT for [handle]{N} citations to resolve (the lint checks the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, optional}
 summary: |
@@ -203,7 +203,7 @@ Before presenting the brief, run the **mechanical** citation check via the `cita
 
 It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance, and flags thin attestations + suspicious unsourced-claim patterns. On a **broken chain** (high severity — e.g. a `[handle]` with no attestation), fix it before finalizing: write the missing attestation, correct the handle, or remove the claim. Re-run until clean, then set `verification_status: attested`.
 
-Note: the lint checks `provenance` on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: source-direct`. A numbered `## Sources` list can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it.
+Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A numbered `## Sources` list can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it.
 
 The lint is **syntactic** — it proves the citations point at real, attested sources. It does NOT judge whether a claim is actually supported by its source; that's author judgment for a single-tier brief (and the independent evaluator's job in `/deep-research`). If the brief is genuinely `legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — record that status honestly rather than manufacturing citations.
 
@@ -238,7 +238,7 @@ kind: research                                    # usually derived from type; s
 slug: <topic-slug>
 research_method: /brief
 verification_status: attested                     # attested | legacy-unattested (absent ⇒ legacy-unattested)
-provenance: source-direct                         # required for [handle]{N} citations to resolve (lint checks the calling brief too)
+provenance: agent-synthesis                       # synthesis artifact (attestation files are source-direct); must be present for [handle]{N} citations to resolve (lint checks the calling brief too)
 updated: <today's date YYYY-MM-DD>
 blocks_phase: <phase number if applicable>
 summary: |
