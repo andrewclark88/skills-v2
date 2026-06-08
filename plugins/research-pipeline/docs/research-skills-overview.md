@@ -1,7 +1,7 @@
 ---
 description: "Unifying architecture for the three-skill research family — /research, /deep-research, /research-program. Same four-role fractal pattern at three scales (question, domain, megatopic). Composition points, scale comparison, when to use which."
 type: architecture
-updated: 2026-04-15
+updated: 2026-06-08
 ---
 
 # Research Skills Overview
@@ -176,27 +176,42 @@ No Haiku anywhere in the research family. Decomposition, synthesis, and evaluati
 Output location scales with the unit:
 
 ```
-.research/briefs/<topic-slug>/                  # single /research
-  brief.md
-  reference-skill/
-
-.research/briefs/<seed-slug>/                   # one /deep-research campaign
-  parent.md
-  <facet-1>.md
-  <facet-N>.md
-  campaign.md
-
-.research/programs/<program-slug>/              # one /research-program
-  program.md                               # meta-plan
-  super-parent.md                          # cross-campaign synthesis
-  program-report.md                        # program-level evaluation
-  campaigns/
-    01-<campaign-slug>/                    # full /deep-research output
-    02-<campaign-slug>/
-    ...
+.research/
+  briefs/<topic-slug>/                     # ANALYSIS tier — single /research
+    parent.md
+    reference-skill/
+  briefs/<seed-slug>/                      # ANALYSIS tier — one /deep-research campaign
+    parent.md
+    <facet-1>.md
+    <facet-N>.md
+    campaign.md
+  programs/<program-slug>/                 # ANALYSIS tier — one /research-program
+    program.md                             # meta-plan
+    super-parent.md                        # cross-campaign synthesis
+    program-report.md                      # program-level evaluation
+    campaigns/
+      01-<campaign-slug>/                  # full /deep-research output
+      02-<campaign-slug>/
+      ...
+  reference/<corpus>/INDEX.md              # SOURCE tier — numbered, append-only bibliography
+  attestation/<handle>.md                  # SOURCE tier — per-source attestation (provenance + quotes)
+  precis/<slug>.md                         # SOURCE tier — engagement-unit aggregation
 ```
 
 Each scale composes cleanly with the scales below it. A campaign directory is valid output whether it was produced standalone or as part of a program. A single brief is valid output whether it was produced by `/research` or extracted from a campaign.
+
+### Two tiers under `.research/`
+
+`.research/` holds two kinds of artifact:
+
+- **Analysis tier** (`briefs/`, `programs/`) — the syntheses you read to understand a domain. These are navigable knowledge docs: they carry the standard knowledge-index frontmatter (`description`/`type`/`updated` + `key_findings`), are indexed by `/knowledge-index`, and are read by the design skills (`epicize`, `epic-design`, `feature-design`).
+- **Source tier** (`reference/`, `attestation/`, `precis/`) — the per-source evidence the analysis rests on, introduced by the ARD verification adapter (see [ard-adoption-plan.md](ard-adoption-plan.md)). These carry a *different* frontmatter schema (`source_handle`/`fetched`/`provenance`), are **not** navigable knowledge, and are **excluded from `/knowledge-index` and the knowledge-graph** — they are tracked by the citation lint, not the index. (Mirrors how `.work/` substrate items are routed by their own schema.)
+
+This is a **compose-beneath** layout: the source tier sits beneath our existing analysis tier rather than migrating to ARD's `.research/analysis/` naming. The citation lint takes `--analysis-dir` so the analysis root stays configurable if we ever migrate.
+
+### Slug convention
+
+Every research output has a canonical **`slug`** — its stable id for `.work/` ↔ `.research/` linkage (`research_refs` / `research_origin`). The slug is the artifact's directory name (e.g. `.research/briefs/auth-providers/` → `auth-providers`); producers SHOULD also emit it as an explicit `slug:` frontmatter field so the id survives any future path change. Prefer the explicit field; derive from the path when it is absent.
 
 ## Cost Budgets, Unified
 

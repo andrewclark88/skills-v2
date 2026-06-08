@@ -21,6 +21,13 @@ RESEARCH_DIR = REPO / ".research"
 # Harmless for projects without a .work/ directory.
 WORK_DIR = REPO / ".work"
 
+# ARD (Agentic Research Discipline) source-record tiers under .research/. These carry a
+# different frontmatter schema (source_handle/fetched/provenance — not description/type/updated)
+# and are NOT navigable knowledge docs: you read the brief, never the attestation. They are
+# tracked by the citation lint, not this index. Excluded from discovery so they neither fail
+# the docs lint nor pollute the navigator. See docs/ard-adoption-plan.md (decision D2).
+ARD_SOURCE_TIERS = ("reference", "attestation", "precis")
+
 # Type → kind derivation per skill spec
 PLANNING_TYPES = {
     "north-star", "architecture", "roadmap", "design", "features",
@@ -83,6 +90,10 @@ def discover_docs():
             if p.name.startswith("doc-review-report-"):
                 continue
             if p.name == "RESUME-STATE.md":
+                continue
+            # Skip ARD source-record tiers under .research/ (tracked by the citation lint,
+            # not the knowledge index — they carry a non-docs frontmatter schema).
+            if len(parts) >= 2 and parts[0] == ".research" and parts[1] in ARD_SOURCE_TIERS:
                 continue
             docs.append(p)
     return docs
