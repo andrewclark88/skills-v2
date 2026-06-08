@@ -175,7 +175,7 @@ type: brief
 slug: {topic-slug}
 research_method: /research
 verification_status: attested   # attested = went through the Phase 2e attestation + Phase 4d citation-lint chain
-provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
+provenance: agent-synthesis   # the brief is a synthesis artifact (only the attestation files are source-direct); provenance must be PRESENT for [handle]{N} citations to resolve (the lint checks the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 summary: |
   {2-4 sentences — what was researched and the key recommendation}
@@ -217,7 +217,7 @@ type: brief
 slug: {topic-slug}
 research_method: /research
 verification_status: attested   # attested = went through the Phase 2e attestation + Phase 4d citation-lint chain
-provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
+provenance: agent-synthesis   # the brief is a synthesis artifact (only the attestation files are source-direct); provenance must be PRESENT for [handle]{N} citations to resolve (the lint checks the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, if this brief gates a specific phase — optional}
 summary: |
@@ -268,7 +268,7 @@ kind: research
 slug: <topic-slug>
 research_method: /research
 verification_status: attested   # attested | legacy-unattested (absent ⇒ legacy-unattested)
-provenance: source-direct   # required for [handle]{N} citations to resolve (lint checks the calling brief too)
+provenance: agent-synthesis   # the brief is a synthesis artifact (attestation files are source-direct); must be present for [handle]{N} citations to resolve (lint checks the calling brief too)
 updated: <YYYY-MM-DD>
 summary: |
   <1-2 sentences on what's in the brief>
@@ -288,7 +288,7 @@ Before finalizing, run the **mechanical** citation check via the `citation-lint`
 
 It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance, and flags thin attestations + suspicious unsourced-claim patterns. On a **broken chain** (high severity — e.g. a `[handle]` with no attestation), fix it before finalizing: write the missing attestation, correct the handle, or remove the claim. Re-run until clean.
 
-Note: the lint checks `provenance` on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: source-direct`. A brief that cites `[handle]{N}` without its own `provenance` field gets a (low-severity) `missing-provenance` finding. Numbered `## Sources` lists can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it or move the source list below the citations.
+Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A brief that cites `[handle]{N}` without its own `provenance` field gets a (low-severity) `missing-provenance` finding. Numbered `## Sources` lists can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it or move the source list below the citations.
 
 This is the syntactic half. It pairs with Phase 5 (the independent semantic evaluation): **4d proves the citations point at real, attested sources; Phase 5 judges whether the claims are actually supported.** Run both.
 

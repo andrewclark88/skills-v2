@@ -208,7 +208,7 @@ type: landscape
 slug: {project}-landscape
 research_method: /scout
 verification_status: attested   # attested if any load-bearing fact was attested + lint is clean; omit ⇒ legacy-unattested
-provenance: source-direct   # REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling doc too)
+provenance: agent-synthesis   # the landscape is a synthesis artifact (only attestation files are source-direct); must be PRESENT for [handle]{N} citations to resolve (the lint checks the calling doc too)
 updated: {date}
 ---
 
@@ -263,7 +263,7 @@ Ask the user where to put the landscape brief before writing (usually `docs/` or
 /citation-lint <path/to/the/landscape/brief.md>
 ```
 
-It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance. Fix any broken chain (high severity — e.g. a `[handle]` with no attestation) before finalizing, then set `verification_status: attested`. The lint is **syntactic** — it proves citations point at real, attested sources; it does not judge whether the source supports the claim. If the landscape is pure orientation with nothing load-bearing attested, there are no `[handle]{N}` citations, the lint is a no-op, and the brief is `legacy-unattested` — record that honestly rather than manufacturing citations. The `provenance` check applies to the **calling doc** too, which is why the landscape frontmatter carries `provenance: source-direct`; a numbered `## Sources` list can trip the advisory `version-number` `[warn]` — ignore it.
+It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance. Fix any broken chain (high severity — e.g. a `[handle]` with no attestation) before finalizing, then set `verification_status: attested`. The lint is **syntactic** — it proves citations point at real, attested sources; it does not judge whether the source supports the claim. If the landscape is pure orientation with nothing load-bearing attested, there are no `[handle]{N}` citations, the lint is a no-op, and the brief is `legacy-unattested` — record that honestly rather than manufacturing citations. The `provenance` check applies to the **calling doc** too (presence, not value), which is why the landscape frontmatter carries `provenance: agent-synthesis` (it's a synthesis artifact; only the attestation files are `source-direct`); a numbered `## Sources` list can trip the advisory `version-number` `[warn]` — ignore it.
 
 **6b. Research Recommendations Handoff**
 
@@ -288,7 +288,7 @@ kind: research
 slug: <project>-landscape
 research_method: /scout
 verification_status: attested                     # attested | legacy-unattested (absent ⇒ legacy-unattested)
-provenance: source-direct                         # required for [handle]{N} citations to resolve (lint checks the calling doc too)
+provenance: agent-synthesis                        # synthesis artifact (attestation files are source-direct); must be present for [handle]{N} citations to resolve (lint checks the calling doc too)
 updated: <YYYY-MM-DD>
 summary: |
   <1-2 sentences on the prior-art landscape covered>
