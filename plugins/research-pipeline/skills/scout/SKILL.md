@@ -171,6 +171,22 @@ For each top finding, produce a structured assessment.
 - For repos, check actual project health — don't just trust stars. Look at recent commits,
   open issues, contributor activity.
 
+#### Attest load-bearing assessment facts (ARD citation chain)
+
+Scout is breadth-first, so most of the landscape is *orientation*, not load-bearing — and a pure orientation map needs no attestations (it's `legacy-unattested`; see Phase 6). But some assessment facts **do** become load-bearing: a specific design choice a downstream `/architecture` decision will lean on, a quantitative claim ("handles 10k req/s"), a stated stack or licence, a post-mortem lesson you'll cite as a reason to adopt-or-avoid. Attest the source behind those — not the brief mentions, not the link dump.
+
+For each such source, write an attestation from the template at `${CLAUDE_PLUGIN_ROOT}/templates/attestation.md` to:
+
+```
+.research/attestation/<handle>.md
+```
+
+- **`<handle>`** — a stable kebab id for the source (`hono-repo`, `temporal-postmortem-hn`, `arxiv-2401-12345`). It MUST equal the `[handle]` you cite with in the landscape brief. If `/research` or another scout already attested the same source, reuse its handle instead of writing a second file (two files declaring the same `source_handle` trip the lint's `colliding-handle` check).
+- Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
+- Body: a **Summary** (paraphrase, ~100-300 words) and **Key passages** (verbatim quotes for the load-bearing facts only, each with a source-internal anchor: README §, commit date, paper §, HN comment).
+
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`) — pick a `<corpus>` slug for the landscape (e.g. `<project>-prior-art`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}`.
+
 **AskUserQuestion checkpoint:** Present the landscape summary:
 - Top finds with assessments
 - Brief mentions grouped by theme/approach
@@ -189,6 +205,10 @@ Write to the project's docs directory as a standalone document.
 ---
 description: "Scout landscape for {project} — prior art, adjacent approaches, lessons learned"
 type: landscape
+slug: {project}-landscape
+research_method: /scout
+verification_status: attested   # attested if any load-bearing fact was attested + lint is clean; omit ⇒ legacy-unattested
+provenance: source-direct   # REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling doc too)
 updated: {date}
 ---
 
@@ -233,7 +253,17 @@ it means either uncharted territory or a search gap worth revisiting.}
 {All URLs consulted during scouting}
 ```
 
+**Cite load-bearing assessment facts** with the `[handle]{N}` wire-form inline — `handle` is the attestation handle from Phase 5, `N` is its entry number in the corpus `INDEX.md`. Example: "Temporal moved off a monolith after hitting scheduler contention at ~5k workflows/sec `[temporal-postmortem-hn]{4}`." The inline `[Project Name](url)` links and the `## Sources` list stay as the human-readable layer; the `[handle]{N}` citations are the machine-checkable chain. Only cite handles you actually attested — brief mentions and orientation prose don't need citations.
+
 Ask the user where to put the landscape brief before writing (usually `docs/` or `docs/architecture/`).
+
+**After writing, lint the citation chain.** Run the **mechanical** check via the `citation-lint` skill on the landscape brief you just wrote:
+
+```
+/citation-lint <path/to/the/landscape/brief.md>
+```
+
+It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance. Fix any broken chain (high severity — e.g. a `[handle]` with no attestation) before finalizing, then set `verification_status: attested`. The lint is **syntactic** — it proves citations point at real, attested sources; it does not judge whether the source supports the claim. If the landscape is pure orientation with nothing load-bearing attested, there are no `[handle]{N}` citations, the lint is a no-op, and the brief is `legacy-unattested` — record that honestly rather than manufacturing citations. The `provenance` check applies to the **calling doc** too, which is why the landscape frontmatter carries `provenance: source-direct`; a numbered `## Sources` list can trip the advisory `version-number` `[warn]` — ignore it.
 
 **6b. Research Recommendations Handoff**
 
@@ -255,7 +285,10 @@ Required frontmatter on the landscape brief:
 description: <one-line "when do I read this?" hook>
 type: landscape
 kind: research
+slug: <project>-landscape
 research_method: /scout
+verification_status: attested                     # attested | legacy-unattested (absent ⇒ legacy-unattested)
+provenance: source-direct                         # required for [handle]{N} citations to resolve (lint checks the calling doc too)
 updated: <YYYY-MM-DD>
 summary: |
   <1-2 sentences on the prior-art landscape covered>
@@ -281,3 +314,6 @@ status: draft
   uncharted territory (exciting) or a search blind spot (fix it).
 - **Don't forget to follow leads.** The best finds often come from following references in other
   finds, not from the original search.
+- **Never cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
+- **Never renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **Don't over-attest.** Scout is breadth-first — attest only the load-bearing facts a downstream decision leans on, not every link. A pure orientation map is legitimately `legacy-unattested`.

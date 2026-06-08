@@ -89,6 +89,24 @@ what the builder needs. If the phase is "implement the mana system," you don't n
 of Magic mana rules. You need the current rules, the edge cases, and the cards the engine will
 encounter most often.
 
+#### 2b. Attest load-bearing sources (ARD citation chain)
+
+As you consult sources, attest the ones that back a **load-bearing** claim — a rule number, an API shape, a specification value, a card-interaction ruling, a quantitative claim. Not every page you skim; only sources a builder would need to verify. (This is ARD's thin-attestation discipline: attest what the brief leans on.)
+
+For each such source, write an attestation from the template at `${CLAUDE_PLUGIN_ROOT}/templates/attestation.md` to:
+
+```
+.research/attestation/<handle>.md
+```
+
+- **`<handle>`** — a stable kebab id for the source (`cr-2024`, `scryfall-api`, `edh-banlist`). It MUST equal the `[handle]` you cite with in the brief.
+- Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
+- Body: a **Summary** (paraphrase, ~100-300 words — your words, no project framing) and **Key passages** (verbatim quotes for the load-bearing claims only, each with a source-internal anchor: CR §, p./¶, endpoint, timecode).
+
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `mtg-rules`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}` citations, so renumbering breaks every existing citation. A new source gets the next free `N`.
+
+If the topic is small enough that nothing is genuinely load-bearing (no numbers, no rules, no API shapes to verify), it's fine to produce no attestations — the brief is then `verification_status: legacy-unattested` (see Phase 4).
+
 ### Phase 3: Outline
 
 Before writing, outline the brief and get approval.
@@ -114,7 +132,10 @@ Every brief produced by `/brief` MUST start with YAML frontmatter that includes 
 ---
 description: {one-line "when do I read this?" hook}
 type: brief
+slug: {topic-slug}
 research_method: /brief
+verification_status: attested   # attested = went through the Phase 2b attestation + Phase 4b citation-lint chain; omit ⇒ legacy-unattested
+provenance: source-direct   # the brief's own sourcing posture — REQUIRED for [handle]{N} citations to resolve (the lint checks provenance on the calling brief, not just the attestation)
 updated: {today's date, YYYY-MM-DD}
 blocks_phase: {phase number, optional}
 summary: |
@@ -166,10 +187,25 @@ will look different from a brief about tournament rules or API endpoints. Struct
 #### Writing Rules
 
 - **Cite everything.** Rule numbers, API docs, source URLs. A builder should be able to verify any claim.
+- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]{N}` citations are the machine-checkable chain `/citation-lint` verifies. Cite the same claims you attested — never cite a handle you didn't write an attestation for.
 - **Use tables for structured data.** Card lists, rule summaries, API endpoints, technique inventories.
 - **Use worked examples for complex interactions.** Walk through the stack resolution step by step. Show the mana calculation. Trace the API call sequence.
 - **Flag the 80/20.** What are the most common cases? (Top 100 meta cards, most frequent tournament rules, most-used API endpoints.) Cover those thoroughly. Acknowledge the long tail but don't exhaustively document it.
 - **Cross-reference other briefs.** Don't duplicate. If another brief covers a related topic, reference it: "See `stack-and-priority.md` for how triggered abilities queue."
+
+#### 4b. Lint the citation chain
+
+Before presenting the brief, run the **mechanical** citation check via the `citation-lint` skill on the brief you just wrote:
+
+```
+/citation-lint <path/to/the/brief/you/just/wrote.md>
+```
+
+It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance, and flags thin attestations + suspicious unsourced-claim patterns. On a **broken chain** (high severity — e.g. a `[handle]` with no attestation), fix it before finalizing: write the missing attestation, correct the handle, or remove the claim. Re-run until clean, then set `verification_status: attested`.
+
+Note: the lint checks `provenance` on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: source-direct`. A numbered `## Sources` list can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it.
+
+The lint is **syntactic** — it proves the citations point at real, attested sources. It does NOT judge whether a claim is actually supported by its source; that's author judgment for a single-tier brief (and the independent evaluator's job in `/deep-research`). If the brief is genuinely `legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — record that status honestly rather than manufacturing citations.
 
 ### Phase 5: Review
 
@@ -199,7 +235,10 @@ schema):
 description: <one-line "when do I read this?" hook — frame as the question this doc answers>
 type: brief
 kind: research                                    # usually derived from type; set explicitly to override
+slug: <topic-slug>
 research_method: /brief
+verification_status: attested                     # attested | legacy-unattested (absent ⇒ legacy-unattested)
+provenance: source-direct                         # required for [handle]{N} citations to resolve (lint checks the calling brief too)
 updated: <today's date YYYY-MM-DD>
 blocks_phase: <phase number if applicable>
 summary: |
@@ -263,3 +302,6 @@ For data pipelines and operational processes.
 - **Don't ignore the data.** If the project has real data (card pools, tournament results, technique inventories), ground the brief in it. "The top 100 meta cards" is better than "common cards."
 - **Don't write without knowing the consumer.** Read the roadmap phase first. A brief for Phase 5 is different from a brief for Phase 10.
 - **Don't be vague.** "Mana abilities don't use the stack" → "Mana abilities (CR 605) do NOT use the stack. They resolve immediately. A player can activate mana abilities while casting a spell (CR 601.2g). Exception: Lion's Eye Diamond has a timing restriction — 'activate only as an instant' means it cannot be activated during spell casting."
+- **Never cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
+- **Never renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **Never mark a brief `verification_status: attested` if `/citation-lint` reports broken chains.** Fix them, or record `legacy-unattested` honestly.
