@@ -55,7 +55,7 @@ Use `/deep-research` instead when:
 Flags:
   --campaigns N                         # Target campaign count (default: Planner decides 3-7)
   --budget $N                           # USD ceiling (default: 100, max: 400)
-  --output-dir <path>                   # Default: docs/programs/<slug>/
+  --output-dir <path>                   # Default: .research/programs/<slug>/
   --parallel                            # Dispatch all independent campaigns concurrently
   --sequential                          # Force fully-sequential dispatch
   --no-review                           # Skip program plan review (use sparingly)
@@ -67,7 +67,7 @@ No-args: prompts for megatopic + scope notes + optional existing programs/campai
 
 ## What This Skill Produces
 
-1. **Program directory:** `docs/programs/<program-slug>/`
+1. **Program directory:** `.research/programs/<program-slug>/`
 2. **program.md** — Planner's meta-plan (campaigns, dependencies, rationale)
 3. **super-parent.md** — Synthesizer's cross-campaign narrative (program-level themes, contradictions, coverage)
 4. **program-report.md** — Program Evaluator's structured quality report
@@ -115,7 +115,7 @@ All briefs enter at `confidence: speculative, status: draft`. Promotion manual i
 
 **Procedure:**
 
-1. From the parent session, create the program directory: `mkdir -p docs/programs/<program-slug>/campaigns/`
+1. From the parent session, create the program directory: `mkdir -p .research/programs/<program-slug>/campaigns/`
 2. Write a smoke-test marker from the parent session: `<program-dir>/.write-preflight`. If this fails, fix permissions before continuing — the parent can't write, so the campaigns can't either.
 3. Dispatch a tiny smoke-test Agent (Sonnet, low budget — ~5 cents) whose entire job is:
    - Try to Write a smoke-test file at `<program-dir>/.spawned-write-preflight`
