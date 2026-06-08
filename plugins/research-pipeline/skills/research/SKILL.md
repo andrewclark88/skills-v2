@@ -145,7 +145,7 @@ sources disagree or are incomplete.
 
 ### 4a. Primer Document
 
-Write to the project's briefs/research directory. **Required: emit standard frontmatter at the top** so `/knowledge-index` regeneration picks it up.
+Write to the canonical research tier: `.research/briefs/<topic-slug>/parent.md` (the same tree `/deep-research` and the design skills read; consumers and `/knowledge-index` resolve briefs from there). **Required: emit standard frontmatter at the top** so `/knowledge-index` regeneration picks it up.
 
 **For technology research:**
 ```markdown
@@ -249,6 +249,29 @@ status: draft
 ---
 ```
 
+## Phase 5: Independent groundedness check
+
+Single-tier `/research` has no parallel specialists, so the brief carries more unverified author judgment than a `/deep-research` campaign — and unlike the deeper tiers, nothing has independently checked it. Before finalizing, run one **fresh-context evaluation** to catch fabrication and ungrounded claims — the same isolation principle `/deep-research`'s Evaluator uses, scaled to one brief.
+
+Spawn an evaluator with **only the written brief + the Phase 1 research questions** — NOT your investigation notes, sources list reasoning, or orchestration context. The isolation is the point: it prevents the evaluator inheriting your framing and rubber-stamping it.
+
+```
+Agent({
+  description: "Evaluate research brief: {topic}",
+  subagent_type: "general-purpose",
+  model: "opus",
+  prompt: <the brief's full text + the Phase 1 research questions; ask for the assessment below>
+})
+```
+
+Ask the evaluator for:
+- **Groundedness** — does every load-bearing claim trace to a source in `## Sources`? Flag anything that reads like training-recall (especially API shapes, version numbers, benchmark/figures) with no citation.
+- **Coverage** — are the Phase 1 research questions actually answered, or are gaps papered over?
+- **Contradictions** — internal inconsistencies, or sources that disagree without being flagged?
+- **Verdict** — `APPROVED` or `NEEDS-REVISION` with specific, locatable findings.
+
+On `NEEDS-REVISION`, fix the flagged claims (re-fetch sources, add citations, or mark gaps honestly as limitations) and re-run until `APPROVED` or the remaining items are acknowledged limitations recorded in the brief. Under an active autopilot run this check is advisory and non-blocking — record the verdict and proceed if the evaluator can't be spawned — but a fabrication-grounds `NEEDS-REVISION` should always be addressed.
+
 ## Anti-Patterns
 
 - **NEVER skip the knowledge index check.** If a brief exists, read it first. Don't duplicate.
@@ -268,3 +291,4 @@ status: draft
 - Reference skill written (technology research only)
 - Knowledge index updated
 - User confirmed findings at Phase 3 checkpoint
+- Independent groundedness check passed (Phase 5) — or its findings acknowledged as recorded limitations

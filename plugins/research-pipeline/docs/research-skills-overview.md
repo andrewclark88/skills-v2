@@ -176,17 +176,17 @@ No Haiku anywhere in the research family. Decomposition, synthesis, and evaluati
 Output location scales with the unit:
 
 ```
-docs/briefs/<topic-slug>/                  # single /research
+.research/briefs/<topic-slug>/                  # single /research
   brief.md
   reference-skill/
 
-docs/briefs/<seed-slug>/                   # one /deep-research campaign
+.research/briefs/<seed-slug>/                   # one /deep-research campaign
   parent.md
   <facet-1>.md
   <facet-N>.md
   campaign.md
 
-docs/programs/<program-slug>/              # one /research-program
+.research/programs/<program-slug>/              # one /research-program
   program.md                               # meta-plan
   super-parent.md                          # cross-campaign synthesis
   program-report.md                        # program-level evaluation

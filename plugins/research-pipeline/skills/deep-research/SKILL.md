@@ -72,12 +72,12 @@ Flags:
   --depth N                           # Max decomposition depth (default: 3, max: 4)
   --parallel N                        # Max parallel specialists (default: 5, max: 7)
   --budget $N                         # USD ceiling (default: 30, max: 100)
-  --output-dir <path>                 # Default: docs/briefs/<seed-slug>/
+  --output-dir <path>                 # Default: .research/briefs/<seed-slug>/
   --no-review                         # Skip human review checkpoint (use sparingly)
   --tiered-review                     # Approve decomposition AND each specialist assignment
   --continue-from <path>              # Chain mode: extend a leaf of a prior campaign.
                                       # Path is the parent campaign directory (e.g.,
-                                      # docs/briefs/<parent-seed>/). The <topic> argument
+                                      # .research/briefs/<parent-seed>/). The <topic> argument
                                       # becomes the leaf scope; the skill loads parent
                                       # context, scopes decomposition to the leaf, writes
                                       # typed cross-references back to the parent brief,
@@ -91,7 +91,7 @@ Defaults are **generous** — the user opted into deep research; give them a goo
 
 ## What This Skill Produces
 
-1. **Campaign directory:** `docs/briefs/<seed-slug>/`
+1. **Campaign directory:** `.research/briefs/<seed-slug>/`
 2. **Parent brief** (`parent.md`) — synthesis summary + tree navigation
 3. **Specialist briefs** (one per leaf subdomain) with typed `related[]` cross-references
 4. **Campaign report** (`campaign.md`) — structured quality report + cost accounting
@@ -119,7 +119,7 @@ When invoked with `--continue-from <parent-campaign-dir>`, the skill runs as a *
 
 ```
 /deep-research "entity linking with Wikidata SPARQL" \
-  --continue-from docs/briefs/external-taxonomy-gap-detection/
+  --continue-from .research/briefs/external-taxonomy-gap-detection/
 ```
 
 The leaf topic (`entity linking with Wikidata SPARQL`) should correspond to (or subsume) a specialist brief in the parent campaign. The Lead treats the parent campaign's full brief set as priors — don't re-research what the parent covered; cite it.
@@ -161,7 +161,7 @@ chain_mode:
 
 **Output location in chain mode:**
 
-Child campaign's output directory is still `docs/briefs/<child-seed-slug>/` by default — child campaigns live as peers to their parents, not nested. Linkage is by cross-reference, not directory structure. If you want nested layout, pass `--output-dir <parent-dir>/<child-slug>/` explicitly.
+Child campaign's output directory is still `.research/briefs/<child-seed-slug>/` by default — child campaigns live as peers to their parents, not nested. Linkage is by cross-reference, not directory structure. If you want nested layout, pass `--output-dir <parent-dir>/<child-slug>/` explicitly.
 
 ## What This Skill Does NOT Do
 
@@ -199,7 +199,7 @@ This skill uses the following archetype mapping per
    Affects handoff format.
 3. **Knowledge index** — run or read `/knowledge-index` to see what exists
 4. **Existing knowledge search** — `knowledge/search` if BQ available, else filesystem search
-   on `docs/briefs/` and `docs/architecture/`. Gather briefs related to the seed.
+   on `.research/briefs/` and `docs/architecture/`. Gather briefs related to the seed.
 5. **Project docs** — CLAUDE.md, north stars, architecture docs
 6. **Chain mode (`--continue-from` passed):** read the parent campaign's `parent.md` and
    all specialist briefs in full. Treat them as priors for this run. Identify the specialist
@@ -321,7 +321,7 @@ groundedness, recommendations).
 
 ### Phase 9: Write Output
 
-1. Create `docs/briefs/<seed-slug>/` directory
+1. Create `.research/briefs/<seed-slug>/` directory
 2. Write specialist briefs (with synthesis's cross-references)
 3. Write `parent.md` (synthesis output)
 4. Write `campaign.md` (evaluator's report + campaign metadata)
