@@ -141,6 +141,8 @@ Read:
 1. `docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md` — foundation that
    constrains this epic
 2. `AGENTS.md` / `CLAUDE.md` (project conventions; AGENTS is canonical)
+2a. `.agents/rules/*.md` (if present) — the project's force-loaded agent rules
+   (tag semantics, test integrity, review policy)
 3. `docs/PRINCIPLES.md` if it exists
 4. The epic's parent if `parent` is set (rare — epics usually top-level)
 5. Sibling epics in `.work/active/epics/` — to see what they cover and avoid
@@ -172,6 +174,9 @@ For Explore:
   or complex codebases.
 - **Codex / OpenAI:** `explorer` sub-agents with `reasoning_effort: medium`;
   use `high` for large or complex codebases.
+- **Pi path:** use native Pi `scout` or `context-builder` subagents for
+  read-only mapping when hosted in Pi and available; otherwise keep direct
+  host-local mapping.
 
 Possible prompts:
 1. **Existing surface in this epic's area** — what modules, components, or
@@ -291,6 +296,8 @@ this epic's decomposition — not for a final verdict. Do not run the multi-pass
 `peer-review` loop during routine autopilot design. If peeragent is
 unavailable, the peer would use the same model class, or the invocation fails,
 continue with host judgment and note that the advisory pass was skipped.
+If the peeragent target is Claude Opus, allow 10 to 30 minutes for a large
+review; no return after a few minutes is not evidence that it has hung.
 
 Summarize the useful output under `## Other agent review` in the epic body and
 fold accepted questions/risks into the decisions you log. Do not paste the peer

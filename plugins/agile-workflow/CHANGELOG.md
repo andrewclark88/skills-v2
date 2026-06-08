@@ -1,32 +1,230 @@
 # Changelog
 
-## Unreleased
+## v0.11.3
+
+### Research-substrate linkage fields + agentic-research adoption
+
+- **work-view research linkage** — the Item model gains `research_refs` (Arrow 1: a work item
+  tracks/consumes research) and `research_origin` (Arrow 2: research that spawned the item), parsed
+  from frontmatter and queryable via `--research-refs` / `--research-origin`. Mirrors the
+  `gate_origin` precedent; both fields parse harmlessly when unset, so a plain `.work/` substrate is
+  unaffected.
+- **convert** — research-substrate fields are conditional on the `agentic-research` plugin. The
+  canonical AGENTS block ships the base field list and only advertises `research_refs` /
+  `research_origin` (plus the `.work/` ↔ `.research/` handoff pointer) when that plugin is installed;
+  convert never scaffolds `.research/` on its own.
+
+## v0.11.2
+
+### Clarify `--stage review` semantics in seeded docs
+
+- **convert / docs** — reworded the canonical AGENTS section template and architecture docs so
+  `work-view --stage review` reads as "items awaiting an agent review pass (`/agile-workflow:review`)"
+  rather than "items waiting on user." The review stage is the agent's review queue (advance or
+  bounce), not a hold for human sign-off.
+
+## v0.11.1
+
+### Terminal-tier archival: merged `archived_atop` late-binding into delete-refs
+
+- **`archived_atop` late-binding** — archived items are bodyless stubs stamping an immutable
+  `archived_atop` baseline + `git_ref`; `release-deploy` late-binds all unbound archived stubs into
+  one release summary.
+- **Archive-stub gate hydration** — gate skills include `.work/archive/` stubs in the release
+  bundle and hydrate historical bodies from `git_ref` when a body is needed.
+- **convert** — one merged terminal-retention convention; sync detects/offers it and offers to prune
+  existing retained terminal bodies to stubs (stamping `archived_atop` + `git_ref`).
+
+## v0.11.0
+
+### Delete-after-release terminal tiers
+
+- Archived items become bodyless ref stubs; a release collapses bound items into one
+  `releases/<version>/release-<version>.md` summary; full bodies live in git history. `convert` seeds
+  the `terminal-tier retention` convention (default `delete-refs`).
+
+_(0.10.x release notes: see git history.)_
+
+## v0.9.5
+
+### Three-channel distribution
+
+- **Pi package channel** - Added Pi package metadata for supported plugins, kept
+  package versions in lockstep with Claude/Codex metadata, and documented the
+  three-channel distribution model across root and plugin guides.
+- **Pi extension surface** - Added the agile-workflow Pi extension shell with
+  `/aw` queue snapshots, parent/blocking lookups, and handoffs to shared board,
+  autopilot, and scope skills.
+- **Delegation policy** - Updated agile-workflow skills so worker/scout/reviewer
+  routing names Pi-native subagents where available while preserving the shared
+  skill contracts.
+
+### Board and dependency view
+
+- **Expanded browsing** - Added expandable epic and tag groups to the board
+  sidebar without changing filter semantics.
+- **Dependency canvas polish** - Added zoom, hand-pan, layout controls, compact
+  web layout nodes, ephemeral dragging, clearer impact counts, and fixes for
+  resize edge drift, node click jitter, Hand-mode detail opening, clipping, and
+  the null-sentinel module import failure.
+
+### Tests and release gates
+
+- **Board JS behavior harness** - Added a no-build ES-module test harness plus
+  coverage for markdown safety, filter composition, dependency/table behavior,
+  kanban/detail behavior, and expanded browsing.
+- **Hook concurrency and PostCompact audit** - Added deterministic coverage for
+  hook state-file interleaving and verified Codex PostCompact output behavior.
+- **Release-gate follow-ups** - Added Pi package metadata tests, Pi extension
+  command tests, filtered dependency stub coverage, keyboard reachability
+  coverage for tag expansion, and removed dead board-test harness cleanup code.
+
+## v0.9.0
+
+### Cross-vendor `.agents/rules/` auto-load
+
+- **Generic rules loader** - A hook now injects `.agents/rules/*.md` into agent
+  context in both Claude Code and Codex, so dense project rules and the pattern
+  digest load automatically without per-tool wiring. Hook state-file writes are
+  concurrency-hardened (unique temp names, fail-open on error, `fcntl` locking
+  when available).
+- **`convert` extracts rules** - `convert` lifts the dense agent-instruction
+  block into `.agents/rules/agile-workflow.md`, guarded by a content-integrity
+  gate that verifies content exists at its canonical replacement before any
+  destructive op.
+- **`gate-patterns` writes the digest** - The patterns gate emits a generated,
+  hook-loaded `.agents/rules/patterns.md` digest (slug + one-liner index with a
+  drift-detecting `src-sha256`) alongside the canonical pattern skills.
+- **Skills ground on `.agents/rules/`** - The design/implement/review-family
+  skills read `.agents/rules/*.md` during grounding.
+
+### work-view freshness & anti-drift lifecycle
+
+- **`work-view --version`** - Both the Rust binary and the bash fallback report
+  the plugin version (`work-view <semver>`), kept in lockstep with `plugin.json`
+  by `bump-version.sh`, so a single string compare answers "is this installed
+  copy current?".
+- **Self-heal install lifecycle** - The SessionStart hook and `convert` detect a
+  missing or stale `.work/bin/work-view` and reinstall the version-stamped
+  entrypoint; the probe fails open (never blocks the session) on timeout or
+  error.
+
+### Documentation
+
+- Rolled the SPEC forward: the kanban surface is documented as parent swimlanes
+  with verbatim per-stage columns (not a fixed 5-column collapse), and the plugin
+  source layout now includes the `work-view/` Rust workspace.
+- Refreshed pattern-skill example `file:line` references after board modules
+  shifted positions.
+
+### Internal
+
+- New test coverage: `bump-version.sh` lockstep projection, `work-board.sh` shim
+  routing, `convert` content-integrity structural guard, self-heal version-probe
+  timeout fail-open, and a `$TMPDIR`-invariant substrate-root test.
+- Codified 4 new code patterns (board view-module contract, local DOM
+  text-element builder, fail-open subprocess probe, hand-written error `Display`).
+- Removed dead board-view scaffolding (`placeholderView`, `registeredViews`, and
+  orphaned CSS).
+
+## v0.8.9
+
+### Board UI polish
+
+- **Mock-aligned board filters and metadata** - Removed the interactive board's
+  Release filter section and release-binding metadata from cards, details, and
+  the table surface. Missing values now render with the mock's dash treatment
+  instead of a visible `(none)` sentinel, and null parent/release values are not
+  exposed as filter chips.
+
+## v0.8.8
+
+### Interactive Substrate Board
+
+- **Live `work-view board` surface** - Added the compiled localhost board host
+  with `/healthz`, `/api/substrate`, embedded assets, loopback Host header
+  hardening, busy-port scanning, and browser-open handling. `work-view serve`
+  aliases the same read-only board server.
+- **Board shell and views** - Added the no-build browser shell with shared
+  filters, auto-hide, safe markdown rendering, shared item cards, diagnostics,
+  theme/accent controls, and detail surface. Delivered kanban stage/swimlane,
+  dependency graph, and sortable/filterable table views over the same substrate
+  feed.
+- **Board skill** - Added the user-invocable `agile-workflow:board` skill for
+  launching `.work/bin/work-view board`, with clear failure handling when a
+  project still has a non-board-capable bash fallback.
+- **Legacy `/board` command removed** - Deleted the Claude-only `/board`
+  command surface. `scripts/work-board.sh` remains only as a compatibility shim
+  that delegates to `.work/bin/work-view board` when the installed binary
+  supports it.
+
+### Documentation
+
+- Rolled forward the agile-workflow SPEC and ARCHITECTURE docs, plus the root
+  substrate-access architecture note, from static generated board language to
+  the live `work-view board` model.
+
+## v0.8.6
+
+### Substrate CLI
+
+- **Compiled `work-view` CLI** - The `.work/` query tool is now a compiled Rust
+  binary (`work-view-core` library + `work-view` CLI) with full flag/output
+  parity over the bash script, on a shared query core (frontmatter parsing, the
+  item model, dependency-graph evaluation, composable filters) that the
+  forthcoming web board reuses. Ships per-platform with a pure-bash fallback.
+- **Stage-aware `--ready` / `--blocked`** - `--ready` no longer hides
+  design-ready (`drafting`) and review-ready items whose dependencies are
+  satisfied; it surfaces any active-tier item at `drafting`, `implementing`, or
+  `review` with all `depends_on` terminal (and `--blocked` the inverse). The
+  prompt-context hook no longer double-lists a `review` item under both Ready
+  and Review.
+- **Platform install path** - `install-work-view.sh` selects the matching
+  prebuilt binary (uname → target triple, smoke-test, atomic install), wired
+  into `/agile-workflow:convert`, with the bash fallback when no binary matches.
+  Added a CI cross-compile workflow and the `dist/` layout. Binaries are
+  CI-produced; until the manual refresh job populates `dist/`, installs use the
+  bash fallback (no regression).
+
+### Also in this release (previously unreleased)
 
 - **Review skill progressive disclosure** - Split the review skill into a
   substrate-first core plus references for target resolution, review lenses,
-  deep-review mechanics, and substrate side effects. The core now explicitly
-  supports standalone branch/PR/commit reviews without `.work` mutations and
-  keeps deep-review mode adaptable across contracts, data, concurrency, release,
-  and product/UX dimensions.
+  deep-review mechanics, and substrate side effects. Supports standalone
+  branch/PR/commit reviews without `.work` mutations and keeps deep-review mode
+  adaptable across contracts, data, concurrency, release, and product/UX
+  dimensions.
 - **work-view single-pass parsing** - Rewrote `work-view.sh` frontmatter
   parsing to a single `awk` pass over the whole tree instead of spawning an
-  `awk` (plus `tr`) per field per file. The old path forked ~4,900 short-lived
-  processes for a default table view of a 617-item substrate; the rewrite forks
-  ~3. Measured on a 617-item repo: default table view drops from ~7.9s to
-  ~0.12s (66x), and `--count`/`--ready`/filtered views all drop to ~0.1s. The
-  `sys`-time-dominated profile (process fork/exec + redundant file reads)
-  collapses accordingly. Output is now deterministically sorted by path; all
-  filters and output modes are otherwise byte-for-byte identical to before.
+  `awk` (plus `tr`) per field per file. Measured on a 617-item repo: default
+  table view drops from ~7.9s to ~0.12s (66x); output is now deterministically
+  sorted by path, otherwise byte-for-byte identical to before.
 - **Dual Codex/Claude hook set** - Replaced the eager SessionStart queue dump
-  with prompt-gated context injection. Actionable workflow prompts can now get a
-  compact queue snapshot plus once-per-session principles capsules; idle chat and
+  with prompt-gated context injection. Actionable workflow prompts get a compact
+  queue snapshot plus once-per-session principles capsules; idle chat and
   explainer prompts stay silent. Capsule state lives in the host plugin data
-  directory when available, with non-worktree fallbacks, so normal project
-  worktrees stay clean.
+  directory when available, with non-worktree fallbacks.
 - **Substrate maintainer hook** - Expanded the PostToolUse hook from `updated:`
   bumping to deterministic touched-item validation: required frontmatter, valid
   kind/stage, filename/id match, parent/dependency existence, and dependency
   cycles reachable from the touched item.
+
+### Documentation
+
+- Foundation docs (VISION, SPEC, ARCHITECTURE) rolled forward: work-view bash
+  script → compiled binary + fallback, and the stage-aware ready/blocked
+  semantic.
+
+### Internal
+
+- First project pattern catalog under `.agents/skills/patterns/` (5 patterns
+  extracted from the CLI work).
+- Expanded test coverage: binary-level proof of the `--ready` drafting fix,
+  exit-3 fatal-IO, the `--blocked` review case, the hook review-dedup, a
+  `convert` install-routing guard, and bash-parity empty-result tests.
+- Added an `actionlint` CI workflow for GitHub Actions files; removed dead code
+  (unused `From<io::Error>` impl, an unused parameter, a vestigial no-op); added
+  a root `.gitignore`.
 
 ## v0.7.7 - Skill metadata hotfix
 

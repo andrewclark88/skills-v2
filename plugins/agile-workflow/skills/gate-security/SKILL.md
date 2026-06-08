@@ -26,6 +26,9 @@ Sub-agent strength is explicit:
   high`; use `xhigh` only for auth/crypto/data-loss surfaces, broad public API
   changes, or a large/polyglot release bundle. Use a reviewer/default agent if
   available, otherwise a worker with read-only instructions.
+- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for the deep
+  security audit when hosted in Pi and available; otherwise use the same-host
+  read-only analysis fallback.
 
 This is NOT a standalone audit (for that, use a standalone `repo-eval` skill). This
 is a gate over a specific release bundle, producing items the release-deploy
@@ -42,19 +45,24 @@ flow can drain to `done` before shipping.
 
 If a release version was provided:
 ```bash
-.work/bin/work-view --release <version> --paths
+# `--release` auto-widens to ALL tiers (active + archive + releases). Drop any
+# returned path under `.work/archive/`: those are already-done, body-pruned
+# stubs that were gated when active and MUST NOT be re-gated (no-re-gate rule).
+# Filter by path, not `--scope active` — the bash fallback ignores `--scope`.
+.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'
 ```
 
 Otherwise, find the active release file (the one at `stage: planned` or
 `stage: quality-gate`) and use its version.
 
-If no items are bound, halt with: "No items bound to release `<version>`. Bind items
-first via `/agile-workflow:release-deploy`."
+If no items are bound (after dropping archived stubs), halt with: "No items
+bound to release `<version>`. Bind items first via
+`/agile-workflow:release-deploy`."
 
-Build the union of files changed by the bundle:
+Build the union of files changed by the bundle (archived stubs already excluded):
 
 ```bash
-for item in $(.work/bin/work-view --release <version> --paths); do
+for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
   id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
   git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
 done | sort -u > /tmp/bundle-files-<version>.txt
@@ -74,7 +82,9 @@ sub-agent can be told to skip duplicates.
 Spawn ONE deep audit sub-agent with the full audit brief. For Claude Code, this
 is `Agent(subagent_type=general-purpose, model=opus)`. For Codex, use
 `reasoning_effort: high`, escalating to `xhigh` for auth/crypto/data-loss
-surfaces, broad public API changes, or large/polyglot bundles. The sub-agent does all of the analysis end-to-end —
+surfaces, broad public API changes, or large/polyglot bundles. For Pi, use a
+native `reviewer` or `oracle` subagent when available; otherwise use the
+same-host read-only analysis fallback. The sub-agent does all of the analysis end-to-end —
 stack discovery, domain selection, parallel domain audits, severity
 classification — and returns structured findings.
 

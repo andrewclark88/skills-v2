@@ -24,6 +24,9 @@ Sub-agent strength is explicit:
   `subagent_type: "general-purpose"`.
 - **Codex / OpenAI:** spawn one analysis sub-agent with `reasoning_effort:
   high`; use `xhigh` for large or polyglot release bundles.
+- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for the deep
+  cleanup audit when hosted in Pi and available; otherwise use the same-host
+  read-only analysis fallback.
 
 ## Trigger
 
@@ -35,11 +38,15 @@ Sub-agent strength is explicit:
 ### Phase 1: Identify bundle changes
 
 ```bash
-# Bound items
-.work/bin/work-view --release <version> --paths
+# Bound items. `--release` auto-widens to ALL tiers (active + archive +
+# releases). Drop any returned path under `.work/archive/`: those are already-
+# done, body-pruned stubs that were gated when active and MUST NOT be re-gated
+# (no-re-gate rule). Filter by path, not `--scope active` — the bash fallback
+# ignores `--scope`.
+.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'
 
-# Files changed by the bundle
-for item in $(.work/bin/work-view --release <version> --paths); do
+# Files changed by the bundle (archived stubs already excluded)
+for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
   id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
   git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
 done | sort -u > /tmp/bundle-files-<version>.txt
@@ -58,7 +65,9 @@ into the sub-agent's brief.
 
 Spawn ONE deep cleanup-audit sub-agent with the full scan brief. For Claude
 Code, this is `Agent(subagent_type=general-purpose, model=opus)`. For Codex,
-use `reasoning_effort: high`, or `xhigh` for large/polyglot bundles. The
+use `reasoning_effort: high`, or `xhigh` for large/polyglot bundles. For Pi,
+use a native `reviewer` or `oracle` subagent when available; otherwise use the
+same-host read-only analysis fallback. The
 sub-agent does ecosystem detection, runs language-aware
 tools, applies heuristic pattern-matching, triages confidence, and returns
 structured findings.

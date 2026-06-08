@@ -55,6 +55,12 @@ Use explicit runtime paths:
   for large cross-feature write paths, risky migrations, or difficult
   generated-code reconciliation. Use `explorer` sub-agents with
   `reasoning_effort: medium` or `high` for read-only mapping.
+- **Pi path:** when hosted in Pi and native Pi subagents are available, use
+  `worker` subagents for write bundles, `scout` or `context-builder` for
+  read-only mapping, and `reviewer` for same-harness integration checks. If Pi
+  subagents are unavailable, run bounded work in the host session or use the
+  fresh-context fallback already described by the skill. Do not use peeragent for
+  routine implementation-worker fanout.
 
 In every runtime, make each worker prompt self-contained and require one commit
 per item.
@@ -133,6 +139,8 @@ Then read deeply — the quality of your agent prompts depends on this.
    `docs/ARCHITECTURE.md`
 4. **Principles** — both paradigms via the auto-loaded principles skill
 5. **AGENTS.md / CLAUDE.md** — project conventions, build commands
+5a. **`.agents/rules/*.md`** (if present) — the project's force-loaded agent
+   rules (tag semantics, test integrity, review policy)
 6. **Concrete pattern examples** in the codebase — for each type of code the
    agents will write, find an existing example. Read 3-5 key files yourself.
    Use Explore sub-agents only for breadth you can name after local search.
@@ -262,8 +270,10 @@ have no such guarantee.
 
 Re-read `AGENTS.md` and `CLAUDE.md` if both exist. Treat `AGENTS.md` as
 canonical when they disagree; `CLAUDE.md` is usually a symlink or compatibility
-shim. Also read `.agents/skills/patterns/` and legacy `.claude/skills/patterns/`
-if present. Recency improves prompt adherence.
+shim. Also read `.agents/rules/*.md` (if present) — the project's force-loaded
+agent rules (tag semantics, test integrity, review policy) — and
+`.agents/skills/patterns/` and legacy `.claude/skills/patterns/` if present.
+Recency improves prompt adherence.
 
 ### Phase 5: Craft agent prompts
 
@@ -434,6 +444,14 @@ Spawn a `worker` sub-agent with:
   migrations, high-risk reconciliation, or repeated failed attempts
 - no model override unless the user has named one or the project has a stable
   Codex model convention
+
+**Pi:**
+
+When hosted in Pi and native Pi subagents are available, spawn a `worker`
+subagent for each write bundle. Use `scout` or `context-builder` for read-only
+mapping bundles and `reviewer` for same-harness integration checks. If Pi
+subagents are unavailable, keep the bounded work in the host session or use the
+fresh-context fallback already described by the skill.
 
 For waves with multiple bundles, send all in a **single message** with multiple
 sub-agent calls when the runtime supports parallel execution.

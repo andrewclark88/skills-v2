@@ -11,8 +11,8 @@ Located at `plugins/agile-workflow/.claude-plugin/plugin.json`:
 ```json
 {
   "name": "agile-workflow",
-  "version": "0.1.0",
-  "description": "Markdown-based work-tracking substrate for AI-driven projects",
+  "description": "Markdown-based work-tracking substrate for AI-driven projects. Items as files in .work/, late-binding releases, gates that produce items, goal-backed autopilot queue runner. See docs/VISION.md.",
+  "version": "0.10.0",
   "author": { "name": "nklisch" },
   "repository": "https://github.com/nklisch/skills",
   "license": "MIT"
@@ -45,8 +45,10 @@ parent: <slug>|null              # required (null for top-level)
 depends_on: [<slug>, ...]        # required (may be [])
 release_binding: <version>|null  # required
 gate_origin: <gate-name>|null    # required (null unless gate-produced)
+research_refs: [<slug>...]       # optional (research artifacts this item tracks/consumes)
+research_origin: <slug>|null    # optional (research artifact that spawned this item)
 created: YYYY-MM-DD              # required
-updated: 2026-05-29
+updated: 2026-06-08
 ---
 ```
 
@@ -62,6 +64,8 @@ updated: 2026-05-29
 | `depends_on` | array of slugs | **Sequencing.** Items this cannot start until all listed are at `stage: done`. May be empty. Distinct from `parent`. |
 | `release_binding` | version string or null | Late-binding. `null` until the user binds. Format matches the release file's version (e.g., `v1.2.0`). |
 | `gate_origin` | gate name or null | `null` for user-scoped items. One of `security`, `tests`, `cruft`, `docs`, `patterns`, `infra` when produced by a gate. Projects may define additional gate names (e.g. `bugs`, `repo-eval`). |
+| `research_refs` | array of slug strings | **Optional; defaults to `[]`.** The research artifacts (`.research/` slugs or handles) this work item tracks or consumes — the Arrow 1 coordination link. Missing → `[]`. Query: `work-view --research-refs <slug>` (membership). See `plugins/agentic-research/docs/HANDOFF.md` for the cross-tier contract. |
+| `research_origin` | slug or null | **Optional; defaults to `null`.** The research artifact that spawned this work item — the Arrow 2 grounding link. Mirrors `gate_origin`. Missing/empty/`"null"` → `null`. Query: `work-view --research-origin <slug>` (or `null`). See `plugins/agentic-research/docs/HANDOFF.md`. |
 | `created` | ISO date | `YYYY-MM-DD`. Set on creation; never modified. FIFO tie-break in autopilot. |
 | `updated` | ISO date | `YYYY-MM-DD`. Auto-bumped by PostToolUse hook on every item edit. |
 
@@ -90,7 +94,11 @@ tags: [<tag>, ...]
 ---
 ```
 
-Body: a one-paragraph idea description.
+Body: an unscoped capture sized to the input. Simple ideas can be one
+paragraph; richer context notes or roadmap-style multi-arc thoughts can keep
+bullets, references, and current-situation context. Kind, stage, parent,
+dependencies, release binding, and decomposition remain unknown until `scope`
+promotes the item.
 
 ## Substrate file contracts
 
@@ -120,6 +128,9 @@ skill reads this at session start (via the SessionStart hook or directly).
 ## Stage overrides
 <only if the project deviates from the master>
 
+## Terminal-tier retention
+<delete-refs | retain-bodies>
+
 ## Gate config
 gates_for_release: [security, tests, cruft, docs, patterns, infra]
 
@@ -140,6 +151,75 @@ plugin set these to `research-pipeline:epic-design` /
 `research-pipeline:feature-design` so the research-grounded,
 `[needs-brief]`-gated versions win on the autopilot path.
 
+`terminal-tier retention` (default **`delete-refs`**) is **one merged convention** covering the
+whole terminal lifecycle — archival, late-binding, and release collapse — not just on-disk byte
+retention. With `delete-refs`:
+
+1. **Archive (decoupled from release).** A `done` item with no `release_binding` becomes a
+   **bodyless stub** (frontmatter + `# Title` + `git_ref:` + `archived_atop:`). Its body is pruned to
+   git, so terminal prose (which carries zero design authority) cannot leak to future agents.
+   `archived_atop` records the release baseline the item was done atop — stamped once, immutable.
+2. **Late-bind unbound archived stubs.** A release pulls in **all unbound archived stubs**
+   (`release_binding: null`), confirms the set with the user, and sets their `release_binding`. Each
+   stub's `archived_atop` records the baseline it was done atop and is kept as provenance (it surfaces
+   in the release summary), NOT used as the gather filter — filtering by strict `archived_atop ==
+   prior tag` would strand a stub forever whenever a release is skipped. Late-bound archived stubs
+   are re-gated during the release. Gates that need the item body must hydrate it from the stub's
+   `git_ref`; a pruned stub body is a lookup requirement, not a reason to skip the item.
+3. **One-summary release.** All bound items (active done + late-bound stubs) collapse into a single
+   `releases/<version>/release-<version>.md` table (id, title, kind, `archived_atop`, git ref). No
+   per-item placement; full bodies live only in git history.
+
+`retain-bodies` is the legacy opt-out (full bodies kept under `.work/archive/` and
+`.work/releases/<version>/`); it keeps the same `archived_atop`/late-binding semantics, just without
+pruning bodies. A repo that already carries a bespoke "Done-item archival" convention describing this
+model should be **converged** into this one merged convention, not left as a duplicate (see
+`convert`).
+
+#### Archive stub shape
+
+A `done` item with no `release_binding` and no active parent is archived as a bodyless stub. The
+stub is frontmatter + the first `# <Title>` line only; the body is pruned to git history. Its
+frontmatter carries two extra fields beyond the standard contract:
+
+- `archived_atop: <release | pre-release>` — the release baseline the item was done atop (see
+  computation below). Stamped **once** at archival; immutable thereafter.
+- `git_ref: <sha>` — the commit where the full body lives. Recover it with
+  `git show <git_ref>:<path>`.
+
+```yaml
+---
+id: <id>
+kind: <kind>
+stage: done
+tags: [...]
+parent: null
+depends_on: []
+release_binding: null          # null until a release late-binds it
+archived_atop: <release | pre-release>
+git_ref: <sha>
+created: <orig>
+updated: 2026-06-08
+---
+
+# <Title>
+```
+
+#### `archived_atop` computation
+
+`archived_atop` is the **latest released version at archival time**, computed deterministically:
+
+1. The newest git tag matching the project's release tag shape (e.g. `git describe --tags
+   --abbrev=0`), OR
+2. the newest `.work/releases/<version>/` summary, when the project does not tag releases.
+3. If neither exists yet — no release has ever shipped — use the `pre-release` sentinel.
+
+Stamp it once when the stub is written and never rewrite it (it is the immutable baseline recorded as
+provenance). Idempotent re-archival preserves the existing `archived_atop`. The
+`/agile-workflow:release-deploy` bind phase gathers **all unbound archived stubs** (not only those
+whose `archived_atop` matches the prior tag) and records each stub's `archived_atop` in the release
+summary as provenance.
+
 ### AGENTS.md section
 
 `convert` appends or replaces, idempotently, a section in the project's
@@ -153,21 +233,40 @@ a root-readable entrypoint.
 ## Agile-Workflow Substrate
 
 Work tracked in `.work/` as markdown items with YAML frontmatter
-(`kind, stage, tags, parent, depends_on, release_binding`).
+(`kind, stage, tags, parent, depends_on, release_binding, research_refs, research_origin`).
 Layout: `.work/active/{epics,features,stories}/`, `.work/backlog/`,
 `.work/releases/<version>/`, `.work/archive/`.
 
-[full content — see ARCHITECTURE.md]
+[slim dense pointers + work-view query patterns + a MANDATORY
+"read `.agents/rules/*.md` before designing/implementing/reviewing"
+read-directive — see ARCHITECTURE.md]
 <!-- agile-workflow:end -->
 ```
 
-`convert --update` replaces everything between the markers without touching
-the rest of the selected AGENTS target.
+The managed section is **slim**: substrate orientation, `work-view` query
+patterns, and grep-able pointers to the canonical rules file
+`.agents/rules/agile-workflow.md` and the `patterns` skill, plus a mandatory
+read-directive. `convert --update` replaces everything between the markers
+without touching the rest of the selected AGENTS target.
 
-Project-level agent rules and migrated legacy rules live in the selected
-AGENTS target. `.claude/rules/patterns.md` is not a supported canonical rules
-file; when present in older repos, `convert` imports its non-duplicate content
-into AGENTS and replaces it with a short shim that points agents at AGENTS.
+### `.agents/rules/` agent rules
+
+Dense behavioral rules (tag semantics, test integrity, advisory review, entry
+points) live in the plugin-managed `.agents/rules/agile-workflow.md`, delimited
+by `<!-- agile-workflow:rules:start/end -->` markers. The agile-workflow hook
+force-loads every `.agents/rules/*.md` into agent context (see Hook contracts).
+`convert` writes and verifies `.agents/rules/agile-workflow.md` BEFORE slimming
+the AGENTS section, so the managed-section overwrite can never drop dense rule
+content.
+
+User-owned and migrated legacy rule prose lives in separate user-owned
+`.agents/rules/<name>.md` files (e.g. `project.md`), never inside the plugin
+`agile-workflow:rules` markers. When an older repo has `.claude/rules/*.md`,
+`convert`'s content-integrity gate parses each file into Markdown-aware blocks,
+routes structural patterns to `.agents/skills/patterns/` and rule prose to
+`.agents/rules/<name>.md`, verifies every block landed at its canonical home,
+and only then replaces the legacy path with a shim. `.claude/rules/patterns.md`
+is not a supported canonical rules file; its content migrates the same way.
 
 ### CLAUDE.md compatibility
 
@@ -180,8 +279,10 @@ Code to read `AGENTS.md`.
 When migrating an existing regular `CLAUDE.md`, `convert` imports non-duplicate
 content into `AGENTS.md` before replacing it with the symlink or shim.
 
-When migrating an older `.claude/rules/patterns.md`, `convert` follows the same
-preservation rule: import non-duplicate content into AGENTS first, then leave
+When migrating an older `.claude/rules/*.md`, `convert` follows the same
+preservation rule via the content-integrity gate: route each block to its
+canonical home (`.agents/skills/patterns/` for structural patterns,
+`.agents/rules/<name>.md` for rule prose), verify every block landed, then leave
 only a compatibility shim at the legacy path.
 
 ## File and directory layout
@@ -203,17 +304,22 @@ plugins/agile-workflow/
 ├── skills/<skill-name>/
 │   ├── SKILL.md
 │   └── references/<topic>.md
-├── commands/
-│   └── board.md
 ├── hooks/
 │   ├── hooks.json
 │   └── scripts/
 │       ├── prompt-context.py
 │       └── substrate-maintainer.py
 ├── scripts/
+│   ├── install-work-view.sh
 │   ├── work-view.sh
-│   ├── work-board.sh
-│   └── work-board.template.html
+│   └── work-board.sh
+├── work-view/                            # Rust workspace: compiled work-view binary + board host
+│   ├── crates/
+│   │   ├── core/                         # work-view-core: parse, model, index, graph, filter
+│   │   └── cli/                          # work-view binary (CLI + board host)
+│   │       ├── src/board/                # board subcommand: server, feed, assets + embedded assets/
+│   │       └── .work-view-version        # plugin-version stamp (lockstep with plugin.json)
+│   └── dist/<target-triple>/work-view    # prebuilt per-platform binaries
 ├── CHANGELOG.md
 └── README.md
 ```
@@ -227,8 +333,8 @@ After `convert` runs in a project repo:
 ├── .work/
 │   ├── active/{epics,features,stories}/<id>.md
 │   ├── backlog/<id>.md
-│   ├── releases/<version>/<id>.md
-│   ├── archive/<id>.md
+│   ├── releases/<version>/release-<version>.md   # one summary doc (delete-refs)
+│   ├── archive/<id>.md                            # bodyless ref stubs w/ archived_atop + git_ref (delete-refs)
 │   ├── bin/work-view
 │   └── CONVENTIONS.md
 ├── AGENTS.md
@@ -241,11 +347,19 @@ After `convert` runs in a project repo:
 
 ## Distribution
 
-Each agile-workflow skill registers as a `tap.json` entry following the
-existing skills repo convention. The plugin distributes via skilltap.
+The plugin distributes through three equal channels:
 
-Tap entries follow the existing `skilltap-author` shape, added to `tap.json`
-at the repo root. No separate npm package, no separate registry.
+- Claude Code via the repo-root `.claude-plugin/marketplace.json` and
+  `plugins/agile-workflow/.claude-plugin/plugin.json`.
+- OpenAI Codex via the same marketplace index and
+  `plugins/agile-workflow/.codex-plugin/plugin.json`.
+- Pi via package metadata in the plugin root, with the same `skills/` directory
+  plus Pi-native extensions or prompt templates where they improve substrate
+  ergonomics.
+
+The three channel metadata files stay in lockstep on name, version,
+description, repository, and license. Pi-specific runtime surfaces wrap the same
+`.work/` substrate; they do not fork the workflow model.
 
 ## Version strategy
 
@@ -261,13 +375,72 @@ at the repo root. No separate npm package, no separate registry.
 - Promote to v1.0.0 when the substrate has carried 2+ projects through a
   complete release cycle without contract changes.
 
-## work-view script
+### work-view `--version` lockstep
 
-Lives at `plugins/agile-workflow/scripts/work-view.sh`. Copied to
-`.work/bin/work-view` by `convert`.
+Both work-view implementations report the plugin semver so a deployed copy can
+be checked against the plugin with a single string compare:
 
-Pure bash. Optional enhancement via `yq` if installed; falls back to
-`grep`+`sed` otherwise.
+- The Rust CLI and the bash fallback (`scripts/work-view.sh`) each accept
+  `--version` / `-V` and print `work-view <semver>\n` (exit 0). The reported
+  `<semver>` is the agile-workflow **plugin** version from `plugin.json`, not the
+  crate version. Output is byte-identical across both implementations (a parity
+  test enforces this). The bash `--version` answer is emitted by a POSIX-safe
+  prelude that runs before the Bash-4 guard, so it works even on macOS system
+  bash 3.2.
+- `plugin.json` is the single source of truth for the version.
+  `bump-version.sh` projects it, in lockstep, into the Rust stamp file
+  `work-view/crates/cli/.work-view-version` (compiled in via `include_str!`, no
+  trailing newline) and the `WORK_VIEW_VERSION` literal in
+  `scripts/work-view.sh`. A `cargo test` assertion fails loudly if the stamp
+  drifts from `plugin.json`.
+- The four prebuilt `dist/<triple>/work-view` binaries are compiled by CI **from
+  the stamped source**, so they must be rebuilt on the **post-bump** commit:
+  after `bump-version.sh` commits and pushes the bump, trigger the "Build
+  work-view binaries" workflow (`workflow_dispatch`, `commit_binaries=true`)
+  against the bumped commit so the shipped binaries self-report the new semver.
+  Rebuilding before the bump would compile the old stamp and ship
+  version-mismatched binaries. The installer rejects supported-platform
+  prebuilts whose `--version` mismatches the plugin instead of silently
+  downgrading to the Bash fallback, so the CI binary refresh must land before a
+  bumped plugin is considered publishable.
+
+## work-view binary
+
+`convert` installs `work-view` into `.work/bin/work-view` via
+`plugins/agile-workflow/scripts/install-work-view.sh`. The project-side tracked
+entrypoint is the installed `work-view` artifact: a version-verified prebuilt
+Rust binary on supported platforms, or the version-stamped Bash fallback only on
+unsupported platforms. The entrypoint is kept fresh by the session hook
+self-heal step, with convert using the same installer as a backstop. It is
+git-tracked, not gitignored, and its `--version` stamp is compared to the plugin
+version when hook or convert freshness checks run.
+
+Prebuilt Rust binaries live under
+`plugins/agile-workflow/work-view/dist/<target-triple>/work-view` and are the
+standard install path. The compiled binary provides both the query filters and
+`work-view board`. The Bash fallback (`scripts/work-view.sh`) is a degraded CLI
+fallback for unsupported platforms only; it does not support the interactive
+board. Supported prebuilt target triples:
+
+| Triple | Platform |
+|---|---|
+| `x86_64-unknown-linux-musl` | Linux x86_64 (static) |
+| `aarch64-unknown-linux-musl` | Linux aarch64 / ARM64 (static) |
+| `x86_64-apple-darwin` | macOS Intel |
+| `aarch64-apple-darwin` | macOS Apple Silicon (M1/M2/M3) |
+
+Prebuilt binaries are produced by `.github/workflows/build-work-view.yml` and
+committed to `dist/` via the manual refresh job after `bump-version.sh` commits
+and pushes the version bump, so CI builds from the bumped source stamp. Users
+need no Rust toolchain — only CI does.
+
+The Bash fallback (`work-view.sh`) is pure bash, optional enhancement via `yq`
+if installed, falls back to `grep`+`sed` otherwise. It is a **frozen, degraded
+fallback** for platforms without a shipped prebuilt binary: it preserves the
+core filter surface but intentionally does **not** implement newer Rust-only
+features — no `--scope` (it always queries all tiers, the pre-scope default) and
+no `work-view board`. bash<->Rust byte-parity is no longer enforced. Full
+retirement of the Bash fallback (Rust-only) is tracked as a parked epic.
 
 ### Flag set
 
@@ -279,15 +452,24 @@ Pure bash. Optional enhancement via `yq` if installed; falls back to
 | `--parent` | `<id>` | Filter to direct children of the given item |
 | `--release` | `<version>` | Filter by `release_binding` |
 | `--gate` | `<gate>` | Filter by `gate_origin` |
-| `--ready` | (none) | Items at `stage: implementing` with all `depends_on` at `stage: done` |
-| `--blocked` | (none) | Items waiting on unresolved dependencies (annotates which) |
+| `--ready` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` with all `depends_on` terminal (`done`/`released`, or resident in `releases/`/`archive/`) |
+| `--blocked` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` with at least one non-terminal dependency |
 | `--blocking` | `<id>` | Reverse lookup: items that depend on `<id>` |
+| `--scope` | `<active\|backlog\|releases\|archive\|all>` | Tiers to surface. Default (flag absent) = **active + backlog** (non-terminal); terminal tiers (`releases`/`archive`) are hidden unless requested. `--release`/`--gate` auto-widen to `all` unless `--scope` is set explicitly |
+| `--research-origin` | `<slug>` | Filter by `research_origin` (use `null` to select items with no origin) |
+| `--research-refs` | `<slug>` | Items whose `research_refs` list contains `<slug>` |
 | `--paths` | (none) | Output only file paths (grep-pipe-friendly) |
 | `--cat` | (none) | Output full bodies of matching items |
 | `--count` | (none) | Output only the match count |
 | `--help` | (none) | Show usage and exit |
 
-Multiple filters compose with AND semantics.
+Multiple filters compose with AND semantics. By default `work-view` surfaces only
+the non-terminal tiers (active + backlog); the unbounded `releases/`/`archive/`
+history is opt-in via `--scope`. Because release-bound and gate-origin items
+migrate into the terminal `releases/` tier when a release ships, `--release` and
+`--gate` are treated as lifecycle queries and auto-widen to all tiers unless an
+explicit `--scope` overrides them. `--scope` is a Rust-binary feature; the frozen
+Bash fallback does not implement it (see below).
 
 ### Output modes
 
@@ -305,74 +487,106 @@ Multiple filters compose with AND semantics.
 | `2` | Substrate not found (no `.work/CONVENTIONS.md` in CWD or ancestor) |
 | `3` | Internal error (corrupted item file, etc.) |
 
-## work-board script
+## Interactive board
 
-Lives at `plugins/agile-workflow/scripts/work-board.sh` with a paired
-template at `plugins/agile-workflow/scripts/work-board.template.html`.
-Read-only; emits a self-contained HTML kanban view of the substrate and
-nothing else. Invoked via the slash command `/agile-workflow:board`.
+The human board surface is `plugins/agile-workflow/skills/board/SKILL.md` and
+the compiled `work-view board` subcommand. It serves a live localhost view of
+the `.work/` substrate, backed by the Rust query core and embedded assets. The
+server binds `127.0.0.1`, scans upward from the requested port when that port is
+busy, and never exposes the user's absolute paths or raw item frontmatter in the
+browser API. Requests must carry a loopback `Host` authority (`127.0.0.1`,
+`localhost`, or `[::1]`) so a page on a non-local origin cannot use DNS
+rebinding to read the board feed.
 
-Pure bash + awk + `base64`. Optional: `python3` only used by `--serve`.
+`plugins/agile-workflow/scripts/work-board.sh` remains only as a compatibility
+shim for older invocations. It does not render HTML. It checks for a
+board-capable `.work/bin/work-view`, execs `.work/bin/work-view board "$@"` when
+available, and otherwise prints an actionable compiled-binary requirement.
 
 ### Flag set
 
 | Flag | Argument | Effect |
 |---|---|---|
-| `--out` | `<path>` | Write HTML to this path (default: temp file) |
-| `--print` | (none) | Print the output path; skip auto-opening a browser |
-| `--no-open` | (none) | Alias for `--print` |
-| `--serve` | `[port]` | Serve via `python3 -m http.server`, default `8181` |
-| `--port` | `<port>` | Override the `--serve` port |
+| `--port` | `<port>` | Bind localhost starting at this port, default `8181` |
+| `--no-open` | (none) | Do not launch a browser after binding |
+| `--print` | (none) | Alias for `--no-open` |
 | `--help` | (none) | Show usage and exit |
 
-### Stage → column mapping
+### Swimlanes and stage columns
+
+The kanban view groups items into **swimlanes by parent** — the item's `parent`
+id, else its owning epic id, else a `(no parent)` lane. Within each lane it
+renders one **column per distinct stage value**, in preferred order:
 
 ```
-Backlog       — items in .work/backlog/
-Drafting      — stage: drafting (also: stage: planned for releases)
-In Progress   — stage: implementing
-Review        — stage: review (also: stage: quality-gate for releases)
-Done          — stage: done | released, items in .work/archive/, items in .work/releases/
+drafting → implementing → review → done → released
 ```
 
-### Embedded data shape
+Any other stage values present in the items (e.g. `planned`, `quality-gate`)
+follow as their own columns after the preferred order, with a trailing column
+for items that have no stage. Stages are shown **verbatim** — the board does not
+collapse or rename them. Backlog items are surfaced through the kind filter
+(`backlog` is a selectable kind), not a dedicated column.
 
-The renderer emits a `<script type="application/json" id="items-data">`
-block whose contents are a JSON array of item objects:
+### Browser API shape
+
+`GET /api/substrate` returns JSON with project metadata, diagnostics, and an
+array of item objects:
 
 ```ts
 {
-  id: string;
-  kind: 'epic' | 'feature' | 'story' | 'release' | '';
-  stage: string;
-  parent: string | null;
-  release_binding: string | null;
-  gate_origin: string | null;
-  created: string;
-  updated: string;
-  tags: string[];
-  depends_on: string[];
-  unmet_deps: string[];          // computed
-  bucket: 'active' | 'backlog' | 'releases' | 'archive' | 'other';
-  release_dir: string | null;    // version slug from .work/releases/<v>/...
-  ready: boolean;                // implementing AND all deps done
-  blocked: boolean;              // implementing AND ≥1 unmet dep
-  title_b64: string;             // base64-encoded body title
-  excerpt_b64: string;           // base64-encoded first paragraph
-  path_b64: string;              // base64-encoded path relative to repo root
+  work_view_version: string;
+  project: string;
+  root_rel: string;
+  diagnostics: {
+    parse_errors: Array<{ rel_path: string; reason: string }>;
+    validation_warnings: Array<ItemDiagnostic>;
+    duplicate_ids: Array<ItemDiagnostic>;
+  };
+  items: Array<{
+    id: string;
+    kind: 'epic' | 'feature' | 'story' | 'release' | null;
+    tier: 'active' | 'backlog' | 'releases' | 'archive';
+    stage: string | null;
+    parent: string | null;
+    release_binding: string | null;
+    gate_origin: string | null;
+    research_origin: string | null;
+    research_refs: string[];
+    created: string | null;
+    updated: string | null;
+    tags: string[];
+    depends_on: string[];
+    unmet_deps: string[];
+    dependents: string[];
+    children: string[];
+    ready: boolean;
+    blocked: boolean;
+    is_terminal: boolean;
+    body: string;
+    rel_path: string;
+  }>;
 }
+
+type ItemDiagnostic = {
+  rel_path: string;
+  tier: 'active' | 'backlog' | 'releases' | 'archive';
+  id: string | null;
+  field: string | null;
+  reason: string;
+};
 ```
 
-Item title and excerpt are base64-encoded so that quotes, backticks,
-backslashes, and embedded `</script>` sequences in markdown bodies do not
-corrupt the JSON envelope.
+The API intentionally omits absolute filesystem paths and the raw item text
+envelope. Markdown body content is returned for display, while frontmatter is
+represented by parsed fields.
 
 ### Exit codes
 
 | Code | Meaning |
 |---|---|
 | `0` | Success |
-| `1` | Usage error (bad flag) or template missing |
+| `1` | Usage error (bad flag) |
 | `2` | Substrate not found |
 
 ## Hook contracts
@@ -410,15 +624,57 @@ Hooks live in `plugins/agile-workflow/hooks/hooks.json`.
 }
 ```
 
-**Activation:** runs only if `${CLAUDE_PROJECT_DIR}/.work/CONVENTIONS.md`
-exists. Otherwise exits 0 with no output.
+**Activation:** resolves the substrate root by walking up from the hook payload's
+`cwd` (then `CLAUDE_PROJECT_DIR`, then the process working directory) until a
+`.work/CONVENTIONS.md` is found; runs only if one exists, otherwise exits 0 with
+no output.
 
 **Effect:** updates prompt-context state under the host-provided plugin data
 directory (`PLUGIN_DATA` / `CLAUDE_PLUGIN_DATA`), falling back to
 `XDG_STATE_HOME`, `~/.local/state`, or the system temp directory only when no
-plugin data directory is available. This lets principles capsules fire once per
-session, and once again after resume/compaction, without dirtying normal project
-worktrees. It does not inject queue context at session start.
+plugin data directory is available. `SessionStart` resets the per-session epoch
+and seen-set; `PostCompact` bumps the epoch so context re-injects after
+compaction. This lets principles capsules fire once per session, and once again
+after resume/compaction, without dirtying normal project worktrees. It does not
+inject queue context at session start.
+
+These events are also the **primary firing** of the `.agents/rules/`
+rules-injection contract where the host accepts hook-specific context. They emit
+the concatenated `.agents/rules/*.md` content as
+`hookSpecificOutput.additionalContext` directly (after the epoch reset/bump),
+unconditionally — no prompt to gate on. Codex is the exception for
+`PostCompact`: Codex's `PostCompact` output schema does not allow
+`hookSpecificOutput`, so that event only bumps the epoch and leaves context
+reload to `SessionStart` with `source: compact`. This
+keeps rules reloading at session start and after compaction, even during
+auto-continuation with no user prompt, mirroring the legacy Claude-only
+`.claude/rules/` force-load.
+
+### `.agents/rules/` rules-injection contract
+
+The hook force-loads every `.agents/rules/*.md` file into agent context so
+producers (`convert`, `gate-patterns`, or the user) can drop content-agnostic
+rule files there and have them reliably reach the agent in both Claude Code and
+Codex. The contract:
+
+- **Fires on:** `SessionStart` and host-supported `PostCompact` context output,
+  unconditionally. On Codex, `PostCompact` is side-effect-only because its
+  output schema does not allow `hookSpecificOutput`; `SessionStart` with
+  `source: compact` carries the context.
+- **Content:** all `<root>/.agents/rules/*.md` files, sorted by name,
+  concatenated under a `## Project Rules (.agents/rules/)` heading.
+- **Dedup:** per-session epoch + SHA-256 content hash. Rules inject exactly once
+  per `(epoch, content-hash)` — re-injecting after a `PostCompact` epoch bump or
+  when any `.agents/rules/*.md` file changes, but not otherwise.
+- **Substrate gate:** only fires when `${CLAUDE_PROJECT_DIR}/.work/CONVENTIONS.md`
+  exists, like all the prompt-context hooks.
+- **CONVENTIONS flag + byte cap:** `.work/CONVENTIONS.md` may set
+  `rules_context: on|off` (default `on`) to disable injection, and
+  `rules_context_max_bytes: <int>` (default 12000) to cap the emitted size. A
+  malformed CONVENTIONS keeps the enabled defaults so rules are never silently
+  dropped; oversized content is truncated with a "read the files for full
+  content" notice (the hash is computed over the untruncated content so any edit
+  re-injects).
 
 ### UserPromptSubmit hook
 
@@ -438,16 +694,16 @@ worktrees. It does not inject queue context at session start.
 }
 ```
 
-**Activation:** runs only if a substrate exists and the submitted prompt is an
-actionable agile-workflow move: queue operations, stage movement, explicit
-workflow verbs, or a known item id. Explainer prompts and idle chat exit 0 with
-no output.
+**Activation:** runs only if a substrate exists. Principles capsules additionally
+require an actionable agile-workflow move: queue operations, stage movement,
+explicit workflow verbs, or a known item id.
 
 **Effect:** returns `hookSpecificOutput.additionalContext` with:
-- A compact queue snapshot only when the prompt benefits from queue state
-  (`ready`, `blocked`, `review`, `autopilot`, `scope`, item ids, etc.).
 - The smallest relevant principles capsule, at most once per session per
   capsule: code design, dispatch economy, or advisory review.
+
+It does not inject `.agents/rules/*.md` or queue snapshots at prompt time. Queue
+state remains available through explicit `work-view`, `/aw`, or board commands.
 
 ### PostToolUse hook
 
@@ -483,7 +739,7 @@ the touched item. Validation issues are returned as
 
 ### Required
 
-- **bash** ≥ 4.0 — for `work-view`
+- **bash** ≥ 4.0 — for the `work-view` bash fallback (`work-view.sh`) and the install helper (`install-work-view.sh`)
 - **python3** — for plugin hook scripts
 - **grep** — POSIX-compatible
 - **git** — substrate's audit trail; `work-view`'s history queries call `git log`

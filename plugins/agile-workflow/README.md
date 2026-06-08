@@ -2,6 +2,10 @@
 
 A substrate-driven work-tracking plugin for Claude Code (and Codex) — items as files in `.work/` with YAML frontmatter, late-binding releases, gates that produce items, and a goal-backed autopilot queue runner designed to tee up autonomous agent runs that actually ship the right thing.
 
+New projects should use `agile-workflow`. The older [`workflow`](../workflow/)
+plugin remains in the repo only so existing installs do not break; migrate old
+projects with `/agile-workflow:convert`.
+
 > **Note:** This plugin includes one extension from skills-v2: **`gate-infra`** adds release-time infrastructure-safety auditing (Terraform state divergence, secrets, CI-only enforcement). See the gates section below.
 
 ## Install
@@ -17,9 +21,24 @@ A substrate-driven work-tracking plugin for Claude Code (and Codex) — items as
 If you want only Nathan's upstream version (without the skills-v2 extensions), install from his marketplace instead:
 
 ```bash
+# Claude Code
 /plugin marketplace add nklisch/skills
 /plugin install agile-workflow@nklisch-skills
+
+# OpenAI Codex
+codex plugin marketplace add https://github.com/nklisch/skills
+codex plugin install agile-workflow
+
+# Pi
+pi install npm:@nklisch/pi-agile-workflow
+# or, from this repository:
+pi install -l ./plugins/agile-workflow
 ```
+
+Pi loads the same shared skills plus a native `/aw` extension command for queue
+snapshots (`/aw status`, `/aw ready`) and workflow handoffs (`/aw autopilot`,
+`/aw board`). Pi packages can execute extension code, so install from sources you
+trust.
 
 ## Foundation docs
 
@@ -132,13 +151,20 @@ CLAUDE.md -> AGENTS.md                 ← Claude Code compatibility
 docs/                                  ← foundation docs (VISION, SPEC, ARCHITECTURE) — roll forward in place
 ```
 
-Items are markdown files with structured frontmatter (`id, kind, stage, tags, parent, depends_on, release_binding, gate_origin, created, updated`). Design lives inside the item's body — there are no parallel design docs. Foundation docs in `docs/` roll forward in place.
+Items are markdown files with structured frontmatter (`id, kind, stage, tags, parent, depends_on, release_binding, gate_origin, research_refs, research_origin, created, updated`). Design lives inside the item's body — there are no parallel design docs. Foundation docs in `docs/` roll forward in place.
 
 ## Human-facing tools
 
-- **`/agile-workflow:board`** — render `.work/` as a self-contained HTML kanban board (Backlog → Drafting → In Progress → Review → Done) with a Releases section. Pure bash + a single template, no toolchain. Auto-opens in your default browser. Re-run to refresh. Supports `--print`, `--out <path>`, and `--serve [port]`.
+- **`$agile-workflow:board` / `work-view board`** — serve `.work/` as a live
+  localhost board backed by the same substrate query model as the CLI. It binds
+  to `127.0.0.1`, scans upward when the requested port is busy, opens a browser
+  after binding when a desktop session is available, and prints the URL in
+  headless sessions. Supports `--port <n>`, `--no-open`, and `--print`.
 
-Stages advance as work completes. Releases late-bind.
+Every item is a markdown file with structured frontmatter
+(`id, kind, stage, tags, parent, depends_on, release_binding, gate_origin, research_refs, research_origin, created, updated`).
+Stages advance as work completes. Foundation docs in `docs/` roll forward.
+Releases late-bind.
 
 ## Pairing with `ux-ui-design`
 
