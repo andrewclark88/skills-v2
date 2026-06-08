@@ -123,30 +123,31 @@ this "wrong" now is low (`research_refs`/`research_origin` are advisory today �
 `work-view --research-refs` string queries, nothing hard-resolves them), but the
 value compounds as that linkage becomes load-bearing.
 
-## Phase 0 — verified code touchpoints (the prerequisite work)
+## Phase 0 — prerequisite work (done)
 
-All confirmed against the current code on `main`. None of this writes attestations
-yet; it makes the substrate *ready* for them.
+Phase 0 makes the substrate *ready* for attestations without writing any yet.
+Direct code reading shrank the scope from the draft's three code changes to **one**:
 
-1. **`skills/knowledge-index/regen.py`** — `discover_docs()` (≈line 69) rglobs
-   `.research/**/*.md`; `lint_doc` requires `description`/`type`/`updated`
-   (≈line 144). Add `.research/{reference,attestation,precis}/` to the skip set
-   (alongside the existing `_archive` / `doc-review-report-` / `RESUME-STATE.md`
-   skips), **or** route them through a separate discovery like
-   `discover_substrate()`. Decision per D2: **skip** (citation-lint owns them).
-2. **`skills/knowledge-graph/render.py`** — `SCOPE = ("docs/", ".research/")`
-   (line 32) with a generic `.research/` node fallback (≈line 62). Exclude the
-   three source tiers from the scan so attestations don't appear as orphan nodes.
-   (The evidence-node class is the separate fast-follow.)
-3. **`hooks/scripts/post-tool-use-docs-bump.sh`** — activation gate matches
-   `.research/**.md` (≈line 59) and bumps `updated:`. Attestations have no
-   `updated:` field (they use `fetched`) and are immutable source records —
-   exclude `.research/{reference,attestation,precis}/` from the bump.
-   *(This touchpoint was found by direct code reading; it was not in the original
-   plan.)*
-4. **Path map + slug doc** — record the canonical `.research/` layout (D1) and the
-   `slug:` convention (D3) in `research-skills-overview.md` so producers and
-   consumers share one source of truth.
+1. **`skills/knowledge-index/regen.py` — DONE.** `discover_docs()` rglobs
+   `.research/**/*.md` and `lint_doc` requires `description`/`type`/`updated`, so an
+   attestation (which lacks them) would raise lint errors. Added
+   `.research/{reference,attestation,precis}/` to the discovery skip set (constant
+   `ARD_SOURCE_TIERS`), alongside the existing `_archive` / `doc-review-report-` /
+   `RESUME-STATE.md` skips — the **skip** route per D2 (citation-lint owns the source
+   tiers). Covered by `tests/test_regen_exclusions.py`.
+2. **`skills/knowledge-graph/render.py` — no change needed.** Verified: the graph is
+   **index-driven** — `build_nodes` iterates `knowledge-index.yaml` (regen.py's
+   output); it only touches `.research/` filesystem in `classify_target`, and only
+   for `related[]` targets (which attestations never are). Excluding the tiers in
+   `regen.py` keeps them out of the graph automatically. *(Draft over-scoped this.)*
+3. **`hooks/scripts/post-tool-use-docs-bump.sh` — no change needed.** Verified: the
+   hook already guards with `grep -q '^updated:' || return 0`, so it no-ops on
+   attestations (which use `fetched`, not `updated:`). The existing guard is
+   self-documenting; no source-tier carve-out required. *(Draft over-scoped this.)*
+4. **Path map + slug docs — DONE.** The canonical two-tier `.research/` layout (D1),
+   the source-tier exclusion (D2), and the `slug` convention (D3) are recorded in
+   `research-skills-overview.md` § Output Structure so producers and consumers share
+   one source of truth.
 
 ## Phases 1–3 (outline; designed after Phase 0 lands)
 
