@@ -19,11 +19,14 @@
     "kernel/conformance/": "scripts/conformance/",
     "kernel/templates/attestation.md": "templates/attestation.md",
     "kernel/templates/precis.md": "templates/precis.md",
-    "kernel/templates/INDEX.md": "templates/INDEX.md"
+    "kernel/templates/INDEX.md": "templates/INDEX.md",
+    "kernel/discipline.md": "skills/research-discipline/SKILL.md"
+  },
+  "_vendored_paths_notes": {
+    "kernel/discipline.md": "Upstream ships the discipline body inside skills/research-discipline/SKILL.md (no standalone kernel/discipline.md file). We vendor the six numbered sections BYTE-IDENTICAL; only the wrapper above them is deployment-specific (names our /deep-research + /research-program orchestrators and our schema path). Re-sync = re-copy the six sections verbatim, leave the wrapper."
   },
   "not_yet_vendored": {
-    "kernel/discipline.md": "deferred to Phase 2 (research-discipline floor + dispatch inlining)",
-    "kernel/templates/dispatch.md": "deferred to Phase 2"
+    "kernel/templates/dispatch.md": "NOT adopted as a file. dispatch.md is ARD's 9-field registration-declaration template for the research-orchestrator, which Option A does not adopt (we keep our own orchestration). Our /deep-research + /research-program carry their own decomposition/dispatch logic; the discipline-propagation requirement (ARD SPEC §5) is met by inlining research-discipline into specialist dispatch prompts, not by adopting the registration template."
   },
   "conformance": "python3 plugins/research-pipeline/scripts/conformance/run.py"
 }
