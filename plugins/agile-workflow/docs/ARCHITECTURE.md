@@ -23,8 +23,8 @@ files:
 │       └── <id>.md           items bound to this release
 ├── archive/               done items not bound to any release
 │   └── <id>.md
-├── bin/                   repo-local scripts copied from plugin
-│   └── work-view
+├── bin/                   git-tracked, not-gitignored installed entrypoint
+│   └── work-view          prebuilt binary where supported; bash fallback otherwise
 └── CONVENTIONS.md         project-specific overrides
 ```
 
@@ -79,9 +79,11 @@ An item flows through tiers as work progresses on it.
 
 ### Item creation entry points
 
-1. **`/park`** — captures a quick idea mid-conversation as a flat backlog
-   file. Used when something surfaces that shouldn't derail the current
-   thread.
+1. **`/park`** — captures an unscoped backlog note mid-conversation as a flat
+   backlog file. It may be a quick idea, a richer context note, or a
+   roadmap-style multi-arc thought; it preserves supplied context without
+   proactively designing or binding the work. Used when something surfaces
+   that shouldn't derail the current thread.
 2. **`/scope` on a backlog item** — promotes an existing backlog idea to
    active, decides its kind (epic/feature/story), and writes the kind-file
    with full frontmatter including any declared dependencies.
@@ -111,8 +113,9 @@ distinct from `parent` (which is **hierarchy**).
 
 ### Rules
 
-- An item is **ready** when its `stage` is `implementing` AND every
-  `depends_on` entry is at `stage: done`.
+- An item is **ready** when it is in the active tier, its `stage` is
+  `drafting`, `implementing`, or `review`, AND every `depends_on` entry is
+  terminal (`stage: done`/`released`, or resident in `releases/`/`archive/`).
 - Dependencies must form a DAG. Cycles are invalid; skills that produce
   items must validate no cycle is introduced before writing.
 - Cross-tier dependencies are allowed (a feature can depend on an epic;
@@ -146,20 +149,32 @@ cycle and asks the user to resolve.
 | (none) | backlog | `/park` | New file in `.work/backlog/<id>.md` |
 | backlog | active | `/scope` | `git mv` to `.work/active/<kind>/<id>.md`; frontmatter populated |
 | (none) | active | `/scope` (skipping backlog) | New file in `.work/active/<kind>/<id>.md` |
-| active | releases | `/release-deploy` shipping | `git mv` to `.work/releases/<version>/<id>.md`; `release_binding` already set |
-| active | archive | item reaches `done` without `release_binding` | `git mv` to `.work/archive/<id>.md` |
+| active | releases | `/release-deploy` shipping | bound bodies collapse into one `.work/releases/<version>/release-<version>.md` summary; the bodies are `git rm`'d (recoverable via the per-item `git ref`). Legacy `retain-bodies` mode `git mv`s each `<id>.md` instead |
+| active | archive | item reaches `done` without `release_binding` | stripped to a bodyless stub at `.work/archive/<id>.md` (frontmatter + `# Title` + `git_ref` + `archived_atop`, the immutable release baseline a later release late-binds against); body pruned. Legacy `retain-bodies` mode `git mv`s the full body |
 | backlog | (deleted) | user discards via `/scope` rejection | `git rm` (history retained) |
 
-Every tier transition is a `git mv` so history is preserved. The substrate's
-audit trail IS the git log of the file's path changes.
+Active and backlog transitions are `git mv` so history is preserved by path. Terminal transitions
+(`delete-refs`, the default) prune bodies to refs — a bodyless archive stub or a single release
+summary — and git history retains the full content. Either way the substrate's audit trail IS the
+git log.
 
 ## AGENTS.md substrate section
 
-`convert` writes the agile-workflow section into the selected AGENTS target in
-every bootstrapped project. This section is dense pointers — every section is
-something the agent greps or runs as a literal command, not narrative prose.
+`convert` writes a **slim** agile-workflow section into the selected AGENTS
+target in every bootstrapped project. It is dense pointers — substrate
+orientation, `work-view` query patterns, grep-able pointers to the canonical
+rules file `.agents/rules/agile-workflow.md` and the `patterns` skill, and a
+MANDATORY "read `.agents/rules/*.md` before designing/implementing/reviewing"
+read-directive. Every line is something the agent greps or runs as a literal
+command, not narrative prose. The dense behavioral rules (tag semantics, test
+integrity, advisory review, entry points) do not live here — they live in
+`.agents/rules/agile-workflow.md`, which the hook force-loads (see Hook scripts)
+and the design/implement/review skills read in their grounding phase. The
+read-directive is the graceful-degradation guarantee: AGENTS always loads, so
+even when the hook does not fire (no substrate, untrusted hook, non-coding
+session) the agent is told where the rules live.
 
-Full content:
+Navigation reference content:
 
 ````markdown
 ---
@@ -191,7 +206,14 @@ release  planned → quality-gate → released
 
 ## Frontmatter
 id, kind, stage, tags[], parent, depends_on[], release_binding,
-gate_origin, created, updated
+gate_origin, research_refs[], research_origin, created, updated
+
+`research_refs` and `research_origin` are optional linkage fields that connect
+`.work/` items to `.research/` artifacts (mirroring `gate_origin`). Missing →
+`[]` / `null`, no validation warning. Query via `--research-refs <slug>` and
+`--research-origin <slug>`. See `plugins/agentic-research/docs/HANDOFF.md` for
+the cross-tier contract; the emission and commissioning arrows that populate these
+fields are implemented (live) in the `agentic-research` plugin.
 
 ## Querying with work-view (primary tool)
 
@@ -206,8 +228,8 @@ freely. Run `--help` for the authoritative flag list.
 --parent <id>        direct children of given item
 --release <version>  items with release_binding: <version>
 --gate <name>        items produced by gate <name>
---ready              stage:implementing AND all depends_on done
---blocked            stage:implementing AND unmet dependencies
+--ready              active-tier drafting/implementing/review, all depends_on terminal
+--blocked            active-tier drafting/implementing/review, >=1 non-terminal dep
 --blocking <id>      items that depend on <id>
 
 ### Output modes
@@ -221,7 +243,7 @@ freely. Run `--help` for the authoritative flag list.
 # Items ready to work right now
 .work/bin/work-view --ready
 
-# Items awaiting user review
+# Items awaiting an agent review pass
 .work/bin/work-view --stage review
 
 # All children of an epic
@@ -257,7 +279,7 @@ git log --since='1 day ago' -- .work/
 
 ## Session start checklist
 1. cat .work/CONVENTIONS.md            project-specific overrides
-2. .work/bin/work-view --stage review  items waiting on user
+2. .work/bin/work-view --stage review  items awaiting an agent review pass
 3. .work/bin/work-view --ready         items ready to work
 4. Identify your work: explicit user ask, or pick the next ready item
 
@@ -268,10 +290,10 @@ git log --since='1 day ago' -- .work/
 
 ## Foundation docs (rolling-forward principle)
 docs/ holds standing context: VISION.md, SPEC.md, ARCHITECTURE.md, etc.
-- Foundation docs describe the system as it is NOW
+- Foundation docs describe the system's current state or intended future state
 - Never add "previously this was…" or "note: in v1.2 we…"
 - When implementation changes a foundation-doc assertion, update the doc
-- Git history is the audit trail; the doc is the present
+- Git history is the audit trail; the doc carries the active truth
 ````
 
 The agent loads this automatically when working in `.work/` or `docs/`. The
@@ -414,27 +436,42 @@ user-only). Only scopes incremental refactor features.
 **SessionStart / PostCompact effect:** updates prompt-context state under the
 host-provided plugin data directory (`PLUGIN_DATA` / `CLAUDE_PLUGIN_DATA`),
 falling back to `XDG_STATE_HOME`, `~/.local/state`, or the system temp directory
-only when no plugin data directory is available. Prompt-time principles capsules
-fire at most once per session, and once again after resume/compaction. These
-events do not inject queue context and do not dirty the project worktree.
+only when no plugin data directory is available. `SessionStart` resets the
+per-session epoch and seen-set; `PostCompact` bumps the epoch. Prompt-time
+principles capsules fire at most once per session, and once again after
+resume/compaction. These events do not inject queue context and do not dirty the
+project worktree. Where the host supports hook-specific context, they emit the
+`.agents/rules/` block (below) directly as the primary rules firing. Codex
+`PostCompact` is side-effect-only because Codex rejects `hookSpecificOutput` on
+that event; Codex rules context flows through `SessionStart` with `source:
+compact`.
 
-**UserPromptSubmit effect:** only emits context for actionable workflow prompts:
-queue operations, stage movement, explicit agile-workflow verbs, or a known
-item id. Explainer prompts and idle chat stay silent.
+**`.agents/rules/` rules loader:** the script force-loads every
+`<root>/.agents/rules/*.md` file (sorted, concatenated under a
+`## Project Rules (.agents/rules/)` heading) into agent context, so producers
+(`convert` writes `.agents/rules/agile-workflow.md`; `gate-patterns` writes
+`.agents/rules/patterns.md`; the user adds their own) reach the agent reliably
+in both Claude Code and Codex. It is content-agnostic — it injects whatever
+`*.md` files exist. **SessionStart and host-supported PostCompact context output
+emit unconditionally** (mirroring the legacy `.claude/rules/` force-load, and
+guaranteeing re-injection after compaction even with no user prompt). Codex uses
+`SessionStart` with `source: compact` instead of emitting context from
+`PostCompact`. Per-epoch + SHA-256 content-hash dedup means rules load exactly
+once per `(epoch, content)`. `.work/CONVENTIONS.md` may set
+`rules_context: on|off` (default on) and `rules_context_max_bytes: <int>`
+(default 12000); the byte cap truncates with a notice while hashing the
+untruncated content so any edit re-injects.
+
+**UserPromptSubmit effect:** principles capsules emit only for actionable
+workflow prompts: queue operations, stage movement, explicit agile-workflow
+verbs, or a known item id. Explainer prompts and idle chat stay silent. The hook
+does not inject `.agents/rules/*.md` or queue snapshots at prompt time.
 
 When it fires, the script returns JSON `hookSpecificOutput.additionalContext`
-containing a compact queue snapshot and any principles capsules that have not
-already fired in the current session epoch:
+containing any principles capsules that have not already fired in the current
+session epoch:
 
 ```
-## Agile Workflow Snapshot
-Ready: 2
-- story-rate-limits (story, parent=feature-uploads-retry)
-Review: 1
-- feature-uploads-retry (feature, parent=epic-uploads)
-Blocked: 1
-- story-quota-display (story, parent=feature-uploads-retry)
-
 ## Agile Workflow Principles
 Code-design capsule:
 - Ports & Adapters: keep domain logic independent of DB/filesystem/HTTP/time/randomness.
@@ -477,7 +514,7 @@ and produces new items rather than emitting a pass/fail report:
 | `gate-tests` | Coverage of bound items' acceptance criteria | Items with `gate_origin: tests`, tagged `[testing]` for gaps |
 | `gate-cruft` | Dead code introduced or revealed by the bundle | Items with `gate_origin: cruft`, tagged `[cleanup]` |
 | `gate-docs` | Foundation-doc alignment with the bundle's behavior changes | Items with `gate_origin: docs`, tagged `[documentation]` — enforces rolling-foundation |
-| `gate-patterns` | Reusable patterns that emerged in the bundle | Pattern-skill files in `.agents/skills/patterns/` with optional Claude mirror, plus a tracking item with `gate_origin: patterns` |
+| `gate-patterns` | Reusable patterns that emerged in the bundle | Detailed pattern-skill files in `.agents/skills/patterns/` (single source of truth) with optional Claude mirror, the generated hook-loaded `.agents/rules/patterns.md` digest (slug+one-liner index pointing back at the skill, with banner + source hash), plus a tracking item with `gate_origin: patterns` |
 
 Gate-produced items get `stage: implementing` (high-confidence findings),
 `stage: drafting` (medium-confidence), or land in `.work/backlog/`
@@ -509,7 +546,7 @@ Format:
 ## Agile-Workflow Substrate
 
 Work tracked in `.work/` as markdown items with YAML frontmatter
-(`kind, stage, tags, parent, depends_on, release_binding`).
+(`kind, stage, tags, parent, depends_on, release_binding, research_refs, research_origin`).
 Layout: `.work/active/{epics,features,stories}/`, `.work/backlog/`,
 `.work/releases/<version>/`, `.work/archive/`.
 
@@ -520,21 +557,31 @@ parent, and dependency. Common patterns:
 - `work-view --parent <id>` / `--blocking <id>` — hierarchy / sequencing
 - `work-view --help` for the full flag set
 
-Foundation docs in `docs/` describe the system NOW — never add legacy notes;
-git history is the audit trail. The substrate itself is durable memory: record
-decisions, blockers, implementation discoveries, and review findings in item
-bodies instead of depending on chat history.
+Foundation docs in `docs/` describe the system's current state or intended
+future state, never the past; git history is the audit trail. The substrate
+itself is durable memory: record decisions, blockers, implementation
+discoveries, and review findings in item bodies instead of depending on chat
+history.
 
-Project-level agent rules live in AGENTS.md. Reusable structural patterns live
-in `.agents/skills/patterns/`; do not maintain `.claude/rules/patterns.md` as
-a source of truth.
+Reusable code patterns live in `.agents/skills/patterns/` (load the `patterns`
+skill for detail). Project agent rules live in `.agents/rules/*.md`
+(plugin-managed rules in `.agents/rules/agile-workflow.md`); do not maintain
+`.claude/rules/*.md` as a source of truth.
 
-Broad entry points:
-`/agile-workflow:ideate`, `/agile-workflow:epicize`,
-autopilot goals such as "Use agile-workflow autopilot to drain --all",
-and `/agile-workflow:release-deploy`.
+**Before designing, implementing, or reviewing, read `.agents/rules/*.md`** —
+the project's force-loaded agent rules (tag semantics, test integrity, review
+policy). The agile-workflow hook auto-loads these at session start and after
+compaction; read them directly when working without the hook.
 <!-- agile-workflow:end -->
 ```
+
+The dense behavioral rules referenced by the read-directive live in
+`.agents/rules/agile-workflow.md` (between `<!-- agile-workflow:rules:start/end -->`
+markers), which `convert` writes and verifies BEFORE slimming the managed AGENTS
+section, so the overwrite can never drop rule content. The broad entry points
+(`/agile-workflow:ideate`, `/agile-workflow:epicize`, autopilot goals such as
+"Use agile-workflow autopilot to drain --all", `/agile-workflow:release-deploy`)
+live there alongside tag semantics, test integrity, and advisory-review rules.
 
 ### Idempotency rules
 
@@ -547,9 +594,12 @@ and `/agile-workflow:release-deploy`.
 - `CLAUDE.md`, `.claude/CLAUDE.md`, and `.agents/CLAUDE.md` are maintained only
   as compatibility symlinks to the selected AGENTS target. If symlinks are
   unavailable, each becomes a short shim that points Claude Code at `AGENTS.md`.
-- Legacy `.claude/rules/patterns.md` content is imported into the selected
-  AGENTS target during bootstrap or sync, then replaced with a shim pointing at
-  AGENTS. It is never maintained as a parallel rules file.
+- Legacy `.claude/rules/*.md` content migrates via `convert`'s content-integrity
+  gate during bootstrap or sync: each Markdown-aware block routes to its
+  canonical home (structural patterns → `.agents/skills/patterns/`, rule prose →
+  `.agents/rules/<name>.md`), every block is verified to have landed, then the
+  legacy path is replaced with a shim. It is never maintained as a parallel rules
+  file.
 
 ## Skill catalog
 
@@ -560,14 +610,14 @@ All skills with their roles, invocability, and triggers.
 | Skill | Role | Trigger |
 |---|---|---|
 | `ideate` | Foundation-docs workshop. Produces VISION.md, SPEC.md, ARCHITECTURE.md, optionally PRINCIPLES.md / MIGRATION.md. No substrate dependency. | User-invoked |
-| `convert` | Bootstraps `.work/` substrate. Reads existing project shape, writes AGENTS.md section, creates CLAUDE.md compatibility symlink/shim, writes CONVENTIONS.md, copies work-view, seeds initial items. Idempotent via `--update`. | User-invoked, depends on ideate having run |
+| `convert` | Bootstraps `.work/` substrate. Reads existing project shape, writes AGENTS.md section, creates CLAUDE.md compatibility symlink/shim, writes CONVENTIONS.md, installs the git-tracked `work-view` entrypoint via `install-work-view.sh` as a backstop to session hook self-heal (prebuilt binary on supported platforms, Bash fallback only otherwise), seeds initial items. Idempotent via `--update`. | User-invoked, depends on ideate having run |
 | `epicize` | Reads foundation docs. Produces multiple epics in `.work/active/epics/` at `stage: drafting`, with declared dependencies. | User-invoked, depends on convert having run |
 
 ### Capture & promotion (model-invocable)
 
 | Skill | Role | Trigger |
 |---|---|---|
-| `park` | Quick capture of an idea into `.work/backlog/`. One-paragraph file, minimal frontmatter. | "park this", "remind me about X", "add to backlog" |
+| `park` | Capture an unscoped idea, context note, or roadmap-style thought into `.work/backlog/`. Minimal frontmatter; body sized to the supplied context. | "park this", "remind me about X", "add to backlog" |
 | `scope` | Promote backlog item or fresh request to `.work/active/`. Sizes as epic/feature/story. If large, rolls foundation docs forward. Declares dependencies. | "scope this", "promote this", "let's track this" |
 | `fix` | Park-and-implement quick bug as a story. Single-stride: creates story at `stage: implementing`, writes fix, advances to review. | "fix bug X", "fix the typo in", "fix this issue" |
 
@@ -592,6 +642,7 @@ All skills with their roles, invocability, and triggers.
 | Skill | Invocability | Role | Trigger |
 |---|---|---|---|
 | `review` | model-invocable | Code review of changes for an item. Triages findings into items with proper tags. Advances to done if approved. | item at `stage: review` |
+| `board` | user-invocable | Launch the live localhost substrate board through `work-view board`. Opens a browser after binding when a desktop session is available; prints the URL in headless sessions. | User-invoked when the user wants to inspect active work visually |
 | `release-deploy` | user-invocable | Bind items to release, run gates, ship, archive. Idempotent. | User-invoked when ready to cut a version |
 | `bold-refactor` | user-invocable | Multi-feature architectural refactor. Scopes a refactor epic with child features. Aggressive — only on user request. | User-invoked |
 | `autopilot` | model- and user-invocable | Goal-backed queue runner. Drains an epic or all active work using the harness goal/continuation feature. | Goal text like "Use agile-workflow autopilot to drain <epic>" or direct `/agile-workflow:autopilot --all` |
@@ -604,7 +655,7 @@ All skills with their roles, invocability, and triggers.
 | `gate-tests` | Test-coverage scan; produces gap items with `gate_origin: tests` |
 | `gate-cruft` | Dead-code scan; produces cleanup items with `gate_origin: cruft` |
 | `gate-docs` | Foundation-doc alignment; enforces rolling-foundation; produces doc-update items |
-| `gate-patterns` | Pattern extraction; writes pattern skills + tracking item with `gate_origin: patterns` |
+| `gate-patterns` | Pattern extraction; writes pattern skills (`.agents/skills/patterns/`), the generated `.agents/rules/patterns.md` digest, + tracking item with `gate_origin: patterns` |
 
 All five fire during `release-deploy`'s `quality-gate` stage in the order
 configured in `CONVENTIONS.md` (default: security → tests → cruft → docs

@@ -100,6 +100,8 @@ The body should already have a brief. Use it as the seed.
 The `principles` skill auto-loads. Read:
 1. `docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`
 2. `AGENTS.md` / `CLAUDE.md` (root, `.agents/`, or `.claude/`; AGENTS is canonical)
+2a. `.agents/rules/*.md` (if present) — the project's force-loaded agent rules
+   (tag semantics, test integrity, review policy)
 3. Parent epic body at `.work/active/epics/<parent>.md` if `parent` is set
 4. Foundation docs and existing test infrastructure docs in `docs/research/` if present
 
@@ -127,6 +129,9 @@ For Explore:
   or complex codebases.
 - **Codex / OpenAI:** `explorer` sub-agents with `reasoning_effort: medium`;
   use `high` for large or complex codebases.
+- **Pi path:** use native Pi `scout` or `context-builder` subagents for
+  read-only suite and journey mapping when hosted in Pi and available;
+  otherwise keep direct host-local mapping.
 
 Possible prompts:
 1. **Surfaces & journeys** — entry points (CLI, HTTP routes, exported modules),
@@ -143,8 +148,9 @@ verify.
 ### Phase 4: Re-align to project standards
 
 Re-read `AGENTS.md` / `CLAUDE.md` if present at root, `.agents/`, or
-`.claude/`. Treat AGENTS as canonical when they disagree. Recency improves
-adherence.
+`.claude/`, plus `.agents/rules/*.md` (if present) — the project's force-loaded
+agent rules (tag semantics, test integrity, review policy). Treat AGENTS as
+canonical when they disagree. Recency improves adherence.
 
 ### Phase 4.5: Surface ambiguities
 
@@ -414,6 +420,9 @@ Spawn ONE deep audit sub-agent with the audit brief.
 - **Codex / OpenAI:** analysis sub-agent with `reasoning_effort: high`; use
   `xhigh` only for large suites, complex mock-boundary audits, or repeated
   escaped tautologies.
+- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for the
+  mock-boundary audit when hosted in Pi and available; otherwise use the
+  same-host read-only analysis fallback.
 
 The sub-agent reads test files (NOT implementation
 code — that's how tautologies hide), maps the suite against the four

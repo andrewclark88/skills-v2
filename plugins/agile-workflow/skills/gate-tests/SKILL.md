@@ -25,6 +25,9 @@ Sub-agent strength is explicit:
   machines, concurrency-heavy behavior, or repeated test-quality misses. Use a
   reviewer/default agent if available, otherwise a worker with read-only
   instructions.
+- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for the deep test
+  analysis when hosted in Pi and available; otherwise use the same-host
+  read-only analysis fallback.
 
 ## Core principle
 
@@ -49,15 +52,19 @@ this discipline.
 ### Phase 1: Identify the bundle
 
 ```bash
-.work/bin/work-view --release <version> --paths
+# `--release` auto-widens to ALL tiers (active + archive + releases). Drop any
+# returned path under `.work/archive/`: those are already-done, body-pruned
+# stubs that were gated when active and MUST NOT be re-gated (no-re-gate rule).
+# Filter by path, not `--scope active` — the bash fallback ignores `--scope`.
+.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'
 ```
 
-If empty, halt: "No items bound to release `<version>`."
+If empty (after dropping archived stubs), halt: "No items bound to release `<version>`."
 
-Build the union of files changed by the bundle:
+Build the union of files changed by the bundle (archived stubs already excluded):
 
 ```bash
-for item in $(.work/bin/work-view --release <version> --paths); do
+for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
   id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
   git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
 done | sort -u > /tmp/bundle-files-<version>.txt
@@ -77,7 +84,8 @@ Spawn ONE deep analysis sub-agent with the full analysis brief. For Claude Code,
 this is `Agent(subagent_type=general-purpose, model=opus)`. For Codex, use
 `reasoning_effort: high`, escalating to `xhigh` for broad cross-feature
 releases, complex state machines, concurrency-heavy behavior, or repeated
-test-quality misses. The sub-agent extracts behavioral contracts from item
+test-quality misses. For Pi, use a native `reviewer` or `oracle` subagent when
+available; otherwise use the same-host read-only analysis fallback. The sub-agent extracts behavioral contracts from item
 bodies, maps existing tests, applies test-design techniques to find gaps,
 and returns structured findings.
 

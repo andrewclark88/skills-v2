@@ -126,7 +126,11 @@ this caller note in every delegated prompt:
 > strategic questions unless a hard halt condition applies. For large or risky
 > design decisions, use the cross-model advisory review policy from
 > `principles/SKILL.md` only when a different model class is available; peer
-> failures are non-blocking.
+> failures are non-blocking. If that policy launches Claude Opus through
+> peeragent, allow 10 to 30 minutes for large reviews; lack of output after a few
+> minutes does not mean it has hung. When hosted in Pi, use native Pi subagents
+> for same-harness worker/scout/reviewer fanout when available; keep peeragent
+> for cross-model or cross-harness review.
 
 Routing (resolve the design skill via `.work/CONVENTIONS.md` `design_skill_routing`
 when present — `epic_design` for epics, `feature_design` for plain features — else
@@ -144,7 +148,8 @@ versions):
 - `stage: review` -> `review <id>` (review self-selects its lane: a **story**
   fast-advances on `implement`'s verification with no peer pass; a **feature** or
   **epic** gets a fresh-context deep review — cross-model via peeragent when a
-  different class is reachable, else a fresh top-class sub-agent)
+  different class is reachable, else a native Pi reviewer/oracle subagent when
+  hosted in Pi and available, else a fresh top-class sub-agent)
 
 The delegated skill owns its internal workflow and stage transition. After it
 returns, rebuild the queue from disk rather than relying on cached state.
@@ -218,13 +223,19 @@ When the scoped queue appears drained:
 2. If `peer-review` is available with a different model class, run one
    cross-model peer-review loop over that completion bundle. Ask for bugs,
    missed acceptance criteria, unreviewed risks, foundation-doc drift, and
-   substrate-state inconsistencies that would make "complete" premature.
+   substrate-state inconsistencies that would make "complete" premature. When
+   the peer is Claude Opus via peeragent, expect large completion reviews to
+   take 10 to 30 minutes; do not classify a quiet, still-running process as
+   hung after only a few minutes.
 3. If peeragent would use the same model class, do not use `peer-review`; use a
-   local inline review sub-agent as a fresh-context completion check and record
-   that it was not cross-model.
-4. If peer-review is unavailable, use the local inline review fallback. If the
-   selected final-review path fails, do not report completion; mark the run
-   blocked on final review and include the failure reason. Do not invent a pass.
+   native Pi reviewer/oracle subagent when hosted in Pi and available, otherwise
+   a local inline review sub-agent as a fresh-context completion check, and
+   record that it was not cross-model.
+4. If peer-review is unavailable, use the native Pi reviewer/oracle fallback
+   when hosted in Pi and available, otherwise the local inline review fallback.
+   If the selected final-review path fails, do not report completion; mark the
+   run blocked on final review and include the failure reason. Do not invent a
+   pass.
 5. For every substantive accepted finding:
    - Small and clearly safe fix: fix it immediately, run verification, commit,
      and rebuild the queue.

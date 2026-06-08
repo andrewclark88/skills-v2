@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-accent="teal">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>agile-workflow board</title>
+  <link rel="stylesheet" href="/assets/tokens.css">
+  <link rel="stylesheet" href="/assets/components.css">
+  <link rel="stylesheet" href="/assets/motion.css">
+  <link rel="stylesheet" href="/assets/board.css">
+  <script type="module" src="/assets/board.js"></script>
+</head>
+<body>
+  <div class="app-shell u-theme-anim">
+    <header class="appbar" aria-label="Board application bar">
+      <div class="brand" aria-label="agile-workflow substrate board">
+        <span>substrate</span><span class="mark">/</span><span>board</span>
+      </div>
+
+      <nav class="tabs view-tabs" aria-label="Board views">
+        <button class="tab" type="button" data-view="kanban" aria-selected="true">Kanban</button>
+        <button class="tab" type="button" data-view="dependency" aria-selected="false">Dependency</button>
+        <button class="tab" type="button" data-view="table" aria-selected="false">Table</button>
+      </nav>
+
+      <div class="appbar-actions">
+        <div class="theme-picker" aria-label="Theme picker">
+          <label class="lbl" for="theme-accent">accent</label>
+          <select class="select" id="theme-accent" name="accent">
+            <option value="teal" selected>teal</option>
+            <option value="amber">amber</option>
+            <option value="violet">violet</option>
+            <option value="azure">azure</option>
+            <option value="lime">lime</option>
+            <option value="candy">candy</option>
+          </select>
+          <span class="seg" id="theme-mode" aria-label="Color mode">
+            <button class="seg-btn" type="button" data-mode="system" aria-pressed="true">Sys</button>
+            <button class="seg-btn" type="button" data-mode="light" aria-pressed="false">Light</button>
+            <button class="seg-btn" type="button" data-mode="dark" aria-pressed="false">Dark</button>
+          </span>
+        </div>
+        <span class="status-line" id="status-region" role="status" aria-live="polite">
+          <span class="spinner u-spin" aria-hidden="true"></span>
+          <span class="status-text">Waiting for substrate data</span>
+        </span>
+        <button class="btn btn-primary btn--sm u-press" type="button" id="refresh-button">Refresh</button>
+      </div>
+    </header>
+
+    <div class="shell-grid">
+      <aside class="filter-panel" aria-label="Global filters">
+        <div id="global-filter-container">
+          <noscript>Enable JavaScript to use board filters.</noscript>
+        </div>
+      </aside>
+
+      <section class="content-wrap" aria-label="Current board view">
+        <div class="toolbar-row">
+          <span class="crumb">.work / active</span>
+          <span class="diagnostics" id="diagnostics-summary">
+            <span class="count">0 diagnostics</span>
+          </span>
+        </div>
+        <div id="diagnostics-region" aria-live="polite"></div>
+        <main id="view-root" class="u-view-enter" tabindex="-1">
+          <div class="view-placeholder empty">
+            <span class="glyph" aria-hidden="true">::</span>
+            <h1>Board shell ready</h1>
+            <p>Kanban, dependency, and table views mount here as their stories land.</p>
+          </div>
+        </main>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

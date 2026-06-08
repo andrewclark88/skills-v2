@@ -30,6 +30,9 @@ Sub-agent strength is explicit:
   `reasoning_effort: high`; use `xhigh` only for concurrency/data-layer/time
   bugs in high-risk domains, very large scopes, or repeat scans that previously
   missed issues. These are read-only scanner agents, not fixers.
+- **Pi path:** use native Pi `reviewer` or `oracle` subagents for read-only
+  domain scanners when hosted in Pi and available; otherwise use the same-host
+  read-only analysis fallback.
 
 This skill hunts **correctness** bugs, not vulnerabilities, not perf, not style. Use the
 sibling skills for those.
@@ -121,14 +124,21 @@ message** so they run concurrently.
 - Codex / OpenAI: use an analysis sub-agent with `reasoning_effort: high`;
   escalate to `xhigh` only for high-risk domains, very large scopes, or repeat
   scans that previously missed issues.
+- Pi path: use a native `reviewer` or `oracle` subagent for each read-only
+  scanner when available; otherwise use the same-host read-only analysis
+  fallback.
 
 ### Scope (passed into every scanner)
 
 - **Standalone**: the user's path arg, or the whole repo if no arg. Resolve to a concrete file
   list with `git ls-files` (and the path filter, if any).
-- **Gate mode**: only files touched by items bound to the release.
+- **Gate mode**: only files touched by items bound to the release. `--release`
+  auto-widens to ALL tiers (active + archive + releases); drop any returned path
+  under `.work/archive/` — those are already-done, body-pruned stubs that were
+  gated when active and MUST NOT be re-gated (no-re-gate rule). Filter by path,
+  not `--scope active` — the bash fallback ignores `--scope`.
   ```bash
-  for item in $(.work/bin/work-view --release <version> --paths); do
+  for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
     id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
     git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
   done | sort -u > /tmp/bundle-files-<version>.txt

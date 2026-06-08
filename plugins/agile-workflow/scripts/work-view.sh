@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # work-view — query items in the agile-workflow substrate.
 #
+# FROZEN DEGRADED FALLBACK. The canonical work-view is the Rust binary
+# (crates/, installed to .work/bin/work-view). This script is only the
+# install fallback for platforms without a prebuilt binary. It deliberately
+# LACKS newer features: no `--scope` tier filtering (it always queries all
+# tiers) and no `work-view board`. bash<->Rust byte-parity is no longer
+# enforced. Full retirement is tracked as a parked epic; until then this stays
+# as a best-effort degraded fallback.
+#
 # Pure bash + a single awk pass. Frontmatter for every item is parsed exactly
 # once, in one awk process for the whole tree, instead of spawning an awk per
 # field per file. Optional yq enhancement detected at runtime but not required.
@@ -12,6 +20,24 @@
 #   3  internal error (corrupted item file)
 
 set -euo pipefail
+
+# Kept in lockstep with plugin.json by scripts/bump-version.sh. Do not hand-edit.
+WORK_VIEW_VERSION="0.11.3"
+
+# ============================================================================
+# Version prelude (POSIX / bash 3.2 safe — runs BEFORE the Bash-4 guard)
+# ============================================================================
+#
+# `--version` must answer correctly even on a host whose only bash is the
+# macOS system 3.2 with no modern bash to re-exec into. If it fell through to
+# the Bash-4 guard below it would print "requires bash 4" and exit 1, and a
+# self-heal staleness probe would read that failure as a broken/stale tool
+# instead of a version. So short-circuit here using only constructs that work
+# in bash 3.2 (printf, simple parameter expansion, case). Output is
+# byte-identical to the Rust binary: `work-view <semver>\n`, exit 0.
+case "${1:-}" in
+  --version|-V) printf 'work-view %s\n' "$WORK_VIEW_VERSION"; exit 0 ;;
+esac
 
 # ============================================================================
 # Bash 4+ required (associative arrays). macOS ships bash 3.2 at /bin/bash,
@@ -59,8 +85,8 @@ Filters (compose with AND semantics):
   --parent <id>        Direct children of the given item
   --release <version>  Items with release_binding: <version>
   --gate <name>        Items with gate_origin: <name>
-  --ready              Items at stage:implementing with all depends_on done
-  --blocked            Items at stage:implementing with unmet dependencies
+  --ready              Active items at drafting/implementing/review with all depends_on done
+  --blocked            Active items at drafting/implementing/review with unmet dependencies
   --blocking <id>      Items that depend on <id>
 
 Output (default tabular):
@@ -69,6 +95,7 @@ Output (default tabular):
   --count              Match count only
 
 Other:
+  --version            Print the work-view version and exit
   --help               Show this help and exit
 USAGE
 }
@@ -241,6 +268,12 @@ output_mode="table"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --help|-h)       usage; exit 0 ;;
+    # Short-circuits before substrate detection (like --help) so --version
+    # works outside a substrate. -V is the short form; lowercase -v is reserved
+    # for a possible future --verbose. The POSIX prelude at the top already
+    # handles --version as the first arg (for bash 3.2); this arm covers it in
+    # any position once running under bash 4+.
+    --version|-V)    printf 'work-view %s\n' "$WORK_VIEW_VERSION"; exit 0 ;;
     --stage)         want_stage="$2"; shift 2 ;;
     --kind)          want_kind="$2"; shift 2 ;;
     --parent)        want_parent="$2"; shift 2 ;;
@@ -325,9 +358,12 @@ for f in "${ALL_FILES[@]}"; do
     fi
   fi
 
-  # --ready / --blocked: only items at stage:implementing
+  # --ready / --blocked: active-tier items at a movable stage
   if [[ $want_ready -eq 1 || $want_blocked -eq 1 ]]; then
-    [[ "${IDX_STAGE[$f]}" == "implementing" ]] || continue
+    # only active-tier items are actionable candidates
+    case "$f" in */.work/active/*) ;; *) continue ;; esac
+    # stage must be one of: drafting, implementing, review
+    case "${IDX_STAGE[$f]}" in drafting|implementing|review) ;; *) continue ;; esac
     if [[ $want_ready -eq 1 ]]; then
       deps_satisfied "$f" || continue
     else

@@ -89,7 +89,9 @@ Explore.
 Spawn **one** read-only Explore sub-agent only when the batch spans unclear code
 areas or you cannot confidently name the natural seams from direct reading. For
 Claude Code, use the Explore/Agent shape. For Codex, use an `explorer`
-sub-agent with `reasoning_effort: medium`.
+sub-agent with `reasoning_effort: medium`. For Pi, use a native `scout` or
+`context-builder` subagent when available; otherwise keep the area-map in the
+host session.
 Give it:
 - The list of targeted backlog ideas (id + brief, one per line)
 - A one-paragraph summary of the foundation docs from Phase B2
@@ -367,7 +369,8 @@ Then identify which foundation docs need updating:
 
 For each affected doc:
 1. Read the current version in full
-2. Edit the relevant sections to reflect the **new present** — extend, replace, restructure as needed
+2. Edit the relevant sections to reflect the **current or intended future
+   state** — extend, replace, restructure as needed
 3. **Do NOT add "previously" notes, "in v1.x", or migration prose.** Git carries
    history; the doc carries truth (rolling-foundation principle)
 

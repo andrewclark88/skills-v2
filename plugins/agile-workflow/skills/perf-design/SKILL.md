@@ -188,6 +188,8 @@ The brief should describe the perf problem and target. If it's vague:
 The principles skill auto-loads. Read:
 - `docs/VISION.md`, `docs/SPEC.md` (perf targets may be specified)
 - `AGENTS.md` / `CLAUDE.md`
+- `.agents/rules/*.md` (if present) — the project's force-loaded agent rules
+  (tag semantics, test integrity, review policy)
 - Existing benchmarks (search for benchmark files, perf tests, load tests)
 - Existing test suite (so benchmarks follow the same patterns)
 - Source code under investigation — read the target code thoroughly before profiling
@@ -201,6 +203,9 @@ The principles skill auto-loads. Read:
    - **Codex / OpenAI:** analysis sub-agent with `reasoning_effort: medium`
      for known stacks, `high` for unfamiliar runtimes or deeper investigations,
      and `xhigh` only for broad, high-risk perf redesigns.
+   - **Pi path:** use a native Pi `scout` or `context-builder` subagent for
+     profiling-tool research when hosted in Pi and available; otherwise keep the
+     same host-local research fallback.
    Brief it:
    "Find the recommended profiling tools for <language/runtime>. Return: CPU
    profiler, memory/allocation profiler, I/O/tracing tool, lock/off-CPU profiler,
