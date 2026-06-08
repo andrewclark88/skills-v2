@@ -182,13 +182,15 @@ Agent({
   description: "Program campaign {NN}: {campaign title}",
   subagent_type: "general-purpose",
   model: "opus",
-  prompt: <campaign-lead prompt with seed, scope notes, priors from completed dependees,
-           program context, per-campaign budget, output directory>,
+  prompt: <[verbatim research-discipline bundle] + campaign-lead prompt with seed, scope notes,
+           priors from completed dependees, program context, per-campaign budget, output directory>,
   run_in_background: true
 })
 ```
 
-Each spawned Lead runs the full `/deep-research` workflow internally. Parallel groups dispatch concurrently; sequential edges block.
+**Inline the research-discipline bundle, verbatim, into every campaign-Lead prompt (ARD SPEC §5).** Read `${CLAUDE_PLUGIN_ROOT}/skills/research-discipline/SKILL.md` and prepend its full body above the campaign-Lead prompt. This is **load-bearing at program scale** specifically because nested agent spawning is blocked (see Tips): each campaign Lead does its research **single-agent** — it is itself the source-fetching, attesting, citing author, not an orchestrator of specialists. So the discipline must reach the Lead directly; there is no specialist dispatch beneath it to carry it.
+
+Each spawned Lead runs the `/deep-research` workflow internally (single-agent in practice): **attest each load-bearing source to the shared flat `.research/attestation/<handle>.md` before citing it** (`provenance: source-direct`), cite every load-bearing claim `[handle]{N}`, and stamp campaign briefs `provenance: agent-synthesis`. Handles name the **source**, not the campaign — so a source attested in campaign 1 is reused (same handle) in campaign 3, not re-attested under a new name. Parallel groups dispatch concurrently; sequential edges block.
 
 ### Phase 6: Monitor
 
@@ -208,12 +210,15 @@ Agent({
   description: "Cross-campaign synthesis: {megatopic}",
   subagent_type: "general-purpose",
   model: "opus",
-  prompt: <synthesis prompt with program plan + all campaign parents + all specialist briefs>
+  prompt: <[verbatim research-discipline bundle] + synthesis prompt with program plan +
+           all campaign parents + all specialist briefs>
 })
 ```
 
+Inline the discipline bundle here too — the Synthesizer authors citing prose at program scale. The **lens-not-substrate guard** applies hardest here: a campaign `parent.md` or specialist brief is an analytical-tier artifact, never a `[handle]{N}` source. The super-parent carries forward only citations that resolve to real attestation files, verbatim.
+
 Outputs:
-- **super-parent.md** — program-level themes, cross-campaign contradictions flagged explicitly, coverage assessment at program scale
+- **super-parent.md** — program-level themes, cross-campaign contradictions flagged explicitly, coverage assessment at program scale; frontmatter `provenance: agent-synthesis`, preserving `[handle]{N}` citations on restated load-bearing claims
 - **Cross-campaign cross-references** — typed `related[]` edges between briefs across campaigns (vocabulary includes `parallel-to`, `depends-on`, `program-of`)
 - **"Part of program: \<slug\>" append** to each campaign's `parent.md` (additive, non-mutating — validated in chain-mode demos as the reliable linkage primitive)
 - Flags any child-campaign *claims* of resolution as claims, not facts (leaves verification to Program Evaluator)
@@ -248,7 +253,17 @@ Standard dimensions: program coverage, program coherence, cross-campaign contrad
 
 ### Phase 9: Write Output
 
-Write all outputs to the program directory. Run `/knowledge-index` to regenerate the index — do NOT hand-edit `docs/knowledge-index.yaml`. Each brief, parent, and report must have conformant frontmatter (`description`, `type`, `kind: research`, `summary`, `key_findings`, `research_method: /research-program`, `updated`). Use `type: program-parent` for `program.md` and `content_type: program-synthesis` for `super-parent.md`.
+Write all outputs to the program directory.
+
+**Before regenerating the index, lint the citation chain across the whole program (program-wide reconciliation).** Every campaign wrote to the one shared `.research/attestation/` tier, so a `colliding-handle` here means two *campaigns* attested different sources under the same handle — the program-scale version of the deep-research merge check:
+
+```
+/citation-lint .research/programs/<program-slug>/ --exit-code-on high
+```
+
+Resolve every `[handle]{N}` across all campaign briefs and the super-parent against `.research/attestation/`. Reconcile any `colliding-handle` (rename one source's handle + its citations) and fix any `unresolved-handle` before finalizing. Syntactic check; it pairs with the Program Evaluator (Phase 8), which is the semantic groundedness pass — run both.
+
+Run `/knowledge-index` to regenerate the index — do NOT hand-edit `docs/knowledge-index.yaml`. Each brief, parent, and report must have conformant frontmatter (`description`, `type`, `kind: research`, `slug`, `summary`, `key_findings`, `research_method: /research-program`, `provenance: agent-synthesis`, `verification_status: attested` once the lint is clean — absent ⇒ `legacy-unattested`, `updated`). Use `type: program-parent` for `program.md` and `content_type: program-synthesis` for `super-parent.md`.
 
 ### Phase 10: Handoff
 
@@ -271,6 +286,9 @@ Report to user (or calling skill):
 - **Don't nest programs.** Three tiers total (`/research` → `/deep-research` → `/research-program`). Deferred by design.
 - **Don't skip plan review** unless `--no-review` is explicit. Program decomposition is the single most leveraged decision in the campaign.
 - **Don't dispatch with unresolved high-overlap warnings.** If two proposed campaigns have >0.7 scope overlap, merge them before dispatch.
+- **Don't assume the research-discipline skill reaches campaign Leads on its own.** It does not auto-load into spawned agents — inline it verbatim into every campaign-Lead and synthesis prompt. At program scale, with nested spawning blocked, the Lead is the sole authoring context; if the discipline doesn't reach it, nothing else carries it.
+- **Don't skip the program-wide citation lint.** Campaigns share one attestation tier, so `colliding-handle` (two campaigns, same handle, different sources) only surfaces when you lint the whole program. Reconcile before finalizing.
+- **Don't cite a campaign brief as a source in the super-parent.** Analytical-tier artifacts are lens, not substrate — carry forward only `[handle]{N}` citations that resolve to real attestations.
 
 ## Tips
 

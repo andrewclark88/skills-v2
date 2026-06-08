@@ -1,7 +1,7 @@
 ---
 description: "Architecture for the deep-research skill — four-role orchestrator-workers pattern, PMEST-faceted decomposition, veto+weighted stopping, separate synthesis and evaluator agents, per-role model assignments, integration with /ideate /brief /expand."
 type: architecture
-updated: 2026-04-15
+updated: 2026-06-08
 ---
 
 # Architecture: Deep Research
@@ -91,17 +91,20 @@ Each role has its own prompt, context window, and model assignment.
 
 **Responsibilities:**
 - Investigate one leaf subdomain deeply
-- Iteratively: search → gather → filter
-- Cite sources per claim (`sources: [{url, accessed_at, excerpt}]`)
+- Iteratively: attest → search → gather → filter
+- Attest each load-bearing source to `.research/attestation/<handle>.md` (`provenance: source-direct`) before citing it
+- Cite every load-bearing claim `[handle]{N}` (chain: claim → handle → attestation → fetched source); keep the per-claim `sources:` list too
 - Suggest cross-references to sibling subdomains
-- Report findings as a draft brief
+- Report findings as a draft brief (`provenance: agent-synthesis`)
 
 **Context each receives:**
+- The **verbatim research-discipline bundle, prepended to the prompt** (ARD SPEC §5 — it does not auto-load into a spawned agent)
 - Its subdomain description (the leaf node)
 - Parent domain context (the seed)
 - Sibling titles and one-line descriptions (NOT full outputs — causes interference)
 - Relevant existing briefs from the knowledge layer (curated to the subdomain)
-- Output schema (brief frontmatter + body conventions, including the required `research_method: /deep-research` stamp)
+- The shared, flat attestation tier path (`.research/attestation/`), where handles name the source (so co-attested sources converge, not collide)
+- Output schema (brief frontmatter + body conventions, including the required `research_method: /deep-research` stamp and `provenance: agent-synthesis`)
 - Token/time budget
 
 **What they do NOT do:**
@@ -359,11 +362,12 @@ recommendations:
 
 The Lead writes:
 
-1. **Campaign directory** — `docs/briefs/<seed-slug>/`
+1. **Campaign directory** — `.research/briefs/<seed-slug>/`
 2. **Specialist briefs** — one per leaf (with cross-refs added by synthesis)
 3. **Parent brief** — `parent.md` at the directory root
-4. **Campaign quality report** — `campaign.md` with the evaluator's structured report
-5. **Knowledge index update** — entry for each brief
+4. **Citation-chain lint (post-merge reconciliation)** — `/citation-lint .research/briefs/<seed-slug>/ --exit-code-on high` resolves every `[handle]{N}` across all briefs against the shared `.research/attestation/` tier. This is where a `colliding-handle` (two specialists, same handle, different sources) surfaces — reconcile it before finalizing. Syntactic check; pairs with the Evaluator's semantic groundedness pass.
+5. **Campaign quality report** — `campaign.md` with the evaluator's structured report
+6. **Knowledge index update** — entry for each brief
 
 All briefs enter at `confidence: speculative, status: draft` per the north star principle "quality gates are non-negotiable." The user reviews and promotes manually in v1. When Phase 9c (`knowledge/create`) ships, the skill uses it directly with the right initial status.
 
@@ -447,7 +451,7 @@ docs/briefs/<seed-slug>/
 description: "Deep research campaign: {seed topic}"
 type: brief
 content_type: campaign-parent
-updated: {date}
+updated: 2026-06-08
 confidence: speculative
 status: draft
 ---
@@ -629,8 +633,13 @@ Think carefully about the decomposition. The quality of the campaign is bounded 
 
 ### Specialist system prompt (key excerpt)
 
+**The dispatch prompt is assembled as `[verbatim research-discipline bundle] + [the brief below]`.** The Lead reads `${CLAUDE_PLUGIN_ROOT}/skills/research-discipline/SKILL.md` and prepends its full body, unaltered, above this brief (ARD SPEC §5 — the discipline must travel into every authoring sub-context; an auto-loading skill does not propagate into spawned agents).
+
 ```
 You are a research specialist investigating: {leaf subdomain description}.
+
+The research-discipline bundle is inlined above this brief — its six sections bind
+your output. Read it before engaging any source. Do not author without it.
 
 Context:
 - Seed topic: {seed}
@@ -638,25 +647,43 @@ Context:
 - Sibling subdomains (for awareness, do not research these): {sibling titles + one-line descriptions}
 - Relevant existing knowledge: {curated list of existing brief summaries}
 - Cross-reference targets: {sibling slugs for use in related[] suggestions}
+- Attestation tier: .research/attestation/<handle>.md (shared, flat, across all specialists)
 
 Your budget: {token budget}, wall-clock: {time budget}.
 
 Your task:
-1. Deeply investigate this subdomain using web search, source reading, and reasoning.
+1. Attest before synthesizing. Fetch and read the sources your load-bearing claims will
+   rest on. For each, write a per-source attestation at .research/attestation/<handle>.md
+   *before* writing any claim that cites it — paraphrased summary + key passages with
+   source-internal anchors + frontmatter (source_handle, fetched, source_url or source_path,
+   provenance: source-direct). The <handle> names the SOURCE (e.g. rfc6749, hono-repo), not
+   you — so if a sibling attested the same source, reuse the same handle (one file per source,
+   never two files declaring the same source_handle). No synthesis prose in attestation files.
 2. Produce a draft brief in the standard schema. Include:
-   - Frontmatter: description, slug, tags, audience, confidence: speculative, status: draft
-   - Body: structured sections appropriate to the content
-   - sources: [{url, accessed_at, excerpt}] with per-claim attribution
+   - Frontmatter: description, slug, tags, audience, confidence: speculative, status: draft,
+     provenance: agent-synthesis (the brief is a synthesis artifact; the attestations are
+     source-direct), research_method: /deep-research
+   - Body: structured sections appropriate to the content, with every load-bearing claim
+     cited [handle]{N} (N = the source's entry in the per-corpus .research/reference/<corpus>/INDEX.md,
+     append-only — never renumber). A claim with no fetched-source attestation is FORBIDDEN
+     (no training-recall citations; acknowledge the gap and drop the claim instead).
+   - A "## Disconfirming analysis" section: the outcome of actively seeking disconfirming
+     evidence across your attested sources before each load-bearing claim.
+   - A "## Contradictions" section when your sources diverge: named-source positions
+     side-by-side, no resolution-by-paraphrase.
    - A final "Suggested cross-references to sibling subdomains" section listing candidate
      related[] edges with proposed relationship types (synthesis uses these as input)
-3. Iteratively refine: search → gather → filter → write. Stop when budget runs out.
-4. Return a ~100-word summary of your findings. Your summary MUST include a "Sibling scope
-   avoided" line (1-2 sentences) listing what you noticed you could have covered but
-   explicitly avoided per your boundaries. This signals decomposition quality to the
-   evaluator and surfaces drift early.
+3. Iteratively refine: attest → search → gather → filter → write. Stop when budget runs out.
+4. Return (data the Lead consumes, not a human summary): your brief path; the list of
+   attestation handles you authored (the Lead runs a campaign-wide citation-lint); a "Sibling
+   scope avoided" line (1-2 sentences — decomposition-quality signal); and any
+   acquisition-pending gaps (load-bearing sources you could not fetch — name them; never
+   paper over with training-recall).
 
 Do NOT:
 - Wander into sibling subdomains
+- Cite a [handle]{N} you didn't attest, or cite an analytical-tier artifact (a sibling brief,
+  a glossary) as a source — that launders framing into apparent attestation (lens, not substrate)
 - Write final cross-references yourself (suggest them in the "Suggested cross-references"
   section; synthesis writes the frontmatter edges)
 - Research topics already covered by existing briefs (cite them instead)
@@ -664,8 +691,12 @@ Do NOT:
 
 ### Synthesis system prompt (key excerpt)
 
+**Assembled as `[verbatim research-discipline bundle] + [the brief below]`** — synthesis authors citing prose, so the discipline binds it too (especially the lens-not-substrate guard: a specialist brief is never a `[handle]{N}` source).
+
 ```
 You are the Synthesis Agent for a deep research campaign on: {seed topic}.
+
+The research-discipline bundle is inlined above this brief — it binds your output.
 
 You have been given N draft briefs produced by specialists, plus the domain tree.
 
@@ -678,7 +709,9 @@ Your task:
    in the parent brief's "Contradictions Flagged" section. Do NOT silently resolve.
 4. Write the parent brief. Structure: Context, Decomposition (tree with links), Key Findings
    (major themes across specialists), Contradictions Flagged, Coverage Assessment, Related,
-   Campaign Metadata.
+   Campaign Metadata. Frontmatter: provenance: agent-synthesis, research_method: /deep-research.
+   When you restate a load-bearing claim from a specialist, carry its [handle]{N} citation
+   forward verbatim — do not strip the chain.
 5. Self-review your cross-references before returning. For each edge you added, confirm (a)
    the slug target exists, (b) the relationship type matches the closed vocabulary, (c) the
    semantic match between the two briefs is real (not decorative). If any fail, revise.
@@ -686,6 +719,8 @@ Your task:
 
 Do NOT:
 - Research additional content
+- Cite a specialist brief (or any analytical-tier artifact) as a [handle]{N} source — only
+  carry forward citations that resolve to real attestation files (lens, not substrate)
 - Silently resolve contradictions
 - Edit specialist briefs beyond adding cross-references
 - Produce an appended list of specialist outputs — synthesize them

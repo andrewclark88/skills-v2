@@ -254,19 +254,22 @@ Agent({
   description: "Deep research: {facet name}",
   subagent_type: "general-purpose",
   model: "sonnet",
-  prompt: <specialist prompt with subdomain, parent context, sibling titles,
-           relevant existing briefs, output schema, budget>,
+  prompt: <[verbatim research-discipline bundle] + specialist prompt with subdomain,
+           parent context, sibling titles, relevant existing briefs, output schema, budget>,
   run_in_background: true
 })
 ```
 
 Dispatch all in parallel. Track agent IDs.
 
-**Required specialist outputs.** Every specialist prompt MUST require three things:
+**Inline the research-discipline bundle into every specialist prompt (ARD SPEC §5).** A specialist is an authoring sub-context that cites sources, so it MUST receive the anti-fabrication discipline — and an auto-loading skill does **not** propagate into spawned sub-agents. Before dispatch, read `${CLAUDE_PLUGIN_ROOT}/skills/research-discipline/SKILL.md` and **prepend its full body, verbatim, to each specialist prompt** (above the facet-specific brief). Do not paraphrase it; paraphrasing reintroduces the drift it fences. The synthesis dispatch (Phase 7) gets the same prepend — it too authors citing prose.
 
-1. **A written brief** on disk at the specified path (main output; load-bearing for synthesis)
-2. **A "Suggested cross-references to sibling subdomains" section** at the end of the brief body. Synthesis uses these as candidate `related:` edges. Underused if not explicitly required — demos showed all specialists produce high-quality candidates when asked.
-3. **A "Sibling scope avoided" return-message field** (1-2 sentences) listing what the specialist noticed they could have covered but explicitly avoided per their boundaries. Gives the Evaluator and Synthesis real signal about where the decomposition's seams are, and surfaces drift early.
+**Required specialist outputs.** Every specialist prompt MUST require these:
+
+1. **Per-source attestations before synthesis prose.** For each source the specialist's load-bearing claims lean on, it writes an attestation to `.research/attestation/<handle>.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/attestation.md`) **before** citing it. The `<handle>` names the **source** (e.g. `rfc6749`, `hono-repo`), not the specialist — so two specialists hitting the same source converge on one file. Frontmatter: `source_handle`, `fetched`, `source_url`/`source_path`, `provenance: source-direct`.
+2. **A written brief** on disk at the specified path (main output; load-bearing for synthesis), citing every load-bearing claim `[handle]{N}` against a per-corpus `.research/reference/<corpus>/INDEX.md` (append-only; never renumber). Brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`), plus a `## Disconfirming analysis` section (outcome of seeking disconfirming evidence) and a `## Contradictions` section when sources diverge (named-source positions side-by-side, no resolution-by-paraphrase).
+3. **A "Suggested cross-references to sibling subdomains" section** at the end of the brief body. Synthesis uses these as candidate `related:` edges. Underused if not explicitly required — demos showed all specialists produce high-quality candidates when asked.
+4. **Return-message fields:** the brief path, the **list of attestation handles authored** (so the Lead can run the post-merge lint), a **"Sibling scope avoided"** line (1-2 sentences — decomposition-seam signal), and any **acquisition-pending gaps** (load-bearing sources the specialist could not fetch — named explicitly, never papered over with training-recall).
 
 ### Phase 6: Monitor
 
@@ -291,13 +294,17 @@ Agent({
   description: "Synthesize deep research campaign: {seed}",
   subagent_type: "general-purpose",
   model: "opus",
-  prompt: <synthesis prompt with domain tree + all specialist briefs>
+  prompt: <[verbatim research-discipline bundle] + synthesis prompt with domain tree +
+           all specialist briefs>
 })
 ```
 
+**Inline the research-discipline bundle here too** — synthesis authors citing prose, so the same anti-fabrication discipline binds it. In particular the **lens-not-substrate guard**: synthesis must NOT cite a specialist brief as a `[handle]{N}` source (that launders an analytical framing into apparent source-attestation). It may only carry forward `[handle]{N}` citations that resolve to real attestation files.
+
 Synthesis produces:
 - Parent brief (context, decomposition, key findings, contradictions flagged, coverage
-  assessment, related, metadata)
+  assessment, related, metadata), frontmatter `provenance: agent-synthesis`
+- **Preserved `[handle]{N}` citations** — when the parent brief restates a load-bearing claim from a specialist, it carries that claim's citation forward verbatim (don't strip the chain during synthesis)
 - Cross-references added to specialist briefs (`related: [{slug, relationship}]`)
 - Explicit contradiction flags (never silently resolved)
 
@@ -324,9 +331,14 @@ groundedness, recommendations).
 1. Create `.research/briefs/<seed-slug>/` directory
 2. Write specialist briefs (with synthesis's cross-references)
 3. Write `parent.md` (synthesis output)
-4. Write `campaign.md` (evaluator's report + campaign metadata)
-5. Run `/knowledge-index` to regenerate the index from frontmatter (do NOT hand-edit `docs/knowledge-index.yaml`). Each brief must have conformant frontmatter (`description`, `type: brief`, `kind: research`, `summary`, `key_findings`, `research_method: /deep-research`, `updated`)
-6. **Chain mode (`--continue-from` passed):** update the parent campaign's `parent.md` by
+4. **Lint the citation chain across the whole campaign (post-merge reconciliation).** Run the `citation-lint` skill over the campaign directory against the shared attestation tier:
+   ```
+   /citation-lint .research/briefs/<seed-slug>/ --exit-code-on high
+   ```
+   This resolves every `[handle]{N}` in every specialist brief and `parent.md` against `.research/attestation/`. Because all specialists wrote to the **one flat attestation dir**, this is where a **`colliding-handle`** surfaces — two specialists that attested *different* sources under the *same* handle (high severity). Reconcile it: rename one source's handle (and its citations) so each handle names exactly one source. Also fix any `unresolved-handle` (a cited handle no specialist actually attested). Re-run until clean. The lint is **syntactic** — it pairs with the Evaluator (Phase 8), which is the **semantic** groundedness check; run both.
+5. Write `campaign.md` (evaluator's report + campaign metadata)
+6. Run `/knowledge-index` to regenerate the index from frontmatter (do NOT hand-edit `docs/knowledge-index.yaml`). Each brief must have conformant frontmatter (`description`, `type: brief`, `kind: research`, `slug`, `summary`, `key_findings`, `research_method: /deep-research`, `provenance: agent-synthesis`, `verification_status: attested` once the lint is clean — absent ⇒ `legacy-unattested`, `updated`)
+7. **Chain mode (`--continue-from` passed):** update the parent campaign's `parent.md` by
    appending (or extending) a `## Extended by child campaigns` section with a pointer to
    this child campaign directory, the anchor brief slug, and a one-line summary of what
    the child covers. Do not modify the parent campaign's specialist briefs.
@@ -365,6 +377,10 @@ Report to the user (or calling skill):
 - **Don't accept "insufficient data" without investigating why.** A genuinely empty
   subdomain is rare. More often: the subdomain was described poorly, or the specialist
   got stuck. Investigate before marking complete.
+- **Don't assume the research-discipline skill auto-loads into specialists.** It does NOT — an auto-loading skill never propagates into a spawned sub-agent. The discipline must be **inlined verbatim** into every specialist and synthesis dispatch prompt, or the anti-fabrication floor silently vanishes in exactly the contexts that need it.
+- **Don't let a specialist cite a `[handle]{N}` it didn't attest.** Every cited handle must resolve to an attestation file the specialist wrote first. The Phase 9 lint catches violations campaign-wide.
+- **Don't ignore `colliding-handle` from the merged lint.** It means two specialists attested different sources under the same handle — citations now resolve ambiguously. Reconcile before finalizing; don't ship a campaign with a colliding chain.
+- **Don't strip `[handle]{N}` citations during synthesis.** The parent brief carries forward the chain for every load-bearing claim it restates.
 
 ---
 
