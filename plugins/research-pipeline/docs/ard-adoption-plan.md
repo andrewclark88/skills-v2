@@ -1,7 +1,7 @@
 ---
 description: "Plan for adopting ARD (Agentic Research Discipline) verification into research-pipeline — Option A: vendor ARD's liftable kernel (anti-fabrication floor + attestation/[handle]{N} citation chain + citation lint) as a verification adapter, keeping our orchestration/tiers/knowledge layer. Phase 0 decisions locked; Phases 1-2 shipped (chain across all producers + vendored research-discipline); Phase 3 in progress (gate-citations + re-sync procedure). Peer-reviewed (Codex)."
 type: architecture
-updated: 2026-06-08
+updated: 2026-06-09
 ---
 
 # ARD Adoption Plan (Option A)
@@ -198,6 +198,14 @@ a newer ARD release:
 3. **Update `ard.json`** `adopts.{version,release_tag,commit_sha,catalog_baseline}` to the new release.
 4. **Run conformance:** `python3 plugins/research-pipeline/scripts/conformance/run.py` — must stay green (it asserts the vendored lint still reproduces ARD's canonical verdicts; a drift here means the re-sync changed lint behavior). If `catalogs.json` added pattern categories or chain statuses, update `conformance/expected.json` to match the new canonical verdicts and re-run.
 5. **Bump the plugin** (`./scripts/bump-version.sh research-pipeline patch`) — the plugin's own semver is decoupled from `adopts.version`; bump it because the plugin changed.
+
+## Deferred follow-ups (known, not forgotten)
+
+Small debts surfaced during the post-arc review (2026-06; not blocking, captured so they aren't lost):
+
+1. **`version-number` advisory `[warn]` noise.** The vendored lint's pattern catalog flags any `X.Y`-shaped string as a `version-number` advisory — including innocuous prose/titles like "OAuth 2.0" (confirmed in the e2e run), not just numbered `## Sources` lists. It's harmless: advisory `[warn]` only, and `gate-citations` ignores pattern flags (never emits items for them). But it's noisier than the producer docs imply ("numbered Sources lists trip it"). The pattern lives in the **vendored** `scripts/catalogs.json` — pin-don't-fork, so don't patch it locally. Resolve by either (a) tightening the pattern upstream and pulling it on the next ARD re-sync, or (b) flagging it to ARD. Low priority.
+
+2. **Extend cross-model review to skill/prompt-ware authoring.** The peeragent cross-model (Codex) loop earned its keep this arc — it caught real false-assurance bugs in single-author prompt-ware the test suite structurally can't (over-claimed `N` enforcement, the isolated-evaluator passage-support gap, a parallel-INDEX race). **Already wired:** `agile-workflow:review` runs a cross-model peer pass on its standard/deep lanes, and `research-pipeline:feature-design` / `epic-design` run a cross-model advisory pass under autopilot for risky decisions. **The gap:** changes to the *skills/docs themselves* (the prompt-ware that defines the pipeline) get no automatic cross-model pass — this arc's review was a manual `/peer-review`. Consider a convention/trigger so high-blast-radius SKILL.md/doc edits invoke it (e.g. a checkpoint option, or a documented "run `/peer-review` before merging foundational prompt changes" rule). Tracks the companion memory's deferred-wiring note. Medium priority; decide when next touching the review/checkpoint skills.
 
 ## Risks
 
