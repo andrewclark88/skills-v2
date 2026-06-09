@@ -38,6 +38,7 @@
  <label class="chk"><input type="checkbox" id="ecRef" checked>reference</label>
  <label class="chk"><input type="checkbox" id="ecSup" checked>supersession</label>
  <label class="chk"><input type="checkbox" id="ecCon" checked>containment</label>
+ <label class="chk"><input type="checkbox" id="ecCit" checked>citation</label>
  <span class="sep"></span>
  <button id="bDrag" title="toggle left-drag between rotate and pan">drag: rotate</button>
  <button id="bSpin" class="active">spin</button>
@@ -58,7 +59,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;',
 const KIND_ORDER = ['historical','research','brief','architecture','planning'];  // bottom -> top
 const present = [...new Set(DATA.nodes.map(n=>n.kind))];
 const extra = present.filter(k=>!KIND_ORDER.includes(k)).sort();
-const ORDER = ['(missing)'].concat(KIND_ORDER).concat(extra);   // ghosts sink to the bottom
+const ORDER = ['(missing)','(evidence)'].concat(KIND_ORDER).concat(extra);   // ghosts + evidence sink to the bottom
 const GAP = 170;
 const mid = (ORDER.length-1)/2;
 function yOf(kind){ const i=ORDER.indexOf(kind); return ((i<0?ORDER.length:i)-mid)*GAP; }
@@ -71,16 +72,24 @@ const gnodes = DATA.nodes.map(n=>({ id:n.id, label:n.label, kind:n.kind, group:n
   val:1+6*Math.sqrt(n.indeg/maxIndeg), fy:yOf(n.kind) }));
 DATA.ghosts.forEach(g=>gnodes.push({ id:g.id, label:g.label, kind:'(missing)', group:'(missing)',
   color:g.color, ghost:true, dclass:g.dclass, indeg:0, outdeg:0, val:1, fy:yOf('(missing)') }));
-const realNodes = gnodes.filter(n=>!n.ghost);
+// ARD evidence overlay: attestation nodes (a distinct class, not doc nodes) on their own bottom layer
+DATA.evidence.forEach(e=>gnodes.push({ id:e.id, label:e.label, kind:'(evidence)', group:'(evidence)',
+  color:e.color, evidence:true, resolved:e.resolved, provenance:e.provenance, fetched:e.fetched,
+  source:e.source, cited_by:e.cited_by, indeg:0, outdeg:0, val:1.4, fy:yOf('(evidence)') }));
+const EV = {}; DATA.evidence.forEach(e=>EV[e.id]=e);
+const realNodes = gnodes.filter(n=>!n.ghost && !n.evidence);
 const idset = new Set(gnodes.map(n=>n.id));
 const glinks = DATA.edges.filter(e=>idset.has(e.source)&&idset.has(e.target))
   .map(e=>({ source:e.source, target:e.target, ecat:e.ecat, dclass:e.dclass }));
+// citation edges: brief → attestation. Resolved = teal; unresolved (broken chain) = red.
+DATA.citations.forEach(c=>{ if(idset.has(c.source)&&idset.has(c.target))
+  glinks.push({ source:c.source, target:c.target, ecat:'citation', dclass:c.resolved?'':'broken-citation' }); });
 const OBJ = {};  // id -> live node object (gets x/y/z from engine)
 
 const ecOff = new Set();
 function linkVisible(l){ return !ecOff.has(l.ecat); }
-function linkColor(l){ return l.dclass==='broken'?'#ff0033': l.dclass==='unindexed'?'#ff9f1c':
-  l.ecat==='supersession'?'#b07aa1': l.ecat==='containment'?'#2f9e80':'#5566aa'; }
+function linkColor(l){ return l.dclass==='broken'||l.dclass==='broken-citation'?'#ff0033': l.dclass==='unindexed'?'#ff9f1c':
+  l.ecat==='citation'?'#e8b84b': l.ecat==='supersession'?'#b07aa1': l.ecat==='containment'?'#2f9e80':'#5566aa'; }
 
 const Graph = ForceGraph3D({ controlType:'orbit' })(document.getElementById('g'))
   .backgroundColor('#0b0e13')
@@ -111,7 +120,15 @@ function focusNode(n){ if(typeof n==='string') n=OBJ[n]; if(!n) return;
 function chip(t,c){ return '<span class="pill" style="background:'+c+'33;color:'+c+'">'+esc(t)+'</span>'; }
 function showCard(id){ const n=NODE[id]; const P=document.getElementById('panel'), B=document.getElementById('pbody');
   P.classList.add('open');
-  if(!n){ const g=GH[id]; B.innerHTML='<h3>'+esc(g?g.label:id)+'</h3>'+chip(g?g.dclass:'?', '#ff9f1c')+'<div class="kv">'+esc(id)+'</div>'; return; }
+  if(!n){ const e=EV[id];
+    if(e){ B.innerHTML='<h3>'+esc(e.label)+'</h3>'
+      +chip(e.resolved?'attestation':'unresolved citation', e.color)+(e.provenance?chip(e.provenance,'#76b7b2'):'')
+      +'<div class="kv"><b>handle</b> '+esc(e.handle)+'</div>'
+      +(e.source?'<div class="kv"><b>source</b> '+esc(e.source)+'</div>':'')
+      +(e.fetched?'<div class="kv"><b>fetched</b> '+esc(e.fetched)+'</div>':'')
+      +'<div class="kv"><b>cited by</b> '+e.cited_by+' brief(s)</div>'
+      +(e.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run /citation-lint).</div>'); return; }
+    const g=GH[id]; B.innerHTML='<h3>'+esc(g?g.label:id)+'</h3>'+chip(g?g.dclass:'?', '#ff9f1c')+'<div class="kv">'+esc(id)+'</div>'; return; }
   const a=ADJ[id]||{in:[],out:[]};
   const links=arr=>arr.length?'<ul class="lst">'+arr.map(x=>'<li class="lnk" data-go="'+esc(x.id)+'"><span class="rel">'+esc(x.ecat==='containment'?'contains':x.rel)+' › </span>'+esc(NODE[x.id]?NODE[x.id].label:x.id)+'</li>').join('')+'</ul>':'<div class="kv">— none —</div>';
   let h='<h3>↑ In-links <span>('+a.in.length+')</span></h3>'+links(a.in);
@@ -134,7 +151,7 @@ document.getElementById('search').addEventListener('keydown',e=>{ if(e.key!=='En
 
 // ---- edge toggles ----
 function bindEc(id,cat){ document.getElementById(id).addEventListener('change',e=>{ if(e.target.checked)ecOff.delete(cat); else ecOff.add(cat); Graph.linkVisibility(linkVisible); }); }
-bindEc('ecRef','reference'); bindEc('ecSup','supersession'); bindEc('ecCon','containment');
+bindEc('ecRef','reference'); bindEc('ecSup','supersession'); bindEc('ecCon','containment'); bindEc('ecCit','citation');
 
 // ---- controls: fit, drag-mode toggle, auto-spin ----
 document.getElementById('bFit').onclick=()=>Graph.zoomToFit(700,40);
@@ -152,10 +169,11 @@ let ang=0; (function rotate(){ if(spin){ ang+=0.0016; const r=Graph.cameraPositi
 
 // ---- layer legend + group legend ----
 document.getElementById('layers').innerHTML='<div class="lh">kind layers (top → bottom)</div>'
-  + ORDER.slice().reverse().filter(k=>k!=='(missing)'||DATA.ghosts.length).map(k=>'▸ '+esc(k)).join('<br>')
+  + ORDER.slice().reverse().filter(k=>(k!=='(missing)'||DATA.ghosts.length)&&(k!=='(evidence)'||DATA.evidence.length)).map(k=>'▸ '+esc(k)).join('<br>')
   + '<div class="ax">vertical axis = doc kind · horizontal = force layout</div>';
 document.getElementById('legend').innerHTML=DATA.groups.map(g=>'<span class="lg"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</span>').join('')
-  +'<span class="lg"><i style="background:#b07aa1"></i>supersession</span><span class="lg"><i style="background:#2f9e80"></i>containment</span><span class="lg"><i style="background:#ff0033"></i>broken</span>';
+  +'<span class="lg"><i style="background:#b07aa1"></i>supersession</span><span class="lg"><i style="background:#2f9e80"></i>containment</span><span class="lg"><i style="background:#ff0033"></i>broken</span>'
+  +(DATA.evidence.length?'<span class="lg"><i style="background:#e8b84b"></i>citation</span><span class="lg"><i style="background:#2f9e80"></i>attestation</span>':'');
 
 // ---- selectable vertical (Z) axis ----
 // init keeps #17's baked fy exactly; switching axis recomputes fy ON THE NODE OBJECTS and reheats
@@ -178,10 +196,12 @@ function fyAssign(key){ const ax=AXES[key]||AXES.kind;
     const idx={}; ord.forEach((v,i)=>idx[v]=i); const m=(ord.length-1)/2;
     realNodes.forEach(n=>n.fy=(idx[ax.val(n)]-m)*GAP);
     gnodes.filter(n=>n.ghost).forEach(n=>n.fy=-(m+1.3)*GAP);
+    gnodes.filter(n=>n.evidence).forEach(n=>n.fy=-(m+2.3)*GAP);
     return '<div class="lh">'+esc(ax.label)+' layers (top → bottom)</div>'+ord.slice().reverse().map(v=>'▸ '+esc(v)).join('<br>')+'<div class="ax">vertical = '+esc(ax.label)+' · horizontal = force layout</div>'; }
   const xs=realNodes.map(ax.val).filter(isFinite); const mn=Math.min.apply(0,xs), mx=Math.max.apply(0,xs), TOT=4*GAP;
   realNodes.forEach(n=>{ const v=ax.val(n); n.fy=(isFinite(v)&&mx>mn)?((v-mn)/(mx-mn))*TOT-TOT/2:-TOT/2; });
   gnodes.filter(n=>n.ghost).forEach(n=>n.fy=-TOT/2-GAP);
+  gnodes.filter(n=>n.evidence).forEach(n=>n.fy=-TOT/2-2*GAP);
   return '<div class="lh">'+esc(ax.label)+'</div><div class="ax">↑ '+esc(ax.hi)+' · ↓ '+esc(ax.lo)+'</div>';
 }
 function applyAxis(key){ document.getElementById('layers').innerHTML=fyAssign(key); Graph.d3ReheatSimulation(); setTimeout(()=>Graph.zoomToFit(600,80), 800); }

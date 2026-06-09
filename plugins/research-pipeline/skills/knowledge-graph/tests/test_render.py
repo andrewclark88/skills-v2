@@ -27,7 +27,8 @@ def by_id(d):
 
 def test_top_level_shape():
     d = data()
-    assert set(d) == {"meta", "nodes", "ghosts", "edges", "adjacency", "qa", "groups", "stats"}
+    assert set(d) == {"meta", "nodes", "ghosts", "edges", "evidence", "citations",
+                      "adjacency", "qa", "groups", "stats"}
     assert d["meta"]["root"] == "proj"
     assert d["meta"]["root_abs"].endswith("proj")
     assert d["stats"]["nodes"] == 6
@@ -98,6 +99,32 @@ def test_ghosts_emitted_for_dangling():
     assert gids["docs/missing.md"]["dclass"] == "broken"
     assert gids["docs/unindexed-on-disk.md"]["dclass"] == "unindexed"
     assert gids["src/foo.py"]["dclass"] == "out-of-scope"
+
+
+def test_evidence_overlay():
+    """ARD overlay: attestations are a distinct evidence class (NOT doc nodes), and [handle]{N}
+    citations in indexed .research/ docs become citation edges. The fixture has one attestation
+    (rfc6749) and one brief on disk citing it + an unattested handle (ghost-src)."""
+    d = data()
+    ev = {e["handle"]: e for e in d["evidence"]}
+    # resolved evidence comes from .research/attestation/rfc6749.md
+    assert ev["rfc6749"]["resolved"] is True
+    assert ev["rfc6749"]["id"] == "att:rfc6749"
+    assert ev["rfc6749"]["provenance"] == "source-direct"
+    assert ev["rfc6749"]["cited_by"] == 1
+    # unattested cited handle surfaces as an unresolved evidence node (broken chain, made visible)
+    assert ev["ghost-src"]["resolved"] is False
+    # citation edges point from the citing doc to the evidence node
+    cits = {(c["source"], c["handle"]): c for c in d["citations"]}
+    assert cits[(".research/programs/x/sub1.md", "rfc6749")]["resolved"] is True
+    assert cits[(".research/programs/x/sub1.md", "ghost-src")]["resolved"] is False
+    # evidence nodes are NOT doc nodes — doc-corpus stats are unchanged
+    assert "att:rfc6749" not in {n["id"] for n in d["nodes"]}
+    assert d["stats"]["nodes"] == 6
+    assert d["stats"]["evidence"] == 2
+    assert d["stats"]["citations"] == 2
+    assert d["stats"]["unresolved_citations"] == 1
+    assert d["qa"]["unresolved_citations"] == ["att:ghost-src"]
 
 
 def test_determinism():

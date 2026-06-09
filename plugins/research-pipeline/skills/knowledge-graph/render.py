@@ -21,7 +21,7 @@ QA classes for an unresolved related[] target:
   broken      — target does not exist on disk at all (FIX: correct the related[] slug)
   out-of-scope— target outside the indexed roots (e.g. src/), expected; not a defect
 """
-import sys, json, html, tempfile
+import sys, json, html, tempfile, re
 from pathlib import Path
 
 try:
@@ -35,6 +35,13 @@ PALETTE = ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b
            "#fabfd2", "#d4a6c8", "#b6992d", "#d7660e", "#5b8ff9", "#61ddaa", "#f6bd16", "#7262fd"]
 GHOST_COLOR = {"out-of-scope": "#888", "unindexed": "#ff9f1c", "broken": "#ff0033"}
 SUPERSEDE_RELS = {"supersedes", "superseded-by", "superseded", "superseded_by"}
+# ARD evidence overlay: attestations are a distinct node class, NOT doc nodes (they're
+# excluded from the index by design — see ard-adoption-plan.md D2). Resolved = an attestation
+# file backs a cited [handle]{N}; unresolved = a [handle]{N} cited with no attestation (a broken
+# citation chain — the same defect /citation-lint + gate-citations flag, made visible here).
+EVIDENCE_COLOR = {"resolved": "#2f9e80", "unresolved": "#ff0033"}
+CITATION_RE = re.compile(r"\[([\w-]+)\]\{(\d+)\}")   # same wire-form the lint resolves
+ATTEST_DIR = ".research/attestation"
 
 
 # ---------------------------------------------------------------------------
@@ -169,6 +176,68 @@ def build_edges(detail: dict, nodes: dict, root: Path):
     return edges, dangling
 
 
+# ---------------------------------------------------------------------------
+# ARD evidence overlay (attestations + [handle]{N} citation edges)
+# ---------------------------------------------------------------------------
+def _attestation_frontmatter(text: str) -> dict:
+    """Minimal `---`-fenced frontmatter scan — the few fields the overlay surfaces. No YAML dep
+    (the renderer's PyYAML is for the index; attestations are read straight from disk)."""
+    if not text.startswith("---"):
+        return {}
+    end = text.find("\n---", 3)
+    body = text[3:end] if end != -1 else ""
+    fm = {}
+    for line in body.splitlines():
+        k, sep, v = line.partition(":")
+        if sep and k.strip():
+            fm[k.strip()] = v.strip()
+    return fm
+
+
+def build_evidence(root: Path, nodes: dict):
+    """Return (evidence, citations) — the ARD overlay. Evidence nodes are read DIRECTLY from
+    `.research/attestation/*.md` (they're not in the index), keyed by source handle; citation
+    edges come from scanning each indexed `.research/` doc body for `[handle]{N}`. Evidence is
+    deliberately kept OUT of `nodes` so doc-corpus degree/communities/QA are unaffected (ARD D2:
+    visible in the graph without being schema-linted as docs). A cited handle with no attestation
+    becomes an `unresolved` evidence node (a broken citation chain, surfaced visually)."""
+    evidence, citations, cit_seen = {}, [], set()
+    att_dir = root / ATTEST_DIR
+    if att_dir.is_dir():
+        for f in sorted(att_dir.glob("*.md")):
+            fm = _attestation_frontmatter(f.read_text(encoding="utf-8", errors="ignore"))
+            handle = fm.get("source_handle") or f.stem
+            evidence[handle] = {
+                "id": "att:" + handle, "handle": handle, "label": handle, "kind": "evidence",
+                "resolved": True, "provenance": fm.get("provenance", ""),
+                "fetched": fm.get("fetched", ""),
+                "source": fm.get("source_url") or fm.get("source_path") or "",
+                "color": EVIDENCE_COLOR["resolved"], "cited_by": 0,
+            }
+    for p in sorted(nodes):
+        if not p.startswith(".research/"):
+            continue
+        fp = root / p
+        if not fp.is_file():
+            continue
+        for m in CITATION_RE.finditer(fp.read_text(encoding="utf-8", errors="ignore")):
+            handle, n = m.group(1), int(m.group(2))
+            if (p, handle) in cit_seen:
+                continue
+            cit_seen.add((p, handle))
+            resolved = handle in evidence
+            if not resolved:
+                evidence[handle] = {
+                    "id": "att:" + handle, "handle": handle, "label": handle, "kind": "evidence",
+                    "resolved": False, "provenance": "", "fetched": "", "source": "",
+                    "color": EVIDENCE_COLOR["unresolved"], "cited_by": 0,
+                }
+            evidence[handle]["cited_by"] += 1
+            citations.append({"id": f"{p}__att:{handle}", "source": p, "target": "att:" + handle,
+                              "handle": handle, "n": n, "resolved": resolved})
+    return [evidence[h] for h in sorted(evidence)], citations
+
+
 def compute_degree(nodes: dict, edges: list):
     for e in edges:
         if e["dclass"]:
@@ -256,7 +325,10 @@ def compute_communities(nodes: dict, edges: list) -> bool:
 # ---------------------------------------------------------------------------
 # assemble
 # ---------------------------------------------------------------------------
-def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communities) -> dict:
+def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communities,
+                  evidence=None, citations=None) -> dict:
+    evidence = evidence or []
+    citations = citations or []
     groups = sorted({group_of(p) for p in nodes})
     gcolor = {g: PALETTE[i % len(PALETTE)] for i, g in enumerate(groups)}
     for p, n in nodes.items():
@@ -282,6 +354,7 @@ def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communitie
         "out_of_scope": sorted({d["target"] for d in dangling if d["dclass"] == "out-of-scope"}),
         "orphans": orphan_groups,
         "superseded": sorted(p for p, n in nodes.items() if n["superseded"]),
+        "unresolved_citations": sorted(e["id"] for e in evidence if not e["resolved"]),
     }
     stats = {
         "nodes": len(nodes),
@@ -291,6 +364,9 @@ def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communitie
         "orphans": sum(len(v) for v in orphan_groups.values()),
         "unindexed": len(qa["unindexed"]), "broken": len(qa["broken"]),
         "oos": len(qa["out_of_scope"]), "superseded": len(qa["superseded"]),
+        "evidence": len(evidence),
+        "citations": len(citations),
+        "unresolved_citations": sum(1 for c in citations if not c["resolved"]),
     }
     return {
         "meta": {"root": root.name, "root_abs": str(root), "generated_at": str(terse.get("generated_at") or ""),
@@ -300,6 +376,8 @@ def assemble_data(root, terse, nodes, edges, dangling, adjacency, has_communitie
         "nodes": list(nodes.values()),
         "ghosts": list(ghosts.values()),
         "edges": edges,
+        "evidence": evidence,
+        "citations": citations,
         "adjacency": adjacency,
         "qa": qa,
         "groups": [{"name": g, "color": gcolor[g]} for g in groups],
@@ -314,15 +392,18 @@ def render(root: Path, out: Path, want_communities: bool, want_3d: bool = True):
     compute_degree(nodes, edges)
     adjacency = build_adjacency(nodes, edges)
     has_comm = compute_communities(nodes, edges) if want_communities else False
-    data = assemble_data(root, terse, nodes, edges, dangling, adjacency, has_comm)
+    evidence, citations = build_evidence(root, nodes)
+    data = assemble_data(root, terse, nodes, edges, dangling, adjacency, has_comm, evidence, citations)
 
     tpl = "template-3d.html" if want_3d else "template.html"
     template = (Path(__file__).parent / tpl).read_text()
     stats = data["stats"]
+    evid = (f' · <b>{stats["evidence"]}</b> evidence/<b>{stats["citations"]}</b> cites'
+            if stats["evidence"] else "")
     build_stats = (f'<b>{stats["nodes"]}</b> docs · <b>{stats["related"]}</b> related · '
                    f'<b>{stats["containment"]}</b> containment · <b>{stats["groups"]}</b> groups · '
                    f'QA <b>{stats["unindexed"]}</b>u/<b>{stats["broken"]}</b>b/'
-                   f'<b>{stats["orphans"]}</b>o/<b>{stats["superseded"]}</b>s')
+                   f'<b>{stats["orphans"]}</b>o/<b>{stats["superseded"]}</b>s{evid}')
     data_json = json.dumps(data, sort_keys=True)  # sort_keys for byte-stable output
     out_html = (template
                 .replace("__ROOT__", html.escape(root.name))
@@ -346,7 +427,8 @@ def main(argv):
         compute_degree(nodes, edges)
         adjacency = build_adjacency(nodes, edges)
         has_comm = compute_communities(nodes, edges) if "--communities" in flags else False
-        data = assemble_data(root, terse, nodes, edges, dangling, adjacency, has_comm)
+        evidence, citations = build_evidence(root, nodes)
+        data = assemble_data(root, terse, nodes, edges, dangling, adjacency, has_comm, evidence, citations)
         print(json.dumps(data, sort_keys=True))
         return
 
@@ -356,6 +438,9 @@ def main(argv):
           f"containment_edges={stats['containment']} groups={stats['groups']}")
     print(f"QA: unindexed={stats['unindexed']} broken={stats['broken']} out-of-scope={stats['oos']} "
           f"orphans={stats['orphans']} superseded={stats['superseded']}")
+    if stats["evidence"]:
+        print(f"evidence: {stats['evidence']} attestation node(s) · {stats['citations']} citation edge(s) · "
+              f"{stats['unresolved_citations']} unresolved [handle]{{N}} (broken chains)")
     print(f"wrote {out}")
     if qa["unindexed"]:
         print("  UNINDEXED (on disk, fix index):", ", ".join(qa["unindexed"][:8]))
