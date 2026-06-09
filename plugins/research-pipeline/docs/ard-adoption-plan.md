@@ -199,13 +199,18 @@ a newer ARD release:
 4. **Run conformance:** `python3 plugins/research-pipeline/scripts/conformance/run.py` — must stay green (it asserts the vendored lint still reproduces ARD's canonical verdicts; a drift here means the re-sync changed lint behavior). If `catalogs.json` added pattern categories or chain statuses, update `conformance/expected.json` to match the new canonical verdicts and re-run.
 5. **Bump the plugin** (`./scripts/bump-version.sh research-pipeline patch`) — the plugin's own semver is decoupled from `adopts.version`; bump it because the plugin changed.
 
-## Deferred follow-ups (known, not forgotten)
+## Deferred follow-ups
 
-Small debts surfaced during the post-arc review (2026-06; not blocking, captured so they aren't lost):
+Small debts surfaced during the post-arc review are tracked as **substrate items**, not
+here (build-process rule #6 — items in `.work/` track work, docs don't). skills-v2 now
+runs its own `.work/` substrate; query the follow-ups with:
 
-1. **`version-number` advisory `[warn]` noise.** The vendored lint's pattern catalog flags any `X.Y`-shaped string as a `version-number` advisory — including innocuous prose/titles like "OAuth 2.0" (confirmed in the e2e run), not just numbered `## Sources` lists. It's harmless: advisory `[warn]` only, and `gate-citations` ignores pattern flags (never emits items for them). But it's noisier than the producer docs imply ("numbered Sources lists trip it"). The pattern lives in the **vendored** `scripts/catalogs.json` — pin-don't-fork, so don't patch it locally. Resolve by either (a) tightening the pattern upstream and pulling it on the next ARD re-sync, or (b) flagging it to ARD. Low priority.
+```
+.work/bin/work-view --paths | grep -E 'version-number-warn-noise|cross-model-review-prompt-ware'
+```
 
-2. **Extend cross-model review to skill/prompt-ware authoring.** The peeragent cross-model (Codex) loop earned its keep this arc — it caught real false-assurance bugs in single-author prompt-ware the test suite structurally can't (over-claimed `N` enforcement, the isolated-evaluator passage-support gap, a parallel-INDEX race). **Already wired:** `agile-workflow:review` runs a cross-model peer pass on its standard/deep lanes, and `research-pipeline:feature-design` / `epic-design` run a cross-model advisory pass under autopilot for risky decisions. **The gap:** changes to the *skills/docs themselves* (the prompt-ware that defines the pipeline) get no automatic cross-model pass — this arc's review was a manual `/peer-review`. Consider a convention/trigger so high-blast-radius SKILL.md/doc edits invoke it (e.g. a checkpoint option, or a documented "run `/peer-review` before merging foundational prompt changes" rule). Tracks the companion memory's deferred-wiring note. Medium priority; decide when next touching the review/checkpoint skills.
+- **`version-number-warn-noise`** (low) — the vendored lint flags `X.Y` strings (e.g. "OAuth 2.0") as advisory `version-number` `[warn]`s; harmless (gate ignores pattern flags), fix upstream on re-sync, don't patch the vendored catalog.
+- **`cross-model-review-prompt-ware`** (medium) — extend the cross-model review (already wired for substrate review + design-time) to cover edits to the skills/docs themselves.
 
 ## Risks
 
