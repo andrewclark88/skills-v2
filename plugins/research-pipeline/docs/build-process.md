@@ -669,7 +669,7 @@ Namespace: `rp` = `research-pipeline:`, `aw` = `agile-workflow:`.
 | `aw:gate-docs` | Release-deploy / quality-checkpoint | Rolling-foundation drift findings as `gate_origin: docs` items |
 | `aw:gate-patterns` | Release-deploy / quality-checkpoint (last) | Reusable patterns extracted to `.agents/skills/patterns/`; `gate_origin: patterns` tracking item |
 | `aw:gate-infra` | Release-deploy / quality-checkpoint | Infra-safety findings (Terraform drift, secrets, missing CI gates) as `gate_origin: infra` items |
-| `rp:gate-citations` | Quality-checkpoint (research gate) | Citation-chain integrity of the `.research/` corpus — broken/colliding/unresolved `[handle]{N}`, thin attestations — as `gate_origin: citations` items. Syntactic; pairs with the research evaluators' semantic groundedness check |
+| `rp:gate-citations` | Quality-checkpoint (research gate) | Citation-chain integrity of the `.research/` corpus — broken/colliding/unresolved `[handle]{N}`, thin attestations — as `gate_origin: citations` items. Syntactic; pairs with the research evaluators' fabrication-smell pass (passage-level support is a known gap) |
 | `aw:release-deploy` | Cut a release | Binds items, runs gates in CONVENTIONS order, ships, archives bound items to `.work/releases/<version>/` |
 | `aw:autopilot` | Drain the ready queue autonomously | Routes drafting → design, implementing → orchestrator, review → review; commits transitions until done/blocked |
 | `aw:scope` | Promote backlog/fresh ideas into tracking | Epic/feature/story items with declared dependencies |
