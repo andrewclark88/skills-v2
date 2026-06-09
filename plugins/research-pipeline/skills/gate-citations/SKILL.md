@@ -9,8 +9,8 @@ description: >
   tags:[research, citations]. Severity-staged like the other gates
   (high → implementing, medium → drafting, low → backlog). Syntactic only — it
   proves citations point at real, attested sources; the semantic check (claim
-  support) is the /research and /deep-research evaluators' job, though passage-level
-  support remains a known gap (see build-process.md). Runs as the research
+  support) is the adversarial-reader's job (passage-level) plus the isolated
+  evaluators (fabrication-smell) — see build-process.md's three-check model. Runs as the research
   gate in /research-pipeline:quality-checkpoint; can also auto-trigger during
   /agile-workflow:release-deploy.
 allowed-tools: Read, Write, Glob, Grep, Bash
@@ -30,7 +30,7 @@ resolves to a real attestation under `.research/attestation/` with valid provena
 collides, no source is unreachable. It does **not** judge whether a claim is actually supported
 by its source — the plausibility/fabrication-smell pass is the `/research` Phase 5 evaluator and the
 `/deep-research` / `/research-program` Evaluator's job (and even those, being isolated to the brief,
-don't do passage-level support — a known gap, see build-process.md § Quality Checkpoint). The two compose; this gate is the
+don't do passage-level support — that's the adversarial-reader's job, see build-process.md § Quality Checkpoint). The checks compose; this gate is the
 mechanical half.
 
 ## Trigger
@@ -183,7 +183,7 @@ In conversation:
 - **Items created**: count by severity, with new ids
 - **Goal reminder**: every `[handle]{N}` must resolve to a real attestation. high/medium items
   block release until they reach `stage: done`; low items live in the backlog. This gate is
-  syntactic — pair it with the research evaluators' fabrication-smell pass (passage-level support is a known gap, see build-process.md).
+  syntactic — pair it with the adversarial-reader (passage-level support) and the isolated evaluators (fabrication-smell), see build-process.md.
 
 ## Guardrails
 

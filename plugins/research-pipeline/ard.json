@@ -27,6 +27,9 @@
   "_vendored_paths_notes": {
     "kernel/discipline.md": "Upstream ships the discipline body inside skills/research-discipline/SKILL.md (no standalone kernel/discipline.md file). We vendor the six numbered sections BYTE-IDENTICAL; only the wrapper above them is deployment-specific (names our /deep-research + /research-program orchestrators and our schema path). Re-sync = re-copy the six sections verbatim, leave the wrapper."
   },
+  "adapted_not_vendored": {
+    "skills/adversarial-reader/SKILL.md": "ADAPTED (not byte-vendored) from ARD's adversarial-reader dispatch reference + CATALOGS §4 job catalog (a-h), v0.4.1. It's an ORCHESTRATOR-tier artifact upstream (research-orchestrator/references/), not a kernel file, so we adapt the dispatch framing to our producers while keeping the a-h job catalog faithful. No verbatim hash guard (unlike research-discipline) — track ARD's CATALOGS §4 on re-sync but adaptation is expected."
+  },
   "not_yet_vendored": {
     "kernel/templates/dispatch.md": "NOT adopted as a file. dispatch.md is ARD's 9-field registration-declaration template for the research-orchestrator, which Option A does not adopt (we keep our own orchestration). Our /deep-research + /research-program carry their own decomposition/dispatch logic; the discipline-propagation requirement (ARD SPEC §5) is met by inlining research-discipline into specialist dispatch prompts, not by adopting the registration template."
   },
