@@ -365,7 +365,7 @@ The Lead writes:
 1. **Campaign directory** — `.research/briefs/<seed-slug>/`
 2. **Specialist briefs** — one per leaf (with cross-refs added by synthesis)
 3. **Parent brief** — `parent.md` at the directory root
-4. **Citation-chain lint (post-merge reconciliation)** — `/citation-lint .research/briefs/<seed-slug>/ --exit-code-on high` resolves every `[handle]{N}` across all briefs against the shared `.research/attestation/` tier. This is where a `colliding-handle` (two specialists, same handle, different sources) surfaces — reconcile it before finalizing. Syntactic check; pairs with the Evaluator's semantic groundedness pass.
+4. **Citation-chain lint (post-merge reconciliation)** — `/citation-lint .research/briefs/<seed-slug>/ --exit-code-on high` resolves every `[handle]{N}` across all briefs against the shared `.research/attestation/` tier. This is where a `colliding-handle` (two specialists, same handle, different sources) surfaces — reconcile it before finalizing. First assemble the corpus `INDEX.md` from the attestations and normalize the provisional `[handle]{N}` (see Phase 9 in the SKILL). Syntactic check; pairs with the Evaluator's fabrication-smell pass (passage-level support remains a known gap).
 5. **Campaign quality report** — `campaign.md` with the evaluator's structured report
 6. **Knowledge index update** — entry for each brief
 

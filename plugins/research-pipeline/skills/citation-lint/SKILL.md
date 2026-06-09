@@ -78,7 +78,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py" <target> \
 Summarize: counts by status, each broken citation with its file + handle + why, thin-attestation
 flags, and pattern flags (pattern flags are advisory — verify before acting; they catch *likely*
 unsourced claims, not certain ones). State plainly that this is a syntactic pass and recommend the
-research evaluator for semantic support.
+research evaluator for the plausibility/fabrication-smell pass (noting passage-level support is a known gap).
 
 ## Provenance & maintenance
 

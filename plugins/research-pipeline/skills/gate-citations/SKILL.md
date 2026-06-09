@@ -183,7 +183,7 @@ In conversation:
 - **Items created**: count by severity, with new ids
 - **Goal reminder**: every `[handle]{N}` must resolve to a real attestation. high/medium items
   block release until they reach `stage: done`; low items live in the backlog. This gate is
-  syntactic — pair it with the research evaluators' semantic groundedness pass.
+  syntactic — pair it with the research evaluators' fabrication-smell pass (passage-level support is a known gap, see build-process.md).
 
 ## Guardrails
 
