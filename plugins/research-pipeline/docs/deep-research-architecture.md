@@ -664,9 +664,12 @@ Your task:
      provenance: agent-synthesis (the brief is a synthesis artifact; the attestations are
      source-direct), research_method: /deep-research
    - Body: structured sections appropriate to the content, with every load-bearing claim
-     cited [handle]{N} (N = the source's entry in the per-corpus .research/reference/<corpus>/INDEX.md,
-     append-only — never renumber). A claim with no fetched-source attestation is FORBIDDEN
-     (no training-recall citations; acknowledge the gap and drop the claim instead).
+     cited [handle]{N}. The lint resolves the chain by HANDLE (it does not read INDEX.md or
+     check N), so do NOT concurrently append to a shared corpus INDEX.md — that races across
+     parallel specialists. Cite [handle]{N} with a local N and return your handle list; the
+     orchestrator assembles the authoritative corpus INDEX.md once, post-merge (Phase 9). A
+     claim with no fetched-source attestation is FORBIDDEN (no training-recall citations;
+     acknowledge the gap and drop the claim instead).
    - A "## Disconfirming analysis" section: the outcome of actively seeking disconfirming
      evidence across your attested sources before each load-bearing claim.
    - A "## Contradictions" section when your sources diverge: named-source positions

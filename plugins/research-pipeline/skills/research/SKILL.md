@@ -126,7 +126,7 @@ Ask: "Are these the right questions? Anything to add or exclude?"
 - What data structures does this imply?
 - What decisions does this inform?
 
-**Use Agent subagents (`model: "sonnet"`)** for parallel investigation when multiple areas need research.
+**Use Agent subagents (`model: "sonnet"`)** for parallel investigation when multiple areas need research. These subagents **gather** — have them return raw fetched material (URLs + verbatim excerpts), not just conclusions. **You (the parent) write the attestations from the actual sources** in Phase 2e; never attest from a subagent's paraphrase (that would launder an unverified summary into a source-direct attestation — the fabrication the chain exists to catch).
 
 ### 2e. Attest load-bearing sources (ARD citation chain)
 
@@ -142,7 +142,7 @@ For each such source, write an attestation from the template at `${CLAUDE_PLUGIN
 - Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
 - Body: a **Summary** (paraphrase, ~100-300 words — your words, no project framing) and **Key passages** (verbatim quotes for the load-bearing claims only, each with a source-internal anchor: §/p./¶/timecode).
 
-Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `oauth-standards`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}` citations, so renumbering breaks every existing citation. A new source gets the next free `N`.
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `oauth-standards`). **Append entries; never renumber.** `N` is the human-readable bibliography index — `/citation-lint` resolves the chain by **handle** (it does not read `INDEX.md` or check `N`), so append-only keeps the bibliography honest for readers, not because the lint depends on it. A new source gets the next free `N`.
 
 If a topic is small enough that nothing is genuinely load-bearing (no numbers, no API shapes, no rules to verify), it's fine to produce no attestations — the brief is then `verification_status: legacy-unattested` (see Phase 4).
 
@@ -290,7 +290,7 @@ It verifies every `[handle]{N}` resolves to a real attestation under `.research/
 
 Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A brief that cites `[handle]{N}` without its own `provenance` field gets a (low-severity) `missing-provenance` finding. Numbered `## Sources` lists can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it or move the source list below the citations.
 
-This is the syntactic half. It pairs with Phase 5 (the independent semantic evaluation): **4d proves the citations point at real, attested sources; Phase 5 judges whether the claims are actually supported.** Run both.
+This is the syntactic half. It pairs with Phase 5 (the independent evaluation): **4d proves the citations resolve to real, attested sources; Phase 5 — isolated to the brief + questions — catches fabrication-smell, uncited or internally-unsupported claims, and gaps.** Note the boundary: Phase 5 does NOT see the attestation passages, so it does not verify a cited passage actually *supports* its claim (passage-level support is a known pipeline gap — see build-process.md § Quality Checkpoint). Run both; treat clean lint + clean Phase 5 as "the chain resolves and nothing looks fabricated," not "every claim is source-verified."
 
 If the brief is genuinely `verification_status: legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — that's fine; record the status honestly rather than manufacturing citations.
 
@@ -325,7 +325,7 @@ On `NEEDS-REVISION`, fix the flagged claims (re-fetch sources, add citations, or
 - **NEVER skip the health check** — a superior but abandoned library is a liability.
 - **NEVER produce a brief without source citations.** Every claim must be verifiable.
 - **NEVER cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
-- **NEVER renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **Keep the corpus `INDEX.md` append-only.** `N` is a human bibliography index; the lint resolves by handle, not `N`, so renumbering won't break the chain mechanically but will misnumber the reader-facing list.
 - **NEVER mark a brief `verification_status: attested` if `/citation-lint` reports broken chains.** Fix them, or record `legacy-unattested` honestly.
 - **NEVER produce generic findings.** Ground everything in this project's specific needs.
 - **NEVER skip AskUserQuestion checkpoints.** Wrong research direction wastes effort.

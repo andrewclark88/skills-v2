@@ -261,7 +261,9 @@ Write all outputs to the program directory.
 /citation-lint .research/programs/<program-slug>/ --exit-code-on high
 ```
 
-Resolve every `[handle]{N}` across all campaign briefs and the super-parent against `.research/attestation/`. Reconcile any `colliding-handle` (rename one source's handle + its citations) and fix any `unresolved-handle` before finalizing. Syntactic check; it pairs with the Program Evaluator (Phase 8), which is the semantic groundedness pass — run both.
+Resolve every `[handle]{N}` across all campaign briefs and the super-parent against `.research/attestation/`. Reconcile any `colliding-handle` (rename one source's handle + its citations) and fix any `unresolved-handle` before finalizing.
+
+Campaigns ran in parallel against the one shared `.research/attestation/` tier, so — as in `/deep-research` — they wrote attestations convergently (by handle) but did NOT concurrently maintain the shared corpus `INDEX.md`. Assemble the authoritative `INDEX.md` here, once, from the union of campaign-reported handles before linting. The lint resolves the chain by **handle**, not `N` — so the program-wide pass catches cross-campaign `colliding-handle` (two campaigns, same handle, different sources), which is the real integrity check. Syntactic; it pairs with the Program Evaluator (Phase 8), the semantic groundedness pass — run both.
 
 Run `/knowledge-index` to regenerate the index — do NOT hand-edit `docs/knowledge-index.yaml`. Each brief, parent, and report must have conformant frontmatter (`description`, `type`, `kind: research`, `slug`, `summary`, `key_findings`, `research_method: /research-program`, `provenance: agent-synthesis`, `verification_status: attested` once the lint is clean — absent ⇒ `legacy-unattested`, `updated`). Use `type: program-parent` for `program.md` and `content_type: program-synthesis` for `super-parent.md`.
 

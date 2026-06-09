@@ -60,7 +60,11 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py" <target> \
   deterministic and network-free. Drop this flag (let the probe run) only when the user explicitly
   asks to verify source liveness.
 - **`--exit-code-on high`** — non-zero exit when any broken (high-severity) chain is found, so a
-  caller (a producer skill or the docs gate) can fail on broken citations.
+  caller (a producer skill or the docs gate) can fail on broken citations. **But `rp:gate-citations`
+  is stricter — it stages *medium* findings (e.g. `unreachable-source`: a `source_path` that
+  doesn't exist) into `drafting`, which blocks a release.** So a brief that passes its own
+  high-only inline check can still block at the gate. Producers should resolve medium findings
+  too before finalizing (re-run with `--exit-code-on medium` to see them), not just high.
 - Add `--format json` when a caller needs to parse findings.
 
 `--analysis-dir` defaults to `.research/analysis` (ARD's layout) and only affects

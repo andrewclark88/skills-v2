@@ -27,8 +27,9 @@ shipping.
 **This gate is syntactic.** It proves the citation chain is intact — every `[handle]{N}`
 resolves to a real attestation under `.research/attestation/` with valid provenance, no handle
 collides, no source is unreachable. It does **not** judge whether a claim is actually supported
-by its source — that semantic groundedness check is the `/research` Phase 5 evaluator and the
-`/deep-research` / `/research-program` Evaluator's job. The two compose; this gate is the
+by its source — the plausibility/fabrication-smell pass is the `/research` Phase 5 evaluator and the
+`/deep-research` / `/research-program` Evaluator's job (and even those, being isolated to the brief,
+don't do passage-level support — a known gap, see build-process.md § Quality Checkpoint). The two compose; this gate is the
 mechanical half.
 
 ## Trigger
