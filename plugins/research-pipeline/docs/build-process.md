@@ -32,7 +32,7 @@ The item hierarchy replaces the old roadmap-as-document model:
 SESSION START (every session on a project with a substrate)
 │
 ├─ knowledge-index nav auto-loads  (docs/knowledge-index-nav.yaml — corpus situational awareness)
-├─ substrate snapshot auto-loads   (aw SessionStart hook — items at review, the ready queue, top backlog)
+├─ substrate snapshot auto-loads   (rp session-start-substrate.sh hook — ready/blocked/at-review counts + top backlog ids; query work-view for detail)
 │     └─ run rp:knowledge-index if the nav file is missing or stale
 │     └─ query the queue with .work/bin/work-view --ready / --blocked / --kind
 │
