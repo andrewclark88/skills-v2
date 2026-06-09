@@ -42,10 +42,12 @@ A Codex peer-review of the first draft produced one load-bearing correction:
 supports the gate, not the gate itself.** The lint is also **syntactic, not
 semantic** — it proves a `[handle]{N}` resolves to an attestation with provenance
 (plus thin-attestation and surface-pattern flags), but it does **not** verify that
-claim *N* is actually supported by the cited passage. Semantic support stays the
-job of the LLM evaluator (the Phase 5 groundedness check added to `/research`, and
-the isolated evaluators in the deeper tiers). The two are complementary:
-**lint = mechanical chain integrity; evaluator = semantic support.**
+claim *N* is actually supported by the cited passage. That support check is the
+**adversarial-reader** pass (`skills/adversarial-reader/`, which reads the attestation
+passages), with the isolated evaluators catching fabrication-smell/coverage. The three
+are complementary: **lint = chain resolves; adversarial-reader = passage supports the
+claim; isolated evaluator = fabrication-smell, blind to sources.** See build-process.md
+§ Quality Checkpoint for the full three-check model.
 
 ## Scope vendored from ARD (pinned to ARD v0.4.1)
 

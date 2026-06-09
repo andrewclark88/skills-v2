@@ -1,6 +1,6 @@
 ---
 name: adversarial-reader
-description: "The ARD adversarial-read verification stage — a fresh-context, skeptical pass that receives FULL context (the brief(s) + the attestation files + the citation-lint output) and verifies, per load-bearing claim, that the cited attestation passage SEMANTICALLY supports the claim as stated. This is the passage-level source-support check the syntactic /citation-lint and the isolated evaluator cannot do (the lint resolves the chain; the evaluator never sees the passages). Producers dispatch this after linting, before/alongside the isolated evaluator. Job catalog adapted from ARD's adversarial-reader (CATALOGS §4, v0.4.1)."
+description: "The ARD adversarial-read verification stage — a fresh-context, skeptical pass that receives FULL context (the brief(s) + the attestation files + the citation-lint output) and verifies, per load-bearing claim, that the cited attestation passage SEMANTICALLY supports the claim as stated. This is the passage-level source-support check the syntactic /citation-lint and the isolated evaluator cannot do (the lint resolves the chain; the evaluator never sees the passages). Producers dispatch this after linting; a NEEDS-REVISION verdict feeds a revision + re-lint + re-evaluate loop (in single-tier /research it runs before the isolated evaluator; in /deep-research and /research-program it runs in Phase 9, and any revision it forces re-runs the isolated evaluator whose earlier report it stales). Job catalog adapted from ARD's adversarial-reader (CATALOGS §4, v0.4.1)."
 user-invocable: false
 allowed-tools: Read, Glob, Grep, Bash
 ---
@@ -78,10 +78,16 @@ substrate, or return inline for a single brief):
   `partial` / `unsupported` / `passage-absent` (the cited passage isn't actually in the attestation),
   each naming the claim + the handle + the specific issue.
 - **Per-job findings (a–h)**, each naming the specific claim/section and the issue.
-- A **verdict: `APPROVED` or `NEEDS-REVISION`.** `NEEDS-REVISION` (any `unsupported` /
-  `passage-absent`, or a load-bearing job-a failure) triggers a revision pass before the isolated
-  evaluator runs. Be specific enough that the revision can act on each finding without re-reading
-  from scratch.
+- A **verdict: `APPROVED` or `NEEDS-REVISION`.** `NEEDS-REVISION` on any of: an `unsupported` or
+  `passage-absent` verdict; a **`partial` on a load-bearing claim** (the claim overstates what the
+  passage carries — the dominant real case; it must be narrowed to what the passage supports, or
+  recorded as an explicit accepted limitation, not silently passed); or a load-bearing job-a
+  failure. Be specific enough that the revision can act on each finding without re-reading from
+  scratch. (`partial` on a non-load-bearing claim may be noted without blocking.)
+
+Whoever dispatched you handles the loop: on `NEEDS-REVISION` they revise, re-run the lint, and
+re-run you — **and if an isolated evaluator already ran on the pre-revision briefs, they re-run it
+too** (your revisions stale its report).
 
 ## Guardrails
 
