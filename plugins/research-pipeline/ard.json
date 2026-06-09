@@ -6,7 +6,9 @@
     "version": "0.4.1",
     "release_tag": "v0.4.1",
     "commit_sha": "abbcfcdee9d9682b60c2eac99519ccdb8ea359b0",
-    "catalog_baseline": "0.3"
+    "catalog_baseline": "0.3",
+    "discipline_sha256": "2cd737c2e084ba2795df1a0542139d9b92d5a444382c1dfdfb1f4d4fd5b03b6d",
+    "_discipline_sha256_note": "sha256 of the SIX numbered sections (from the '## 1. Source-bound' heading to EOF) of skills/research-discipline/SKILL.md — the verbatim ARD kernel/discipline.md body, EXCLUDING our deployment wrapper above it. test_discipline_verbatim.py enforces it so a stray edit or re-sync can't silently drift the anti-fabrication floor. Regenerate on an intentional ARD bump with: awk '/^## 1\\. Source-bound/{p=1} p' skills/research-discipline/SKILL.md | shasum -a 256"
   },
   "vendored_from": {
     "_comment": "Vendored verbatim from nklisch/skills plugins/agentic-research (which vendors ARD's kernel). pin, don't fork — invoke via flags, never patch.",
