@@ -42,10 +42,12 @@ A Codex peer-review of the first draft produced one load-bearing correction:
 supports the gate, not the gate itself.** The lint is also **syntactic, not
 semantic** — it proves a `[handle]{N}` resolves to an attestation with provenance
 (plus thin-attestation and surface-pattern flags), but it does **not** verify that
-claim *N* is actually supported by the cited passage. Semantic support stays the
-job of the LLM evaluator (the Phase 5 groundedness check added to `/research`, and
-the isolated evaluators in the deeper tiers). The two are complementary:
-**lint = mechanical chain integrity; evaluator = semantic support.**
+claim *N* is actually supported by the cited passage. That support check is the
+**adversarial-reader** pass (`skills/adversarial-reader/`, which reads the attestation
+passages), with the isolated evaluators catching fabrication-smell/coverage. The three
+are complementary: **lint = chain resolves; adversarial-reader = passage supports the
+claim; isolated evaluator = fabrication-smell, blind to sources.** See build-process.md
+§ Quality Checkpoint for the full three-check model.
 
 ## Scope vendored from ARD (pinned to ARD v0.4.1)
 
@@ -175,9 +177,16 @@ Direct code reading shrank the scope from the draft's three code changes to **on
 - **Phase 3 — gate + honesty + sync (in progress).** `rp:gate-citations` surfaces the
   lint as the research gate in the 8-gate `quality-checkpoint`, emitting broken-chain
   findings as `gate_origin: citations` substrate items (severity-staged). The
-  syntactic-vs-semantic distinction (lint = chain integrity; the research evaluators
-  = claim support) is documented in build-process.md § Quality Checkpoint. The ARD
-  v0.4.1 pin lives in `ard.json`; the re-sync procedure is below.
+  three-check grounding model — lint (syntactic) + `adversarial-reader` (passage-level
+  support) + isolated evaluator (fabrication-smell) — is documented in build-process.md
+  § Quality Checkpoint. The ARD v0.4.1 pin lives in `ard.json`; the re-sync procedure
+  is below.
+- **Hardening (post-arc review).** A cross-model (Codex) adversarial review + a verbatim
+  guard for the discipline (`adopts.discipline_sha256` + `test_discipline_verbatim.py`)
+  + an e2e behavioral run. The review's findings (over-claimed `N` enforcement, the
+  isolated evaluator can't verify passage support, a parallel-INDEX race) were fixed;
+  the passage-support gap it surfaced is now closed by `skills/adversarial-reader/`
+  (adapted from ARD CATALOGS §4), wired into all five producers.
 
 ## Re-sync procedure (on an ARD version bump)
 

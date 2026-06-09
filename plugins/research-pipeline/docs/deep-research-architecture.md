@@ -144,7 +144,7 @@ Each role has its own prompt, context window, and model assignment.
 - Assess coherence (G-Eval style scoring)
 - Detect contradictions (across briefs, complementing synthesis's flags)
 - **Reassess severity** — for each contradiction synthesis flagged, independently judge its severity and provide rationale. When your judgment differs from synthesis's, report the delta explicitly. Demo data (2026-04-15) shows severity reassessment happens in 50% of campaigns — it is not exceptional; it's a standard output.
-- Check groundedness — every load-bearing claim carries a `[handle]{N}` citation; flag uncited or training-recall-shaped claims. (Isolated to the briefs, so it cannot verify passage-level support — flag those "unverified"; passage-level verification is a known gap.)
+- Check groundedness — every load-bearing claim carries a `[handle]{N}` citation; flag uncited or training-recall-shaped claims. (Isolated to the briefs by design, so it doesn't verify passage-level support — that's the separate adversarial-reader pass, which runs with the attestations. Flag uncited claims "unverified" here.)
 - Produce structured quality report
 
 **Context it receives:**
@@ -159,7 +159,7 @@ Each role has its own prompt, context window, and model assignment.
 
 ### (Future) CitationAgent
 
-Not in v1. When the Anthropic Citations API is integrated, a Haiku-low agent will post-process specialist briefs for structured source attribution. Until then, citation-chain integrity is the lint's job (syntactic) and the isolated Evaluator catches fabrication-smell/uncited claims — but passage-level source support (does the cited passage actually support the claim?) is a known gap. Closing it would need an adversarial-reader pass that receives the attestations with full context (ARD's model); we do not run one yet.
+Not in v1. When the Anthropic Citations API is integrated, a Haiku-low agent will post-process specialist briefs for structured source attribution. Grounding is verified at three levels today (see build-process.md § Quality Checkpoint): the lint (syntactic chain resolution), the **adversarial-reader** pass (passage-level support — receives the attestations with full context, ARD's model; runs in Phase 9), and the isolated Evaluator (fabrication-smell/coverage). A future Citations-API agent would mechanize part of the adversarial reader's passage-support check.
 
 ## Model Assignment Summary
 
@@ -365,7 +365,7 @@ The Lead writes:
 1. **Campaign directory** — `.research/briefs/<seed-slug>/`
 2. **Specialist briefs** — one per leaf (with cross-refs added by synthesis)
 3. **Parent brief** — `parent.md` at the directory root
-4. **Citation-chain lint (post-merge reconciliation)** — `/citation-lint .research/briefs/<seed-slug>/ --exit-code-on high` resolves every `[handle]{N}` across all briefs against the shared `.research/attestation/` tier. This is where a `colliding-handle` (two specialists, same handle, different sources) surfaces — reconcile it before finalizing. First assemble the corpus `INDEX.md` from the attestations and normalize the provisional `[handle]{N}` (see Phase 9 in the SKILL). Syntactic check; pairs with the Evaluator's fabrication-smell pass (passage-level support remains a known gap).
+4. **Citation-chain lint (post-merge reconciliation)** — `/citation-lint .research/briefs/<seed-slug>/ --exit-code-on high` resolves every `[handle]{N}` across all briefs against the shared `.research/attestation/` tier. This is where a `colliding-handle` (two specialists, same handle, different sources) surfaces — reconcile it before finalizing. First assemble the corpus `INDEX.md` from the attestations and normalize the provisional `[handle]{N}` (see Phase 9 in the SKILL). Syntactic check; pairs with the adversarial-reader (passage-level support) and the isolated Evaluator (fabrication-smell) — the three-check model.
 5. **Campaign quality report** — `campaign.md` with the evaluator's structured report
 6. **Knowledge index update** — entry for each brief
 
@@ -754,8 +754,8 @@ Your task:
    citation. Flag uncited claims and anything that reads like training-recall (API shapes,
    version numbers, figures) with no citation. You see only the briefs, NOT the attestation
    passages — so you cannot verify a cited passage actually supports its claim; flag such cases
-   as "unverified" rather than asserting support. (Passage-level support is a known pipeline
-   gap — it would need an adversarial-reader pass that receives the attestations.)
+   as "unverified" rather than asserting support. (Passage-level support is the separate
+   adversarial-reader pass's job — it runs in Phase 9 with the attestations.)
 6. Recommendations: suggest follow-up campaigns (for uncovered aspects) and briefs needing
    revision.
 

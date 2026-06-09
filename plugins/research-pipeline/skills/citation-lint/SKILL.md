@@ -21,9 +21,9 @@ model: haiku
 A thin wrapper over the vendored ARD citation lint
 (`${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py`, zero-dependency Python). It is the
 **mechanical** half of research-pipeline's grounding model. The semantic question (is the
-claim actually supported by the cited passage?) is only partly covered — the research
-evaluators catch fabrication-smell and uncited claims, but passage-level support is a known
-gap (see build-process.md § Quality Checkpoint). The two are
+claim actually supported by the cited passage?) is the adversarial-reader's job (passage-level),
+with the isolated evaluators catching fabrication-smell — see build-process.md § Quality
+Checkpoint's three-check model. The two are
 complementary — run both.
 
 ## What it checks (ARD CATALOGS §3 + GR.5)
@@ -78,7 +78,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py" <target> \
 Summarize: counts by status, each broken citation with its file + handle + why, thin-attestation
 flags, and pattern flags (pattern flags are advisory — verify before acting; they catch *likely*
 unsourced claims, not certain ones). State plainly that this is a syntactic pass and recommend the
-research evaluator for the plausibility/fabrication-smell pass (noting passage-level support is a known gap).
+adversarial-reader for passage-level support and the isolated evaluator for fabrication-smell.
 
 ## Provenance & maintenance
 

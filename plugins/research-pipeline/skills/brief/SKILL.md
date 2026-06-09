@@ -205,7 +205,24 @@ It verifies every `[handle]{N}` resolves to a real attestation under `.research/
 
 Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A numbered `## Sources` list can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it.
 
-The lint is **syntactic** — it proves the citations point at real, attested sources. It does NOT judge whether a claim is actually supported by its source; that's author judgment for a single-tier brief (and the independent evaluator's job in `/deep-research`). If the brief is genuinely `legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — record that status honestly rather than manufacturing citations.
+The lint is **syntactic** — it proves the citations point at real, attested sources. It does NOT judge whether a claim is actually supported by its source — that's the adversarial read below. If the brief is genuinely `legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — record that status honestly rather than manufacturing citations.
+
+#### 4c. Adversarial source-support read
+
+After the lint, run the **adversarial-reader** — the pass that actually checks whether each cited passage *supports* its claim (the lint can't; it never reads passages). Dispatch a fresh sub-agent with **full context**:
+
+```
+Agent({
+  description: "Adversarial source-support read: {topic}",
+  subagent_type: "general-purpose",
+  model: "opus",
+  prompt: <[verbatim research-discipline bundle]
+           + [verbatim ${CLAUDE_PLUGIN_ROOT}/skills/adversarial-reader/SKILL.md body]
+           + the brief path, the attestation files for every cited handle, and the lint output>
+})
+```
+
+It returns per-claim support verdicts (`supported` / `partial` / `unsupported` / `passage-absent`) + job a–h findings + `APPROVED` / `NEEDS-REVISION`. On `NEEDS-REVISION`, narrow the claim to what the passage supports, re-attest, or drop it; re-run 4b + 4c until clean. Skip only when the brief is `legacy-unattested`. (`/brief` has no isolated-evaluator phase like `/research` Phase 5 — this adversarial read is the brief's groundedness gate.)
 
 ### Phase 5: Review
 

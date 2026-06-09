@@ -290,13 +290,30 @@ It verifies every `[handle]{N}` resolves to a real attestation under `.research/
 
 Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A brief that cites `[handle]{N}` without its own `provenance` field gets a (low-severity) `missing-provenance` finding. Numbered `## Sources` lists can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it or move the source list below the citations.
 
-This is the syntactic half. It pairs with Phase 5 (the independent evaluation): **4d proves the citations resolve to real, attested sources; Phase 5 — isolated to the brief + questions — catches fabrication-smell, uncited or internally-unsupported claims, and gaps.** Note the boundary: Phase 5 does NOT see the attestation passages, so it does not verify a cited passage actually *supports* its claim (passage-level support is a known pipeline gap — see build-process.md § Quality Checkpoint). Run both; treat clean lint + clean Phase 5 as "the chain resolves and nothing looks fabricated," not "every claim is source-verified."
+This is the syntactic check — one of three (see build-process.md § Quality Checkpoint): **4d (lint)** proves the citations resolve; **4e (adversarial read)** verifies the cited passage actually supports the claim; **Phase 5 (isolated evaluator)** catches fabrication-smell and gaps blind to the sources. Run all three; a clean result means all three passed, not just the lint.
 
 If the brief is genuinely `verification_status: legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — that's fine; record the status honestly rather than manufacturing citations.
 
+### 4e. Adversarial source-support read
+
+The lint proves citations *resolve*; it does not read the passages. Before the isolated evaluator, run the **adversarial-reader** — the one pass that actually checks whether each cited passage *supports* its claim. Dispatch a fresh sub-agent with **full context** (the opposite of the Phase 5 evaluator's isolation):
+
+```
+Agent({
+  description: "Adversarial source-support read: {topic}",
+  subagent_type: "general-purpose",
+  model: "opus",
+  prompt: <[verbatim research-discipline bundle]
+           + [verbatim ${CLAUDE_PLUGIN_ROOT}/skills/adversarial-reader/SKILL.md body]
+           + the brief path, the attestation files for every cited handle, and the Phase 4d lint output>
+})
+```
+
+It returns per-claim support verdicts (`supported` / `partial` / `unsupported` / `passage-absent`) + the job a–h findings + `APPROVED` / `NEEDS-REVISION`. On `NEEDS-REVISION`, fix the flagged claims (re-fetch and re-attest, narrow the claim to what the passage supports, or drop it) and re-run 4d + 4e until clean. Skip only when the brief is `legacy-unattested` (no citations to verify). This is the **passage-level** check; it composes with the syntactic lint (4d) and the isolated evaluator (Phase 5) — run all three.
+
 ## Phase 5: Independent groundedness check
 
-Single-tier `/research` has no parallel specialists, so the brief carries more unverified author judgment than a `/deep-research` campaign — and unlike the deeper tiers, nothing has independently checked it. Before finalizing, run one **fresh-context evaluation** to catch fabrication and ungrounded claims — the same isolation principle `/deep-research`'s Evaluator uses, scaled to one brief.
+Single-tier `/research` has no parallel specialists, so the brief carries more unverified author judgment than a `/deep-research` campaign. This is the **isolated** complement to 4e: where the adversarial reader saw everything (passages included) to check support, this evaluator sees **only the brief + the Phase 1 questions** — the isolation is deliberate (the FR.1 fence), so it catches fabrication-smell and framing it would inherit if it saw your sources. Run one **fresh-context, isolated evaluation** to catch fabrication and ungrounded claims — the same isolation principle `/deep-research`'s Evaluator uses, scaled to one brief.
 
 Spawn an evaluator with **only the written brief + the Phase 1 research questions** — NOT your investigation notes, sources list reasoning, or orchestration context. The isolation is the point: it prevents the evaluator inheriting your framing and rubber-stamping it.
 
