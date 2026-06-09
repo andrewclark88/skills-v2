@@ -2,8 +2,8 @@
 # SessionStart hook: print knowledge-index navigator to stdout.
 # Activation: only runs if docs/knowledge-index-nav.yaml (or older
 # docs/knowledge-index.yaml) exists in the hook cwd, CLAUDE_PROJECT_DIR, PWD,
-# or any ancestor. Otherwise exits 0 silently (the agile-workflow SessionStart
-# hook will still print its substrate snapshot if a substrate exists).
+# or any ancestor. Otherwise exits 0 silently. (The sibling session-start-substrate.sh
+# hook independently prints a compact .work/ substrate snapshot when a substrate exists.)
 
 set -euo pipefail
 
@@ -41,6 +41,6 @@ while [ "$dir" != "/" ] && [ -n "$dir" ]; do
   dir="$(dirname "$dir")"
 done
 
-# No index found — silent exit. The agile-workflow SessionStart hook will
-# print a substrate snapshot if .work/CONVENTIONS.md exists.
+# No index found — silent exit. The sibling session-start-substrate.sh hook
+# prints a compact substrate snapshot if .work/CONVENTIONS.md exists.
 exit 0

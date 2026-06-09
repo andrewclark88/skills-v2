@@ -1,5 +1,5 @@
 {
-  "description": "research-pipeline hooks: knowledge-index navigator + cross-model peer-review preflight on SessionStart + docs/ updated: auto-bump on PostToolUse. Nav is flag-gated by docs/knowledge-index-nav.yaml presence; the peer-preflight is gated by peeragent being installed; both inert otherwise.",
+  "description": "research-pipeline hooks: knowledge-index navigator + compact .work/ substrate snapshot + cross-model peer-review preflight on SessionStart + docs/ updated: auto-bump on PostToolUse. Nav is flag-gated by docs/knowledge-index-nav.yaml presence; the substrate snapshot by .work/CONVENTIONS.md presence; the peer-preflight by peeragent being installed; all inert otherwise. Each is a SEPARATE hook command (its own ~10KB inline-output budget).",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,11 @@
           {
             "type": "command",
             "command": "bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/scripts/session-start-nav.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/scripts/session-start-substrate.sh\"",
             "timeout": 10
           },
           {
