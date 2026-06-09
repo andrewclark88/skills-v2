@@ -20,8 +20,10 @@ model: haiku
 
 A thin wrapper over the vendored ARD citation lint
 (`${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py`, zero-dependency Python). It is the
-**mechanical** half of research-pipeline's grounding model; the **semantic** half (is the
-claim actually supported by the cited passage?) is the research evaluator's job. The two are
+**mechanical** half of research-pipeline's grounding model. The semantic question (is the
+claim actually supported by the cited passage?) is only partly covered — the research
+evaluators catch fabrication-smell and uncited claims, but passage-level support is a known
+gap (see build-process.md § Quality Checkpoint). The two are
 complementary — run both.
 
 ## What it checks (ARD CATALOGS §3 + GR.5)

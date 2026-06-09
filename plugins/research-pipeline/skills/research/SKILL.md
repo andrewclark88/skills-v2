@@ -165,7 +165,7 @@ sources disagree or are incomplete.
 
 Write to the canonical research tier: `.research/briefs/<topic-slug>/parent.md` (the same tree `/deep-research` and the design skills read; consumers and `/knowledge-index` resolve briefs from there). **Required: emit standard frontmatter at the top** so `/knowledge-index` regeneration picks it up.
 
-**Cite load-bearing claims** with the `[handle]{N}` wire-form inline in the body — `handle` is the attestation handle from Phase 2e, `N` is its entry number in the corpus `INDEX.md`. Example: "OAuth refresh tokens SHOULD rotate on use `[rfc6749]{3}`." The `## Sources` section stays as the human-readable list; the `[handle]{N}` citations are the machine-checkable chain `/citation-lint` verifies. Cite the same claims you attested — don't cite a handle you didn't write an attestation for.
+**Cite load-bearing claims** with the `[handle]{N}` wire-form inline in the body — `handle` is the attestation handle from Phase 2e, `N` is its entry number in the corpus `INDEX.md`. Example: "OAuth refresh tokens SHOULD rotate on use `[rfc6749]{3}`." The `## Sources` section stays as the human-readable list; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Cite the same claims you attested — don't cite a handle you didn't write an attestation for.
 
 **For technology research:**
 ```markdown

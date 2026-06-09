@@ -8,8 +8,9 @@ description: >
   attestations — into substrate items in .work/ with gate_origin:citations and
   tags:[research, citations]. Severity-staged like the other gates
   (high → implementing, medium → drafting, low → backlog). Syntactic only — it
-  proves citations point at real, attested sources; the semantic groundedness
-  check is the /research and /deep-research evaluators' job. Runs as the research
+  proves citations point at real, attested sources; the semantic check (claim
+  support) is the /research and /deep-research evaluators' job, though passage-level
+  support remains a known gap (see build-process.md). Runs as the research
   gate in /research-pipeline:quality-checkpoint; can also auto-trigger during
   /agile-workflow:release-deploy.
 allowed-tools: Read, Write, Glob, Grep, Bash
@@ -159,8 +160,9 @@ updated: YYYY-MM-DD
 - thin-attestation: the attestation has no verbatim key-passage anchors (GR.5).>
 
 ## Required fix
-<the specific repair. The chain must lint clean (exit 0 at --exit-code-on high) before this
-item moves to done.>
+<the specific repair. The finding must clear at its severity before this item moves to done —
+for a high finding the chain must lint clean at `--exit-code-on high`; for a medium
+(unreachable-source) it must clear at `--exit-code-on medium`. Re-run the lint to confirm.>
 ```
 
 Use a short, stable slug derived from `(handle, status)` so re-runs match (`gate-citations-rfc6749-unresolved`).

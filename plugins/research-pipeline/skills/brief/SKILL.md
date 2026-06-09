@@ -187,7 +187,7 @@ will look different from a brief about tournament rules or API endpoints. Struct
 #### Writing Rules
 
 - **Cite everything.** Rule numbers, API docs, source URLs. A builder should be able to verify any claim.
-- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]{N}` citations are the machine-checkable chain `/citation-lint` verifies. Cite the same claims you attested — never cite a handle you didn't write an attestation for.
+- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Cite the same claims you attested — never cite a handle you didn't write an attestation for.
 - **Use tables for structured data.** Card lists, rule summaries, API endpoints, technique inventories.
 - **Use worked examples for complex interactions.** Walk through the stack resolution step by step. Show the mana calculation. Trace the API call sequence.
 - **Flag the 80/20.** What are the most common cases? (Top 100 meta cards, most frequent tournament rules, most-used API endpoints.) Cover those thoroughly. Acknowledge the long tail but don't exhaustively document it.

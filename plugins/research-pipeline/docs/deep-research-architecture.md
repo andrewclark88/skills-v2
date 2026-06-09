@@ -144,7 +144,7 @@ Each role has its own prompt, context window, and model assignment.
 - Assess coherence (G-Eval style scoring)
 - Detect contradictions (across briefs, complementing synthesis's flags)
 - **Reassess severity** — for each contradiction synthesis flagged, independently judge its severity and provide rationale. When your judgment differs from synthesis's, report the delta explicitly. Demo data (2026-04-15) shows severity reassessment happens in 50% of campaigns — it is not exceptional; it's a standard output.
-- Check groundedness (claims traceable to sources; `confidence` fields match groundedness scores)
+- Check groundedness — every load-bearing claim carries a `[handle]{N}` citation; flag uncited or training-recall-shaped claims. (Isolated to the briefs, so it cannot verify passage-level support — flag those "unverified"; passage-level verification is a known gap.)
 - Produce structured quality report
 
 **Context it receives:**
@@ -159,7 +159,7 @@ Each role has its own prompt, context window, and model assignment.
 
 ### (Future) CitationAgent
 
-Not in v1. When the Anthropic Citations API is integrated, a Haiku-low agent will post-process specialist briefs for structured source attribution. Until then, the groundedness check lives in the Evaluator.
+Not in v1. When the Anthropic Citations API is integrated, a Haiku-low agent will post-process specialist briefs for structured source attribution. Until then, citation-chain integrity is the lint's job (syntactic) and the isolated Evaluator catches fabrication-smell/uncited claims — but passage-level source support (does the cited passage actually support the claim?) is a known gap. Closing it would need an adversarial-reader pass that receives the attestations with full context (ARD's model); we do not run one yet.
 
 ## Model Assignment Summary
 
@@ -750,8 +750,12 @@ Your task:
    judge its severity. When your judgment differs, report (id, synthesis_severity,
    your_severity, rationale). This is a standard output — not exceptional. Do not defer
    to synthesis on severity.
-5. Groundedness: for each brief, check that claims are supported by the sources listed in
-   frontmatter. Flag claims without supporting sources. Score per-brief groundedness.
+5. Groundedness: for each brief, check that every load-bearing claim carries a `[handle]{N}`
+   citation. Flag uncited claims and anything that reads like training-recall (API shapes,
+   version numbers, figures) with no citation. You see only the briefs, NOT the attestation
+   passages — so you cannot verify a cited passage actually supports its claim; flag such cases
+   as "unverified" rather than asserting support. (Passage-level support is a known pipeline
+   gap — it would need an adversarial-reader pass that receives the attestations.)
 6. Recommendations: suggest follow-up campaigns (for uncovered aspects) and briefs needing
    revision.
 

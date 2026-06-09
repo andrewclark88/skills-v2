@@ -255,7 +255,7 @@ it means either uncharted territory or a search gap worth revisiting.}
 {All URLs consulted during scouting}
 ```
 
-**Cite load-bearing assessment facts** with the `[handle]{N}` wire-form inline — `handle` is the attestation handle from Phase 5, `N` is its entry number in the corpus `INDEX.md`. Example: "Temporal moved off a monolith after hitting scheduler contention at ~5k workflows/sec `[temporal-postmortem-hn]{4}`." The inline `[Project Name](url)` links and the `## Sources` list stay as the human-readable layer; the `[handle]{N}` citations are the machine-checkable chain. Only cite handles you actually attested — brief mentions and orientation prose don't need citations.
+**Cite load-bearing assessment facts** with the `[handle]{N}` wire-form inline — `handle` is the attestation handle from Phase 5, `N` is its entry number in the corpus `INDEX.md`. Example: "Temporal moved off a monolith after hitting scheduler contention at ~5k workflows/sec `[temporal-postmortem-hn]{4}`." The inline `[Project Name](url)` links and the `## Sources` list stay as the human-readable layer; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Only cite handles you actually attested — brief mentions and orientation prose don't need citations.
 
 Ask the user where to put the landscape brief before writing (usually `docs/` or `docs/architecture/`).
 
