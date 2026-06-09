@@ -337,8 +337,11 @@ Run before binding a release. Orchestrates a sequential gate sweep on one shared
 5. `rp:doc-review` (the narrative cascading pass, running alongside gate-docs)
 6. `aw:gate-patterns`
 7. `aw:gate-infra`
+8. `rp:gate-citations` (research-corpus citation-chain integrity — our gate)
 
 Each gate **emits findings as substrate items**, not a pass/fail report — Critical/High land at `stage: implementing` (release blockers), Mediums at `drafting`, Lows at backlog. The orchestrator never acts on findings or substitutes its own judgment; it sequences, injects the extension policies, and reports. Gates are idempotent (skip already-tracked findings), so re-running after an `aw:autopilot` drain only emits net-new items. A clean bundle (zero `implementing`/`drafting` gate items) is ready for `aw:release-deploy`.
+
+**Syntactic vs semantic — two complementary checks on research output.** `rp:gate-citations` (and the inline `/citation-lint` the research producers run) is the **syntactic** half: it mechanically proves every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance — no fabricated, colliding, or unreachable citations. It does **not** judge whether a claim is actually *supported* by its source. That **semantic** half is the research evaluators' job: `/research` Phase 5 (the independent groundedness check) and the `/deep-research` / `/research-program` Evaluator (isolated-context fresh read). The two compose and neither subsumes the other — a citation can resolve perfectly to an attestation that doesn't actually support the claim (caught only by the evaluator), and a well-supported claim can cite a handle that was never attested (caught only by the lint). Run both; never treat a clean lint as evidence of groundedness.
 
 ### Release (`aw:release-deploy <version>`)
 
@@ -664,6 +667,7 @@ Namespace: `rp` = `research-pipeline:`, `aw` = `agile-workflow:`.
 | `aw:gate-docs` | Release-deploy / quality-checkpoint | Rolling-foundation drift findings as `gate_origin: docs` items |
 | `aw:gate-patterns` | Release-deploy / quality-checkpoint (last) | Reusable patterns extracted to `.agents/skills/patterns/`; `gate_origin: patterns` tracking item |
 | `aw:gate-infra` | Release-deploy / quality-checkpoint | Infra-safety findings (Terraform drift, secrets, missing CI gates) as `gate_origin: infra` items |
+| `rp:gate-citations` | Quality-checkpoint (research gate) | Citation-chain integrity of the `.research/` corpus — broken/colliding/unresolved `[handle]{N}`, thin attestations — as `gate_origin: citations` items. Syntactic; pairs with the research evaluators' semantic groundedness check |
 | `aw:release-deploy` | Cut a release | Binds items, runs gates in CONVENTIONS order, ships, archives bound items to `.work/releases/<version>/` |
 | `aw:autopilot` | Drain the ready queue autonomously | Routes drafting → design, implementing → orchestrator, review → review; commits transitions until done/blocked |
 | `aw:scope` | Promote backlog/fresh ideas into tracking | Epic/feature/story items with declared dependencies |

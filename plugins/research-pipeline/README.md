@@ -12,7 +12,7 @@ This plugin is **additive**: it does not modify `agile-workflow`. It layers rese
 | **Prior art** | `/scout` |
 | **Foundation docs** | `/ideate` (super-layer: produces VISION/SPEC/ARCHITECTURE + research-plan + PRINCIPLES), `/architecture` |
 | **Substrate planning** | `/epicize`, `/epic-design`, `/feature-design`, `/update-epicize`, `/brief` |
-| **Quality** | `/doc-review` (cascading), `/quality-checkpoint` (orchestrates 7 gates), `/test-quality`, `/security-review` |
+| **Quality** | `/doc-review` (cascading), `/quality-checkpoint` (orchestrates 8 gates), `/gate-citations` (research-corpus citation integrity), `/test-quality`, `/security-review` |
 | **Lifecycle** | `/init-project`, `/expand`, `/update-documentation`, `/knowledge-index` |
 | **Knowledge viz** | `/knowledge-graph` (interactive corpus graph + index-integrity linter; sibling to `agile-workflow:board`) |
 | **Auto-loaded** | `/engineering-principles` (code-design), `/build-process` (methodology) |
@@ -25,7 +25,7 @@ See the [top-level README](../../README.md) for the full catalog.
 
 This plugin operates on Nathan Klisch's `agile-workflow` substrate. Same `.work/` format, same frontmatter schema, same `work-view` query tool. On shared projects, our skills check tags (`[needs-brief]`, `[needs-research]`) to decide when to run; his skills ignore them.
 
-**Where we extend his skills**: `gate-infra` is added in `plugins/agile-workflow/` (his namespace), and our `quality-checkpoint` orchestrator invokes his gates with optional extension policies (cascading doc-review on top of his `gate-docs`, spec-driven coverage on top of his `gate-tests`).
+**Where we extend his skills**: `gate-infra` is added in `plugins/agile-workflow/` (his namespace), and our `quality-checkpoint` orchestrator invokes his gates with optional extension policies (cascading doc-review on top of his `gate-docs`, spec-driven coverage on top of his `gate-tests`). Our own `gate-citations` (in this plugin) adds research-corpus citation-chain integrity as an 8th gate — the syntactic half of the ARD verification adapter; its semantic counterpart is the research evaluators' groundedness check.
 
 **Where we don't duplicate**: `implement`, `implement-orchestrator`, `cruft-cleaner`, `bold-refactor`, `repo-eval`, `e2e-test-design`, `extract-patterns`, `refactor-design`, `feature`, `release` — defer to his.
 

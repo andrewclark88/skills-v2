@@ -1,5 +1,5 @@
 ---
-description: "Plan for adopting ARD (Agentic Research Discipline) verification into research-pipeline — Option A: vendor ARD's liftable kernel (anti-fabrication floor + attestation/[handle]{N} citation chain + citation lint) as a verification adapter, keeping our orchestration/tiers/knowledge layer. Phase 0 decisions locked + code touchpoints; Phases 1-3 outlined. Peer-reviewed (Codex)."
+description: "Plan for adopting ARD (Agentic Research Discipline) verification into research-pipeline — Option A: vendor ARD's liftable kernel (anti-fabrication floor + attestation/[handle]{N} citation chain + citation lint) as a verification adapter, keeping our orchestration/tiers/knowledge layer. Phase 0 decisions locked; Phases 1-2 shipped (chain across all producers + vendored research-discipline); Phase 3 in progress (gate-citations + re-sync procedure). Peer-reviewed (Codex)."
 type: architecture
 updated: 2026-06-08
 ---
@@ -149,29 +149,46 @@ Direct code reading shrank the scope from the draft's three code changes to **on
    `research-skills-overview.md` § Output Structure so producers and consumers share
    one source of truth.
 
-## Phases 1–3 (outline; designed after Phase 0 lands)
+## Phases 1–3 (status)
 
-- **Phase 1 — verification adapter, one vertical slice with teeth.** Vendor
-  `lint-citations.py` + schema + `catalogs.json` + `ard.json` + the templates; add
-  a **Bash-capable `citation-lint` skill** (the five research skills' `allowed-tools`
-  omit `Bash`, so they cannot run the lint directly — confirmed). Wire **one**
-  `/research` slice end-to-end: write one attestation, cite `[handle]{1}`, run the
-  lint, fail on broken chains. Add a conformance/fixture test proving the vendored
-  lint reproduces ARD's verdicts. Mark pre-existing briefs
-  `verification_status: legacy-unattested` (the lint's `reduced-substrate` status
-  only applies when an attestation already exists, so legacy briefs need an
-  explicit marker — they otherwise pass with zero citations checked).
-- **Phase 2 — roll out with propagation.** Extend attestation-writing + `[handle]{N}`
-  across `/research` → **`/brief` → `/scout`** (both emit sourced research that feeds
-  design — omitting them leaves bypasses) → `/deep-research` → `/research-program`.
-  **Inline the discipline body into dispatch prompts** (an auto-loading skill does
-  not propagate into spawned specialists — ARD prepends the discipline into every
-  authoring dispatch). Single-agent paths first; parallel specialists last, where
-  shared-handle collisions/races appear.
-- **Phase 3 — gate + honesty + sync.** Surface the lint as a release/quality gate;
-  document plainly that lint = syntactic chain integrity and the LLM evaluator =
-  semantic support; record the ARD v0.4.1 pin and the re-sync procedure (run
-  conformance after any ARD bump).
+- **Phase 1 — verification adapter, one vertical slice with teeth (DONE).** The
+  vendored kernel (`scripts/lint-citations.py`, `catalogs.json`, `schema/`,
+  `conformance/`, `templates/{attestation,INDEX,precis}.md`, `ard.json`) plus a
+  Bash-capable `citation-lint` skill (the research skills' `allowed-tools` omit
+  `Bash`, so they delegate to it). `/research` is wired end-to-end: attest →
+  `[handle]{N}` → lint. The conformance suite (16/16) proves the vendored lint
+  reproduces ARD's verdicts. Pre-existing briefs are `verification_status:
+  legacy-unattested` (the lint checks zero citations on them, so they need the
+  explicit marker).
+- **Phase 2 — roll out with propagation (DONE).** The attestation + `[handle]{N}`
+  chain runs across all producers: `/research`, `/brief`, `/scout` (single-agent;
+  the parent authors, thin-attestation for scout's breadth-first nature), and
+  `/deep-research` + `/research-program` (parallel specialists / single-agent
+  campaign Leads). The `research-discipline` bundle is vendored as a skill (six
+  sections byte-identical to ARD) and **inlined verbatim into every specialist /
+  campaign-Lead / synthesis dispatch prompt** — an auto-loading skill does not
+  propagate into spawned sub-agents. Handle-namespacing is ARD's: a flat shared
+  `.research/attestation/` dir with source-named handles, and the lint's
+  `colliding-handle` check as the post-merge backstop (the orchestrators run a
+  campaign/program-wide lint in Phase 9). provenance convention: attestation files
+  = `source-direct`; all synthesis briefs = `agent-synthesis`.
+- **Phase 3 — gate + honesty + sync (in progress).** `rp:gate-citations` surfaces the
+  lint as the research gate in the 8-gate `quality-checkpoint`, emitting broken-chain
+  findings as `gate_origin: citations` substrate items (severity-staged). The
+  syntactic-vs-semantic distinction (lint = chain integrity; the research evaluators
+  = claim support) is documented in build-process.md § Quality Checkpoint. The ARD
+  v0.4.1 pin lives in `ard.json`; the re-sync procedure is below.
+
+## Re-sync procedure (on an ARD version bump)
+
+ARD is pinned in `ard.json` (`adopts.version` / `release_tag` / `commit_sha`). To adopt
+a newer ARD release:
+
+1. **Extract the new release.** `git archive upstream/main plugins/agentic-research | tar -x -C /tmp/ar` (or the pinned tag/sha of the new version). Confirm the `<!-- ARD-Version: X.Y.Z -->` markers match the target.
+2. **Re-copy each `vendored_paths` entry verbatim** from the new release into this plugin — the kernel artifacts (`lint-citations.py`, `catalogs.json`, `schema/`, `conformance/`, `templates/*`) are byte-for-byte; the `research-discipline` SKILL's **six numbered sections** are byte-for-byte (leave the deployment wrapper above them — it names our orchestrators and paths). "Pin, don't fork — never patch": fix bugs upstream, then re-sync.
+3. **Update `ard.json`** `adopts.{version,release_tag,commit_sha,catalog_baseline}` to the new release.
+4. **Run conformance:** `python3 plugins/research-pipeline/scripts/conformance/run.py` — must stay green (it asserts the vendored lint still reproduces ARD's canonical verdicts; a drift here means the re-sync changed lint behavior). If `catalogs.json` added pattern categories or chain statuses, update `conformance/expected.json` to match the new canonical verdicts and re-run.
+5. **Bump the plugin** (`./scripts/bump-version.sh research-pipeline patch`) — the plugin's own semver is decoupled from `adopts.version`; bump it because the plugin changed.
 
 ## Risks
 
@@ -181,8 +198,8 @@ Direct code reading shrank the scope from the draft's three code changes to **on
 - **Legacy corpora** predating attestations → explicit
   `verification_status: legacy-unattested`; do not rely on the lint to handle them
   silently.
-- **Vendoring drift** from ARD → the conformance fixtures (Phase 3) are the guard;
-  re-run on every ARD re-sync.
+- **Vendoring drift** from ARD → the conformance suite (`scripts/conformance/`) is the
+  guard; the re-sync procedure (above) re-runs it on every ARD bump.
 - **`allowed-tools` / Bash** → addressed by a dedicated `citation-lint` skill rather
   than widening every research skill's tool surface.
 

@@ -2,7 +2,7 @@
 
 Additive check `research-pipeline:quality-checkpoint` layers on top of
 `agile-workflow:gate-tests` (see
-`plugins/agile-workflow/skills/gate-tests/SKILL.md`) when running the 7-gate
+`plugins/agile-workflow/skills/gate-tests/SKILL.md`) when running the 8-gate
 release-time quality system.
 
 Nathan's `gate-tests` already enforces "tests derive from specs, not
