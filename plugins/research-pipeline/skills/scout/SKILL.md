@@ -102,7 +102,9 @@ Iterate until confirmed.
 ### Phase 3: Discover
 
 Execute broad search across multiple source types. **Use Agent subagents (`model: "sonnet"`) for parallel search** —
-fan out across vectors or source types, then reconverge for filtering.
+fan out across vectors or source types, then reconverge for filtering. Search subagents **gather** (return
+URLs + verbatim excerpts); **you (the parent) write any attestations from the actual sources** (Phase 5) —
+never attest from a subagent's paraphrase.
 
 **Source types and what each reveals:**
 
@@ -185,7 +187,7 @@ For each such source, write an attestation from the template at `${CLAUDE_PLUGIN
 - Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
 - Body: a **Summary** (paraphrase, ~100-300 words) and **Key passages** (verbatim quotes for the load-bearing facts only, each with a source-internal anchor: README §, commit date, paper §, HN comment).
 
-Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`) — pick a `<corpus>` slug for the landscape (e.g. `<project>-prior-art`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}`.
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`) — pick a `<corpus>` slug for the landscape (e.g. `<project>-prior-art`). **Append entries; never renumber.** `N` is the human-readable bibliography index — `/citation-lint` resolves the chain by **handle** (it does not read `INDEX.md` or check `N`), so append-only is for reader integrity, not a lint dependency.
 
 **AskUserQuestion checkpoint:** Present the landscape summary:
 - Top finds with assessments
@@ -253,7 +255,7 @@ it means either uncharted territory or a search gap worth revisiting.}
 {All URLs consulted during scouting}
 ```
 
-**Cite load-bearing assessment facts** with the `[handle]{N}` wire-form inline — `handle` is the attestation handle from Phase 5, `N` is its entry number in the corpus `INDEX.md`. Example: "Temporal moved off a monolith after hitting scheduler contention at ~5k workflows/sec `[temporal-postmortem-hn]{4}`." The inline `[Project Name](url)` links and the `## Sources` list stay as the human-readable layer; the `[handle]{N}` citations are the machine-checkable chain. Only cite handles you actually attested — brief mentions and orientation prose don't need citations.
+**Cite load-bearing assessment facts** with the `[handle]{N}` wire-form inline — `handle` is the attestation handle from Phase 5, `N` is its entry number in the corpus `INDEX.md`. Example: "Temporal moved off a monolith after hitting scheduler contention at ~5k workflows/sec `[temporal-postmortem-hn]{4}`." The inline `[Project Name](url)` links and the `## Sources` list stay as the human-readable layer; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Only cite handles you actually attested — brief mentions and orientation prose don't need citations.
 
 Ask the user where to put the landscape brief before writing (usually `docs/` or `docs/architecture/`).
 
@@ -315,5 +317,5 @@ status: draft
 - **Don't forget to follow leads.** The best finds often come from following references in other
   finds, not from the original search.
 - **Never cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
-- **Never renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **Keep the corpus `INDEX.md` append-only.** `N` is a human bibliography index; the lint resolves by handle, not `N`, so renumbering won't break the chain mechanically but will misnumber the reader-facing list.
 - **Don't over-attest.** Scout is breadth-first — attest only the load-bearing facts a downstream decision leans on, not every link. A pure orientation map is legitimately `legacy-unattested`.

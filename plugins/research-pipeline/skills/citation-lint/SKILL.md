@@ -20,8 +20,10 @@ model: haiku
 
 A thin wrapper over the vendored ARD citation lint
 (`${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py`, zero-dependency Python). It is the
-**mechanical** half of research-pipeline's grounding model; the **semantic** half (is the
-claim actually supported by the cited passage?) is the research evaluator's job. The two are
+**mechanical** half of research-pipeline's grounding model. The semantic question (is the
+claim actually supported by the cited passage?) is only partly covered — the research
+evaluators catch fabrication-smell and uncited claims, but passage-level support is a known
+gap (see build-process.md § Quality Checkpoint). The two are
 complementary — run both.
 
 ## What it checks (ARD CATALOGS §3 + GR.5)
@@ -60,7 +62,11 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py" <target> \
   deterministic and network-free. Drop this flag (let the probe run) only when the user explicitly
   asks to verify source liveness.
 - **`--exit-code-on high`** — non-zero exit when any broken (high-severity) chain is found, so a
-  caller (a producer skill or the docs gate) can fail on broken citations.
+  caller (a producer skill or the docs gate) can fail on broken citations. **But `rp:gate-citations`
+  is stricter — it stages *medium* findings (e.g. `unreachable-source`: a `source_path` that
+  doesn't exist) into `drafting`, which blocks a release.** So a brief that passes its own
+  high-only inline check can still block at the gate. Producers should resolve medium findings
+  too before finalizing (re-run with `--exit-code-on medium` to see them), not just high.
 - Add `--format json` when a caller needs to parse findings.
 
 `--analysis-dir` defaults to `.research/analysis` (ARD's layout) and only affects
@@ -72,7 +78,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py" <target> \
 Summarize: counts by status, each broken citation with its file + handle + why, thin-attestation
 flags, and pattern flags (pattern flags are advisory — verify before acting; they catch *likely*
 unsourced claims, not certain ones). State plainly that this is a syntactic pass and recommend the
-research evaluator for semantic support.
+research evaluator for the plausibility/fabrication-smell pass (noting passage-level support is a known gap).
 
 ## Provenance & maintenance
 

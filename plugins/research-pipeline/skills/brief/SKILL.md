@@ -78,7 +78,7 @@ Those questions define the brief's scope.
 Investigate the domain deeply. Use every tool available:
 
 - **WebSearch/WebFetch** — official documentation, specifications, rule books, API docs
-- **Agent subagents (`model: "sonnet"`)** — spawn parallel researchers for different aspects of the topic
+- **Agent subagents (`model: "sonnet"`)** — spawn parallel researchers for different aspects of the topic. They **gather** (return URLs + verbatim excerpts); **you (the parent) write the attestations from the actual sources** in Phase 2b — never attest from a subagent's paraphrase (that launders an unverified summary into a source-direct attestation).
 - **Existing code** — if the project has related code, read it to understand what patterns are established
 - **Existing data** — if the project has data (card pools, technique inventories, etc.), analyze it to ground the brief in reality
 
@@ -103,7 +103,7 @@ For each such source, write an attestation from the template at `${CLAUDE_PLUGIN
 - Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
 - Body: a **Summary** (paraphrase, ~100-300 words — your words, no project framing) and **Key passages** (verbatim quotes for the load-bearing claims only, each with a source-internal anchor: CR §, p./¶, endpoint, timecode).
 
-Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `mtg-rules`). **Append entries; never renumber** — the entry number `N` is the anchoring target for `[handle]{N}` citations, so renumbering breaks every existing citation. A new source gets the next free `N`.
+Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `mtg-rules`). **Append entries; never renumber.** `N` is the human-readable bibliography index — `/citation-lint` resolves the chain by **handle** (it does not read `INDEX.md` or check `N`), so append-only keeps the bibliography honest for readers, not because the lint depends on it. A new source gets the next free `N`.
 
 If the topic is small enough that nothing is genuinely load-bearing (no numbers, no rules, no API shapes to verify), it's fine to produce no attestations — the brief is then `verification_status: legacy-unattested` (see Phase 4).
 
@@ -187,7 +187,7 @@ will look different from a brief about tournament rules or API endpoints. Struct
 #### Writing Rules
 
 - **Cite everything.** Rule numbers, API docs, source URLs. A builder should be able to verify any claim.
-- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]{N}` citations are the machine-checkable chain `/citation-lint` verifies. Cite the same claims you attested — never cite a handle you didn't write an attestation for.
+- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Cite the same claims you attested — never cite a handle you didn't write an attestation for.
 - **Use tables for structured data.** Card lists, rule summaries, API endpoints, technique inventories.
 - **Use worked examples for complex interactions.** Walk through the stack resolution step by step. Show the mana calculation. Trace the API call sequence.
 - **Flag the 80/20.** What are the most common cases? (Top 100 meta cards, most frequent tournament rules, most-used API endpoints.) Cover those thoroughly. Acknowledge the long tail but don't exhaustively document it.
@@ -303,5 +303,5 @@ For data pipelines and operational processes.
 - **Don't write without knowing the consumer.** Read the roadmap phase first. A brief for Phase 5 is different from a brief for Phase 10.
 - **Don't be vague.** "Mana abilities don't use the stack" → "Mana abilities (CR 605) do NOT use the stack. They resolve immediately. A player can activate mana abilities while casting a spell (CR 601.2g). Exception: Lion's Eye Diamond has a timing restriction — 'activate only as an instant' means it cannot be activated during spell casting."
 - **Never cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
-- **Never renumber a corpus `INDEX.md`.** Entry numbers are citation anchors; append only.
+- **Keep the corpus `INDEX.md` append-only.** `N` is a human bibliography index; the lint resolves by handle, not `N`, so renumbering won't break the chain mechanically but will misnumber the reader-facing list.
 - **Never mark a brief `verification_status: attested` if `/citation-lint` reports broken chains.** Fix them, or record `legacy-unattested` honestly.
