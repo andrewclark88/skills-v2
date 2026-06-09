@@ -1,9 +1,10 @@
 ---
 name: quality-checkpoint
 description: >
-  Orchestrate the 7-gate quality system at release time: gate-security, gate-tests,
+  Orchestrate the 8-gate quality system at release time: gate-security, gate-tests,
   gate-cruft, gate-docs (with cascading consistency extension), gate-patterns,
-  gate-infra, plus /doc-review. Findings emit as substrate items, not reports.
+  gate-infra, gate-citations (research-corpus citation integrity), plus /doc-review.
+  Findings emit as substrate items, not reports.
   Run pre-release-deploy when binding items to a version.
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Skill
@@ -14,9 +15,9 @@ model: opus
 
 You are the **Quality Checkpoint** orchestrator. The build-process methodology
 (`${CLAUDE_PLUGIN_ROOT}/docs/build-process.md`
-§Quality Checkpoint) prescribes a 7-gate sweep before any release-deploy: six
-substrate-emitting gates (Nathan's five + our `gate-infra`) plus our
-narrative `doc-review` pass running alongside.
+§Quality Checkpoint) prescribes an 8-gate sweep before any release-deploy: seven
+substrate-emitting gates (Nathan's five + our `gate-infra` and `gate-citations`)
+plus our narrative `doc-review` pass running alongside.
 
 Your job is to invoke them in order on a single shared release bundle, then
 surface a consolidated summary so the user can decide whether the bundle is
@@ -25,7 +26,7 @@ ready for `/agile-workflow:release-deploy` or needs draining via
 
 ## Why this skill exists
 
-Running 7 gates by hand has three friction points:
+Running 8 gates by hand has three friction points:
 1. The user has to remember the sequence and re-type the version 7 times
 2. Each gate emits items independently; nothing aggregates the blocking set
 3. Our extensions to Nathan's gate-docs and gate-tests (cascading consistency,
@@ -108,6 +109,8 @@ emitted their items).
      — runs alongside gate-docs for the cascading narrative pass
 6. Skill(agile-workflow:gate-patterns, <version>)
 7. Skill(agile-workflow:gate-infra, <version>)
+8. Skill(research-pipeline:gate-citations, <version>)
+     — research-corpus citation-chain integrity (our gate; no extension policy needed)
 ```
 
 For each gate:
@@ -134,11 +137,11 @@ it alongside its built-in methodology.
 
 ### Phase 3: Report consolidated findings
 
-After all 7 gates + doc-review have run, write a single consolidated summary
+After all 8 gates + doc-review have run, write a single consolidated summary
 directly in your response. Include:
 
 - **Scope** — version, bundle item count, bundle file count
-- **Per-gate breakdown** — for each of the 7 gates:
+- **Per-gate breakdown** — for each of the 8 gates:
   - Items emitted (count, with first 3 ids)
   - Severity breakdown (Critical / High / Medium / Low)
   - Query command to view (e.g. `work-view --gate security --release <version>`)
@@ -191,7 +194,7 @@ Use AskUserQuestion if the user needs to decide, or report directly:
 ## Completion Criteria
 
 - Scope confirmed (version arg accepted, or `--pending` resolved)
-- All 7 gates + doc-review invoked (or skipped with documented reason)
+- All 8 gates + doc-review invoked (or skipped with documented reason)
 - Extension policies (gate-docs, gate-tests) passed at invocation
 - Consolidated blocking set surfaced
 - Next-action recommendation made
@@ -215,7 +218,7 @@ the findings:
 
 # Per-gate findings
 .work/bin/work-view --gate <name> --release <version> --paths
-# Where <name> ∈ {security, tests, cruft, docs, patterns, infra}
+# Where <name> ∈ {security, tests, cruft, docs, patterns, infra, citations}
 
 # Only this orchestrator's extension findings (cascading + spec-driven)
 .work/bin/work-view --tag research-pipeline-extension --release <version>

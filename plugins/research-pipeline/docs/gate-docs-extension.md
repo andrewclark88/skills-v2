@@ -2,7 +2,7 @@
 
 Additive checks `research-pipeline:quality-checkpoint` layers on top of
 `agile-workflow:gate-docs` (see
-`plugins/agile-workflow/skills/gate-docs/SKILL.md`) when running the 7-gate
+`plugins/agile-workflow/skills/gate-docs/SKILL.md`) when running the 8-gate
 release-time quality system.
 
 Nathan's `gate-docs` already covers foundation-doc drift, README staleness,
@@ -153,7 +153,7 @@ depends_on: []
 release_binding: <version>
 gate_origin: docs
 created: YYYY-MM-DD
-updated: YYYY-MM-DD
+updated: 2026-06-08
 ---
 ```
 
