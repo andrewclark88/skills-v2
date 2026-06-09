@@ -62,6 +62,7 @@
  <label class="chk"><input type="checkbox" id="ecRef" checked>reference</label>
  <label class="chk"><input type="checkbox" id="ecSup" checked>supersession</label>
  <label class="chk"><input type="checkbox" id="ecCon" checked>containment</label>
+ <label class="chk"><input type="checkbox" id="ecCit" checked>citation</label>
 </div>
 <div id="legend"></div>
 <div id="stage"><div id="cy"></div>
@@ -83,6 +84,7 @@ document.documentElement.style.setProperty('--top', (document.getElementById('ba
 // ---- indexes ----
 const NODE = {}; DATA.nodes.forEach(n => NODE[n.id] = n);
 const GHOST = {}; DATA.ghosts.forEach(g => GHOST[g.id] = g);
+const EV = {}; DATA.evidence.forEach(e => EV[e.id] = e);   // ARD attestation overlay nodes
 const ADJ = DATA.adjacency;
 const maxIndeg = Math.max(1, ...DATA.nodes.map(n => n.indeg));
 
@@ -98,8 +100,14 @@ DATA.nodes.forEach(n => els.nodes.push({ data:{
   indeg:n.indeg, outdeg:n.outdeg, deg:n.deg, nav:n.nav, orphan:n.orphan, superseded:n.superseded,
   sz: 14 + 36 * Math.sqrt(n.indeg / maxIndeg) } }));
 DATA.ghosts.forEach(g => els.nodes.push({ data:{ id:g.id, label:g.label, ghost:true, dclass:g.dclass, color:g.color, sz:12 } }));
+// ARD evidence overlay: attestation nodes (distinct class, not doc nodes) + brief→attestation citation edges
+DATA.evidence.forEach(e => els.nodes.push({ data:{ id:e.id, label:e.label, evidence:true, resolved:e.resolved,
+  handle:e.handle, provenance:e.provenance, source:e.source, fetched:e.fetched, cited_by:e.cited_by, color:e.color, sz:11 } }));
 DATA.edges.forEach(e => els.edges.push({ data:{
   id:e.id, source:e.source, target:e.target, rel:e.rel, ekind:e.ekind, ecat:e.ecat, dclass:e.dclass } }));
+DATA.citations.forEach(c => els.edges.push({ data:{
+  id:c.id, source:c.source, target:c.target, rel:'cites', ekind:'citation', ecat:'citation',
+  dclass:c.resolved?'':'broken-citation' } }));
 
 const cy = cytoscape({ container:document.getElementById('cy'), elements:els, wheelSensitivity:0.25,
   userPanningEnabled:true, boxSelectionEnabled:false, autoungrabify:false,
@@ -111,6 +119,7 @@ const cy = cytoscape({ container:document.getElementById('cy'), elements:els, wh
     {selector:'node[?orphan]',style:{'background-opacity':0.35,'border-width':1,'border-color':'#3a3a44','border-style':'dashed'}},
     {selector:'node[?superseded]',style:{'border-width':3,'border-color':'#b07aa1'}},
     {selector:'node[?ghost]',style:{'shape':'diamond','background-opacity':0.85}},
+    {selector:'node[?evidence]',style:{'shape':'round-tag','background-opacity':0.85,'border-width':1,'border-color':'#1c2330'}},
     {selector:'node.show-label',style:{'text-opacity':1}},
     {selector:'edge',style:{'curve-style':'haystack','width':0.7,'line-color':'#33405a','opacity':0.5}},
     {selector:'edge[ecat="containment"]',style:{'line-color':'#2f5d50','opacity':0.55,'width':0.9}},
@@ -118,6 +127,8 @@ const cy = cytoscape({ container:document.getElementById('cy'), elements:els, wh
     {selector:'edge[dclass="unindexed"]',style:{'line-color':'#ff9f1c','opacity':0.9,'width':1.3}},
     {selector:'edge[dclass="broken"]',style:{'line-color':'#ff0033','opacity':0.95,'width':1.6}},
     {selector:'edge[dclass="out-of-scope"]',style:{'line-color':'#555','opacity':0.4,'line-style':'dashed'}},
+    {selector:'edge[ecat="citation"]',style:{'line-color':'#e8b84b','opacity':0.7,'width':0.9}},
+    {selector:'edge[dclass="broken-citation"]',style:{'line-color':'#ff0033','opacity':0.95,'width':1.4}},
     {selector:'.hidden',style:{'display':'none'}},
     {selector:'.ecat-off',style:{'display':'none'}},
     {selector:'.faded',style:{'opacity':0.07,'text-opacity':0}},
@@ -131,7 +142,7 @@ function var_accent(){return '#2d6cdf';}
 let ecApi=null, nav=null;
 try{ if(window.cytoscapeExpandCollapse){ cy.expandCollapse && (ecApi=cy.expandCollapse({layoutBy:null,fisheye:false,animate:false,undoable:false})); } }catch(e){ console.warn('expand-collapse off',e); }
 try{ if(window.cytoscapeNavigator){ nav=cy.navigator({container:document.getElementById('minimap')}); } }catch(e){ console.warn('navigator off',e); document.getElementById('minimap').style.display='none'; }
-try{ if(window.cytoscapeCxtmenu){ cy.cxtmenu({ selector:'node[!isGroup][!ghost]', commands:[
+try{ if(window.cytoscapeCxtmenu){ cy.cxtmenu({ selector:'node[!isGroup][!ghost][!evidence]', commands:[
   {content:'open', select:n=>openDoc(n.id())},
   {content:'expand', select:n=>expandNode(n.id())},
   {content:'dependents', select:n=>showReaches(n.id())},
@@ -153,16 +164,18 @@ function neighbors(id, depth){
 function rebuild(){
   const vis=view.visible;
   cy.batch(()=>{
-    cy.nodes('[!isGroup][!ghost]').forEach(n=> n.toggleClass('hidden', !vis.has(n.id())));
-    // ghosts: shown only when an incident dangling edge has a visible real source
-    const ghostShown=new Set();
+    cy.nodes('[!isGroup][!ghost][!evidence]').forEach(n=> n.toggleClass('hidden', !vis.has(n.id())));
+    // ghosts + evidence: shown only when an incident edge has a visible real source
+    const ghostShown=new Set(), evShown=new Set();
     cy.edges().forEach(e=>{
       const d=e.data(); let show = vis.has(d.source) && (NODE[d.target]? vis.has(d.target) : true);
       if(show && view.ecatOff.has(d.ecat)) show=false;
       e.toggleClass('hidden', !show);
       if(show && GHOST[d.target]) ghostShown.add(d.target);
+      if(show && EV[d.target]) evShown.add(d.target);
     });
     cy.nodes('[?ghost]').forEach(g=> g.toggleClass('hidden', !ghostShown.has(g.id())));
+    cy.nodes('[?evidence]').forEach(g=> g.toggleClass('hidden', !evShown.has(g.id())));
     // group parents visible iff they have a non-hidden child (use hasClass, NOT :visible —
     // :visible is recursive on ancestors, which would deadlock parent vs. child here)
     cy.nodes(':parent').forEach(p=> p.toggleClass('hidden', p.children().filter(c=>!c.hasClass('hidden')).length===0));
@@ -235,7 +248,10 @@ sEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const q=sEl.value.trim(
 
 // ---- tooltip (hover) ----
 const tip=document.getElementById('tip');
-cy.on('mouseover','node[!isGroup]',e=>{ const n=NODE[e.target.id()]||GHOST[e.target.id()]; if(!n) return;
+cy.on('mouseover','node[!isGroup]',e=>{ const id=e.target.id(); const ev=EV[id];
+  if(ev){ tip.innerHTML='<div class="t">'+esc(ev.label)+'</div><div class="m">'+(ev.resolved?'attestation':'unresolved citation')+(ev.provenance?' · '+esc(ev.provenance):'')+' · cited by '+ev.cited_by+'</div>'+(ev.source?'<div class="s">'+esc(ev.source)+'</div>':'');
+    tip.style.display='block'; return; }
+  const n=NODE[id]||GHOST[id]; if(!n) return;
   const meta = n.dclass ? ('ghost · '+n.dclass) : (n.kind+' · '+(n.status||'—')+' · in '+n.indeg+' / out '+n.outdeg);
   tip.innerHTML='<div class="t">'+esc(n.label)+'</div><div class="m">'+esc(meta)+'</div>'+(n.summary?'<div class="s">'+esc(n.summary.slice(0,240))+'</div>':'');
   tip.style.display='block'; });
@@ -258,7 +274,16 @@ function syncSelection(id){ view.sel=id;
 
 // ---- detail card ----
 function chip(txt,color){ return '<span class="pill" style="background:'+color+'33;color:'+color+'">'+esc(txt)+'</span>'; }
-function showCard(id){ const n=NODE[id]; const pane=document.getElementById('paneDetail'); if(!n){ pane.innerHTML='<div class="muted">—</div>'; return; }
+function showCard(id){ const pane=document.getElementById('paneDetail');
+  const ev=EV[id];
+  if(ev){ pane.innerHTML='<h3>'+esc(ev.label)+'</h3>'
+    +'<div>'+chip(ev.resolved?'attestation':'unresolved citation', ev.color)+(ev.provenance?chip(ev.provenance,'#76b7b2'):'')+'</div>'
+    +'<div class="kv"><b>handle</b> '+esc(ev.handle)+'</div>'
+    +(ev.source?'<div class="kv"><b>source</b> '+esc(ev.source)+'</div>':'')
+    +(ev.fetched?'<div class="kv"><b>fetched</b> '+esc(ev.fetched)+'</div>':'')
+    +'<div class="kv"><b>cited by</b> '+ev.cited_by+' brief(s)</div>'
+    +(ev.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run /citation-lint).</div>'); return; }
+  const n=NODE[id]; if(!n){ pane.innerHTML='<div class="muted">—</div>'; return; }
   const a=ADJ[id]||{in:[],out:[]};
   const links=(arr)=>arr.length? '<ul class="lst">'+arr.map(x=>'<li class="lnk" data-go="'+esc(x.id)+'"><span class="rel">'+esc(x.ecat==='containment'?'contains':x.rel)+' › </span>'+esc(NODE[x.id]?NODE[x.id].label:x.id)+'</li>').join('')+'</ul>' : '<div class="muted" style="font-size:11px">— none —</div>';
   let h='';
@@ -297,7 +322,7 @@ function markTableRow(id){ const pane=document.getElementById('paneTable'); pane
 function renderQa(){ const qa=DATA.qa; const pane=document.getElementById('paneQa');
   const lens=(key,label,color,arr)=>{ const n=arr.length;
     return '<div class="row"><button class="lensBtn '+(view.lens===key?'active':'')+'" data-lens="'+key+'" style="border-color:'+color+'">'+label+' ('+n+')</button>'+(n?'<button data-next="'+key+'">next ▸</button>':'')+'</div>'+
-      (n? '<div>'+arr.slice(0,200).map(p=>'<div class="item" data-id="'+esc(p)+'">'+esc((NODE[p]?NODE[p].label:p.split('/').pop()))+'</div>').join('')+'</div>' : '<div class="item ok">— none —</div>'); };
+      (n? '<div>'+arr.slice(0,200).map(p=>'<div class="item" data-id="'+esc(p)+'">'+esc((NODE[p]?NODE[p].label:EV[p]?EV[p].label:p.split('/').pop()))+'</div>').join('')+'</div>' : '<div class="item ok">— none —</div>'); };
   const orph=[]; Object.keys(qa.orphans).sort().forEach(g=>qa.orphans[g].forEach(p=>orph.push(p)));
   let h='<div class="muted" style="font-size:11px">Lenses highlight findings over the current view. “next” steps through them.</div>';
   h+='<h3>🟠 Unindexed (on disk — fix index)</h3>'+lens('unindexed','unindexed','#ff9f1c',qa.unindexed);
@@ -305,6 +330,7 @@ function renderQa(){ const qa=DATA.qa; const pane=document.getElementById('paneQ
   h+='<h3>⚪ Orphans (no edges)</h3>'+lens('orphan','orphans','#888',orph);
   h+='<h3>🟣 Superseded</h3>'+lens('superseded','superseded','#b07aa1',qa.superseded);
   h+='<h3>⚫ Out-of-scope (expected)</h3>'+lens('oos','out-of-scope','#666',qa.out_of_scope);
+  if((qa.unresolved_citations||[]).length) h+='<h3>🟡 Unresolved citations (broken chain)</h3>'+lens('unresolved_citations','unresolved [handle]{N}','#ff0033',qa.unresolved_citations);
   pane.innerHTML=h;
   pane.querySelectorAll('[data-lens]').forEach(b=>b.onclick=()=>{ view.lens = view.lens===b.getAttribute('data-lens')?null:b.getAttribute('data-lens'); renderQa(); applyLens(); });
   pane.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>nextFinding(b.getAttribute('data-next')));
@@ -321,14 +347,17 @@ function applyLens(){ cy.elements().removeClass('faded halo'); if(!view.lens) re
     ids.forEach(id=>{ const n=cy.getElementById(id); if(n.length){ n.removeClass('faded').addClass('halo'); n.connectedEdges().removeClass('faded'); } }); });
 }
 function focusFinding(id){ const n=cy.getElementById(id);
-  if(NODE[id]){ selectNode(id); } else if(n.length){ // ghost: surface a referencing source
+  if(NODE[id]){ selectNode(id); }
+  else if(EV[id]){ // evidence: surface a citing brief so the attestation node appears
+    const c=DATA.citations.find(c=>c.target===id && NODE[c.source]); if(c) selectNode(c.source); }
+  else if(n.length){ // ghost: surface a referencing source
     const srcEdge=DATA.edges.find(e=>e.target===id && NODE[e.source]); if(srcEdge) selectNode(srcEdge.source); }
 }
 function nextFinding(key){ const arr=lensSet(key); if(!arr.length) return; const i=(view.findingIdx[key]??-1)+1; view.findingIdx[key]=i%arr.length; focusFinding(arr[view.findingIdx[key]]); }
 
 // ---- edge-type toggles ----
 function bindEcat(id,cat){ document.getElementById(id).addEventListener('change',e=>{ if(e.target.checked)view.ecatOff.delete(cat); else view.ecatOff.add(cat); rebuild(); }); }
-bindEcat('ecRef','reference'); bindEcat('ecSup','supersession'); bindEcat('ecCon','containment');
+bindEcat('ecRef','reference'); bindEcat('ecSup','supersession'); bindEcat('ecCon','containment'); bindEcat('ecCit','citation');
 
 // ---- pin ----
 function togglePin(n){ n.toggleClass('halo'); savePosDebounced(); } // visual cue; positions already persisted

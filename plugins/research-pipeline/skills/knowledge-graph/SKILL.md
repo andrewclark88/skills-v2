@@ -8,10 +8,12 @@ description: >
   vertical layers by a selectable dimension (kind / group / status / recency / in-degree / community);
   pass --2d for the cytoscape.js view (search-first "type to explore" DOI navigation + QA lenses +
   sortable table). Doubles as a knowledge-index LINTER: classifies unresolved related[] targets
-  (unindexed-on-disk / broken-ref / out-of-scope) and surfaces orphans + superseded chains. Sibling to
-  agile-workflow:board (board = work substrate; this = knowledge corpus). Use when the user asks to
-  "visualize the knowledge graph", "show the doc graph", "graph the research", "find orphan docs", or
-  "audit the knowledge index integrity".
+  (unindexed-on-disk / broken-ref / out-of-scope) and surfaces orphans + superseded chains. When an
+  .research/attestation/ tier exists, overlays the ARD citation chain as a distinct evidence-node class
+  (attestations + brief→attestation [handle]{N} edges; unresolved handles flagged red) without
+  schema-linting them as docs. Sibling to agile-workflow:board (board = work substrate; this = knowledge
+  corpus). Use when the user asks to "visualize the knowledge graph", "show the doc graph", "graph the
+  research", "find orphan docs", "see the citation chain", or "audit the knowledge index integrity".
 user-invocable: true
 allowed-tools: Bash, Read
 model: haiku
@@ -62,6 +64,11 @@ The search-first 2D graph — best for integrity auditing. Built on the **DOI mo
 - ⚫ **out-of-scope** — target outside the indexed roots (e.g. `src/`); expected, not a defect.
 - ⚪ **orphans** — docs with zero edges (after containment); a cross-reference gap worth backfilling.
 - 🟣 **superseded** — docs carrying a `supersession_note`.
+- 🟡 **unresolved citations** — a `[handle]{N}` cited in a `.research/` brief with no attestation under `.research/attestation/` → a broken citation chain (the same defect `/citation-lint` + `/gate-citations` flag, surfaced visually). 2D view only; both views render it as a red attestation node.
+
+### ARD evidence overlay (attestations + citations)
+
+When a project has an `.research/attestation/` tier, the graph renders a distinct **evidence node class** (read directly from the attestation files — they're deliberately absent from the knowledge index, so they're shown *without* being schema-linted as docs) plus **citation edges** from each brief to the attestations its `[handle]{N}` citations resolve to. Resolved attestations are teal; a cited handle with no attestation is a red **unresolved** node (a broken chain). Evidence is a separate class — it never counts toward doc-corpus degree, communities, orphans, or QA. Toggle it with the **citation** edge-type checkbox; in 3D it occupies its own bottom layer; click any attestation node for its handle / source / provenance / cited-by count.
 
 ## Workflow
 
