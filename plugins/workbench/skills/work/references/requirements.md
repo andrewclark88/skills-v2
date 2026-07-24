@@ -1,72 +1,28 @@
-# Requirements Gathering
+# Requirements
 
-Requirements gathering is a progressive conversation, not a preliminary form.
-Its purpose is to remove expensive misunderstandings while preserving momentum.
+Establish enough shared understanding to execute safely without turning every
+request into a formal specification.
 
-## Learn before asking
+Determine:
 
-First inspect:
+- intended outcome and audience;
+- observable behavior and acceptance evidence;
+- constraints and explicit exclusions;
+- consequential failure behavior;
+- product choices only the user can settle.
 
-- the user's exact request and earlier decisions;
-- relevant active or parked work;
-- foundation documents and project conventions;
-- current behavior, interfaces, tests, and nearby implementation;
-- external sources for unstable factual questions.
+Inspect code, tests, documentation, and current external facts before asking the
+user. Ask one focused question when an answer materially changes the result,
+then pause for the answer. Include a recommendation and evidence when useful.
+Never treat the absence of a structured question tool as consent to guess.
 
-Do not ask the user to rediscover facts available from those sources. Convert
-what you learn into sharper questions about decisions only the user can make.
+If the intended outcome or scope cannot yet support a coherent work item,
+invoke `ideate` rather than accumulating a long requirements interview inside
+`work`. Preserve ideate's no-write boundary and return only through a
+user-selected handoff. Do not route away merely because one or two
+consequential implementation or product choices remain.
 
-## What to establish
-
-Gather the dimensions that materially affect the work:
-
-- desired outcome and why it matters;
-- users, environments, and supported scenarios;
-- observable behavior, including important failure and recovery behavior;
-- explicit exclusions and acceptable simplifications;
-- compatibility, privacy, security, accessibility, performance, or operational
-  constraints that have real consequence here;
-- external contracts or integrations;
-- acceptance evidence: what the user should be able to see, do, or verify;
-- visual and interaction requirements for UI-bearing work.
-
-Not every item needs every dimension. Ask only what can change the solution.
-
-## How to ask
-
-Honor the effective `interaction` preference from `preferences.md`:
-`collaborative` discusses meaningful choices together; `checkpointed` pauses for
-consequential or difficult-to-reverse choices; `autonomous` resolves routine
-ambiguity with the least irreversible sound option and records it. No setting
-turns destructive, externally binding, or genuinely user-owned decisions into
-agent guesses.
-
-Group related questions so the user can reason about one concern at a time.
-Prefer concrete choices with visible consequences over vague preference prompts.
-Explain trade-offs briefly without steering through loaded wording.
-
-When a structured question tool is available, use it for bounded choices that
-benefit from comparison. Free-form discussion remains appropriate for ambiguous
-product framing. When the tool is unavailable, ask numbered inline questions
-and stop for the user's response. Do not continue while pretending an important
-answer was supplied.
-
-Ask follow-ups when an answer reveals a new consequential ambiguity. Do not
-impose a fixed one-round limit, but avoid interrogating the user about reversible
-implementation details the agent can decide responsibly.
-
-## Readiness
-
-Work is ready for confident implementation when:
-
-- the outcome and acceptance evidence are clear;
-- unresolved choices are either reversible agent discretion or explicitly
-  recorded unknowns;
-- research has reduced factual uncertainty enough for the decision;
-- UI-bearing work has a user-reviewed walkthrough or the user deliberately
-  chose to proceed without one.
-
-Under `interaction: autonomous`, use the least irreversible sound choice for
-routine ambiguity and record it. Pause only for product direction, meaningful
-external contracts, destructive behavior, or other choices where guessing
-would betray the requested outcome.
+Record settled requirements and exclusions in the relevant work item. Replace
+superseded decisions instead of appending a conversation transcript. Preserve
+implementation discoveries only when they change requirements, design,
+integration, or future handoff.

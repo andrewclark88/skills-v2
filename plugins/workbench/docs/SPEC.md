@@ -1,6 +1,44 @@
 # Specification: Workbench
 
-## Substrate ownership
+## Authority boundaries
+
+```text
+.work/
+├── CONVENTIONS.md
+├── active/.gitkeep
+├── active/<id>.md
+├── backlog/.gitkeep
+├── backlog/<id>.md
+├── completed/.gitkeep
+├── completed/<id>.md
+├── releases/.gitkeep
+└── releases/<version>.md
+
+.research/
+├── CONVENTIONS.md
+├── attestations/.gitkeep
+├── attestations/<handle>.md
+├── briefs/.gitkeep
+├── briefs/<id>.md
+└── bibliography.yaml
+
+.knowledge/index.json
+.mockups/<item-id>/index.html
+docs/<repository-wide foundations>
+docs/<sub-project>/<scope-owned foundations>
+<sub-project>/docs/<scope-owned foundations>
+AGENTS.md
+```
+
+- `.work/` records outcomes the project may decide and deliver.
+- `.research/` records externally fetched evidence and grounded synthesis.
+- Foundation documents record current or explicitly intended project truth.
+- `.knowledge/index.json` is committed discovery metadata with no independent
+  authority.
+
+Workbench and agile-workflow are mutually exclusive `.work/` owners.
+
+## Work conventions
 
 `.work/CONVENTIONS.md` begins with:
 
@@ -8,171 +46,134 @@
 ---
 owner: workbench
 schema: 1
-release_mode: summarized|none
-# Optional project overrides:
-# interaction: collaborative|checkpointed|autonomous
-# rigor: lean|standard|rigorous
-# review: inline|fresh|cross-model|convergent
-# capability: efficient|adaptive|maximum
-# execution: cohesive|adaptive|parallel
-# commits: delivery|checkpoint|granular
+completed_items: summarize|discard
 ---
 ```
 
-Workbench and agile-workflow use different `.work/` contracts and must not
-operate on the same project simultaneously. A skill halts rather than guessing
-when the ownership marker is absent or names another owner.
+Setup always asks the user how completed items should be retained and aligns
+repository-specific conventions. It may recommend conventions from repository
+evidence, including parking useful out-of-scope findings and behavior-focused
+testing, but writes no new convention without confirmation.
 
-The six workflow keys are optional. Resolve each independently from explicit
-user direction in the current prompt or active user-authored goal, then the
-project convention, then Workbench's default: `checkpointed`, `standard`,
-`fresh`, `adaptive`, `adaptive`, and `delivery`, respectively. Prompt overrides
-apply only to that requested scope and are never written back unless the user
-explicitly asks to change project defaults. Natural-language equivalents are
-valid; explicit model names are narrower prompt overrides and do not belong in
-project conventions.
-
-## Layout
-
-```text
-.work/
-├── CONVENTIONS.md
-├── active/<id>.md
-├── backlog/<id>.md
-├── archive/<id>.md      # release_mode: summarized only
-└── releases/<version>.md
-.research/<id>.md         # grounded research artifacts
-.mockups/<item-id>/         # interactive requirements walkthroughs
-docs/PRINCIPLES.md          # optional project-owned engineering philosophy
-.agents/skills/patterns/    # optional observed code-pattern catalog
-```
-
-`.research/` and `.mockups/` are separate artifact tiers, not work queues.
-Research files preserve evidence and a reusable synthesis; work items point to
-them through `research_refs`. UI walkthroughs may contain several HTML pages and
-shared local assets; `index.html` is always the entry point shown to the user,
-and work items point to them through `mock_refs`.
-
-## Active item frontmatter
+## Active items
 
 ```yaml
 ---
-id: onboarding-flow
-kind: epic|feature|story|scan
+id: <stable-kebab-id>
+kind: epic|feature|story
 status: active|blocked
-tags: [ui, auth]
-parent: account-experience|null
-hard_dependencies: [session-contract]
-soft_dependencies: [password-recovery]
-research_refs: [.research/session-options.md]
-mock_refs: [.mockups/onboarding-flow/index.html]
-release: null
+tags: []
+parent: null
+blocked_by: []
+related_to: []
+research_refs: []
+mock_refs: []
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
 
-`story` is the smallest durable outcome or concern worth tracking. It does not
-imply a worker assignment, fixed size, lifecycle, or commit boundary; temporary
-execution tasks remain in the item's `## Execution approach`.
-
-Only `active` and `blocked` are valid active statuses. `research_refs` and
-`mock_refs` are optional arrays and default to empty. Readiness is derived from
-hard dependencies. Soft dependencies communicate useful ordering or shared
-context but never mechanically block execution. Temporary agent-work units and
-their dependencies belong in `## Execution approach`; they become separate
-items only when independently durable tracking is useful.
-
-The body has no mandatory section inventory. Common sections are Intent,
-Requirements, Decisions and open questions, Design, Execution approach,
-Progress and discoveries, Blocker, and Review. Keep detailed research in
-`.research/` and UI walkthroughs in `.mockups/`; the item records their references
-and the decisions they informed. Add only sections that carry useful state.
-
-## Backlog items
-
-Backlog files require only `id`, `created`, `updated`, and `tags`. Their bodies
-preserve the useful amount of context supplied by the user without inventing a
-design or active-work structure.
+Hierarchy expresses durable outcome structure. `blocked_by` names active
+prerequisites; `related_to` carries non-blocking context. An external blocker
+uses an exact `## Blocker` section naming the condition and how it clears.
+Focused audits, cleanup, and refactors use tags rather than new item kinds.
 
 ## Completion
 
-`done` and `completed` are invalid resting statuses in `.work/active/`.
-Completion is one atomic filesystem transition:
+Completed work never remains active.
 
-- `release_mode: summarized`: replace the active item with
-  `.work/archive/<id>.md`, a small stub containing identity, relationships,
-  completion date, and a one- or two-sentence outcome.
-- `release_mode: none`: remove the active item.
+- `completed_items: summarize` replaces an active item with a compact
+  `.work/completed/<id>.md` outcome stub.
+- `completed_items: discard` removes the active item after verification.
 
-The same transition applies to epics, features, tasks, and scans. Before and
-after substantive work, sweep `.work/active/` for legacy or interrupted terminal
-items, verify their completion evidence against the repository, and archive or
-remove them. Never infer completion from a stale label alone.
+Before closure, remaining active relationships are reconciled and active
+children are completed. `release` may collapse selected completion stubs into
+one `.work/releases/<version>.md`; it does not tag, publish, or deploy.
 
-A release selects eligible archive stubs, writes one
-`.work/releases/<version>.md` summary, and removes the selected individual
-stubs. The release summary is the retained substrate record; code, foundation
-documents, and Git remain the durable technical record.
+## Work behavior
 
-## Foundation documents
+`work` keeps a clear request in one workflow even when it requires requirements,
+design, implementation, review, integration, or several epics. It asks the
+human at least one focused question about consequential choices, pauses for the
+answer, and continues until the full named boundary is complete or externally
+blocked.
 
-`docs/PRINCIPLES.md`, when present, is project-owned. Setup elicits it from
-existing direction, repository evidence, and user-confirmed trade-offs;
-Workbench does not install universal code-design doctrine. It contains
-high-level engineering philosophy, while concrete recurring implementation
-structures live in `.agents/skills/patterns/`.
+If the outcome, ownership boundary, or success shape cannot yet form coherent
+work, `work` routes through `ideate`. Ideate preserves a no-write boundary until
+the user selects a Workbench, backlog, research, or foundation handoff.
 
-Foundation documents are project-selective files such as `docs/VISION.md`,
-`docs/ARCHITECTURE.md`, `docs/SPEC.md`, or `docs/CONTRACTS.md`. They may omit
-implementation details and lesser capabilities. Every statement they do make
-must describe current truth or clearly intended future truth.
+Standalone cleanup, simplification, and refactoring are ordinary bounded work.
+Behavior-preserving cleanup may travel with a delivery when cohesive; intended
+behavior changes require explicit requirements.
 
-Before completing affected work:
+Verification targets stable interfaces and meaningful user journeys. A test
+must protect enough behavior, contract, boundary, risk, or regression to justify
+its maintenance cost. Fresh-context or cross-model review is used when
+independent judgment is materially valuable, and findings are verified before
+acceptance.
 
-1. identify assertions changed or contradicted by the work;
-2. update or remove those assertions in place;
-3. keep only vision, direction, architectural boundaries, high-level design,
-   and durable contracts;
-4. remove historical narration and code-level implementation detail;
-5. do not add documentation merely for completeness.
+## Research
 
-## Bug-fix evidence
+An attestation uses:
 
-Reported defects are reproduced before correction whenever possible. A stable
-regression test should fail for the expected reason before the fix and pass
-after it; when an automated test would be misleading or disproportionately
-costly, preserve another repeatable before/after check and record why. Diagnose
-root cause, avoid speculative changes for unreproduced reports, never weaken a
-test to obtain green output, and run proportionate adjacent verification.
+```yaml
+---
+source_handle: <lowercase-kebab-handle>
+fetched: YYYY-MM-DD
+source_title: <title>
+source_url: <absolute-http-or-https-url>
+---
+```
 
-## Embedded maintenance
+Attestations contain source-faithful summaries and numbered citable details
+under `## Attested details`. They do not contain project recommendations.
+Repository files are project context and are not represented as external
+attestations.
 
-Substantial design includes an elimination, project-principle fit, existing
-pattern fit, emerging recurrence, and adjacent behavior-preserving cleanup
-pass. Cohesive cleanup may travel with the delivery; broader work is parked.
-Behavior-changing opportunities remain normal features or stories.
+Briefs cite details as `[handle]{N}`, distinguish source claims from inference,
+preserve contradictions, and always include `## Disconfirming evidence`.
+Research may use specialist fan-out only when every specialist receives the
+full discipline, owns and lints its evidence, and the lead owns cross-source
+synthesis.
 
-Pattern harvesting is signal-driven at stable feature-sized, autonomous-scope,
-or release boundaries. It begins from changed code and follows concrete
-candidates into nearby consumers. Roughly three genuine occurrences are a
-strong recurrence signal, not a loophole or fixed schedule. New and evolved
-patterns update `.agents/skills/patterns/` in the same coherent delivery commit;
-aesthetic inconsistency and churn-only conformity produce no work.
+After interactive research, the skill may ask whether genuinely reusable
+guidance should become a project skill. It never promotes a skill autonomously
+or without explicit approval.
 
-## Commit boundaries
+## Knowledge index
 
-With the default `commits: delivery`, use one coherent commit per feature-sized
-delivery when the project permits agent commits. That commit may include
-requirements/design updates, code, tests, foundation reconciliation, and the
-active-item archive/removal. `checkpoint` retains meaningful design,
-implementation, and integration boundaries; `granular` favors independently
-reviewable or reversible units. Separate commits are never required merely by
-item edits or status changes.
+`build-knowledge-index.py` indexes root and sub-project documentation,
+`.research/**/*.md`, and `.work/**/*.md`. It emits byte-stable JSON, rejects
+duplicate namespace/id pairs and unresolved relationships, generates the
+bibliography, and checks committed freshness with `--check`.
 
-## Managed project instructions
+Allowed knowledge relationships are `supports`, `contradicts`, `informs`, and
+`supersedes`. Work hierarchy and scheduling continue to use `parent`,
+`blocked_by`, and `related_to`.
 
-Setup writes a short marked section to the canonical project `AGENTS.md`. It
-contains substrate ownership and layout, the foundation-document invariant,
-requirements-first behavior, completion/archive behavior, and pointers to
-`.work/CONVENTIONS.md`. It preserves all content outside the markers.
+## Setup conversion
+
+Setup inventories any existing workflow semantically, aligns conventions with
+the user, maps useful truth to the canonical destinations, validates retained
+content block by block, rewrites inbound references, and only then removes
+superseded artifacts.
+
+Every removal target is classified as clean tracked, modified tracked,
+untracked, ignored, or otherwise unrecoverable. Clean tracked content is
+recoverable from Git. Removing other content requires a pre-state commit or the
+user's exact-list confirmation.
+
+Setup removes repository-scoped competing workflow plugins after conversion and
+reports user- or machine-scoped competing installs for the user to uninstall.
+It creates no migration archives, compatibility copies, `.bak` files, or legacy
+folders. A second run produces no material change.
+
+## Deterministic validation
+
+`validate-workbench.py` checks ownership, canonical directories and clone-stable
+markers, item schemas, globally unique ids, active relationships, blocker
+evidence, research and mock references, and superseded substrate paths.
+
+`lint-research.py` checks attestation metadata, external URL safety, sensitive
+markers, mandatory attested-detail and disconfirming sections, and citation
+resolution. `build-knowledge-index.py --check` rejects stale committed output.

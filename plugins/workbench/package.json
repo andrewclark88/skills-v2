@@ -1,7 +1,7 @@
 {
   "name": "@nklisch/pi-workbench",
   "version": "0.1.1",
-  "description": "Requirements-first software workbench with a lightweight .work/ ledger.",
+  "description": "Requirements-first delivery and externally grounded research with a lightweight work ledger.",
   "author": {
     "name": "nklisch"
   },
@@ -11,6 +11,14 @@
     "directory": "plugins/workbench"
   },
   "license": "MIT",
+  "files": [
+    ".claude-plugin",
+    ".codex-plugin",
+    "README.md",
+    "docs",
+    "skills",
+    "scripts/*.py"
+  ],
   "publishConfig": {
     "access": "public"
   },

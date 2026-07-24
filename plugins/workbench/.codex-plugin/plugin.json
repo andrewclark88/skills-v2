@@ -1,7 +1,7 @@
 {
   "name": "workbench",
   "version": "0.1.1",
-  "description": "Requirements-first software workbench built around a lightweight .work/ ledger, research and interactive UI mockups, judgment-led execution, and compact release summaries.",
+  "description": "Requirements-first delivery and externally grounded research through a lightweight work ledger, collaborative ideation, adaptive execution, and deterministic knowledge indexing.",
   "author": {
     "name": "nklisch"
   },
@@ -10,8 +10,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Workbench",
-    "shortDescription": "Flexible, requirements-first software delivery",
-    "longDescription": "A lightweight .work/ ledger where natural-language requests and project conventions guide requirements, research, interactive UI walkthroughs, design, implementation, review, parking, and release summaries.",
+    "shortDescription": "Requirements-first delivery and grounded research",
+    "longDescription": "A compact workbench for collaborative ideation, clean repository setup, natural-language delivery across one or several epics, externally sourced research, and deterministic project-knowledge indexing.",
     "developerName": "nklisch",
     "category": "Productivity",
     "capabilities": [
@@ -20,7 +20,7 @@
       "Bash"
     ],
     "defaultPrompt": [
-      "Use Workbench to understand this request, gather unresolved requirements, and carry the requested work to an appropriate verified outcome."
+      "Use Workbench to clarify this request and carry the chosen outcome through grounded research and verified completion."
     ],
     "websiteURL": "https://github.com/nklisch/skills"
   }

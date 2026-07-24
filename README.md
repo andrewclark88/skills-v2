@@ -93,7 +93,7 @@ workflow handoffs.
 | Plugin | What it does | Guide |
 |---|---|---|
 | **agile-workflow** | Substrate-driven work tracking. Items as files in `.work/` with YAML frontmatter, late-binding releases, gates that produce items, goal-backed autopilot queue runner. | [docs/agile-workflow-guide.md](docs/agile-workflow-guide.md) |
-| **workbench** | Flexible requirements-first delivery. A lightweight `.work/` ledger references grounded `.research/` evidence and interactive `.mockups/` walkthroughs; natural language drives research, design, implementation, review, scans, and release summaries. | [plugins/workbench/README.md](plugins/workbench/README.md) |
+| **workbench** | Requirements-first delivery and externally grounded research. Natural language drives collaborative ideation, clean setup, one or several epics, parking, verification, and deterministic knowledge indexing. | [plugins/workbench/README.md](plugins/workbench/README.md) |
 | **ux-ui-design** | HTML/CSS/JS mockup-first UI design. Throwaway single-file mockups in `.mockups/` for alignment before any production code. Loosely integrated with agile-workflow. | [docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) |
 | **code-audit** | Standalone markdown-first code audits — deep multi-lane scans, bug/security/test scans, perf scouting, bold refactor proposals, and repo scorecards without `.work`. | [plugins/code-audit/README.md](plugins/code-audit/README.md) |
 | **nates-toolkit** | Standalone utility skills, no workflow lock-in — explain in plain language, reflect on tool & skill usage, author skills, and audit skill artifacts. | [plugins/nates-toolkit/README.md](plugins/nates-toolkit/README.md) |
@@ -111,8 +111,9 @@ workflow handoffs.
 The package release procedure is documented in
 [docs/npm-publishing.md](docs/npm-publishing.md). Choose one `.work/` owner per
 project: `agile-workflow` provides a structured stage-and-gate system, while
-`workbench` provides a smaller requirements-first ledger and can migrate an
-existing agile-workflow substrate through `/workbench:setup`. The standalone
+`workbench` provides a smaller requirements-first ledger, integrated grounded
+research, and migration from an existing agile-workflow substrate through
+`/workbench:setup`. The standalone
 `ux-ui-design` plugin remains available for projects that want its larger,
 specialized mockup system.
 

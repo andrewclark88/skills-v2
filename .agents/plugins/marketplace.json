@@ -62,7 +62,7 @@
         "source": "local",
         "path": "./plugins/workbench"
       },
-      "description": "Requirements-first software delivery with a lightweight .work/ ledger, integrated research and interactive UI walkthroughs, judgment-led execution, and compact release summaries.",
+      "description": "Requirements-first delivery and externally grounded research through a lightweight work ledger, collaborative ideation, adaptive execution, and deterministic knowledge indexing.",
       "category": "Productivity",
       "policy": {
         "installation": "AVAILABLE",

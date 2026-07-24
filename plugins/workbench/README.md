@@ -1,43 +1,40 @@
 # Workbench
 
-A requirements-first software delivery plugin for Claude Code, OpenAI Codex,
-and Pi. Workbench keeps a lightweight `.work/` ledger while leaving research,
-UI exploration, design, implementation, review, scans, orchestration, and commit
-boundaries to informed agent judgment.
+A compact requirements-first delivery and grounded-research plugin for Claude
+Code, OpenAI Codex, and Pi.
 
 ## Skills
 
 | Skill | Purpose |
 |---|---|
-| `setup` | Create or adopt the Workbench substrate and managed project instructions. |
-| `work` | Scope, clarify, research, mock, design, implement, review, scan, or autonomously finish requested work. |
-| `park` | Capture useful context for later without derailing current work. |
-| `release` | Collapse completed archive stubs into one release summary. |
+| `setup` | Convert any repository into one clean Workbench state and align conventions with the user. |
+| `work` | Scope and drive a clear outcome, one epic, or several epics through verified completion. |
+| `ideate` | Collaboratively clarify an uncertain direction before creating project state. |
+| `park` | Preserve useful out-of-scope context in the backlog. |
+| `release` | Collapse completed outcome stubs into a release summary; it does not publish or deploy. |
+| `research` | Produce externally sourced, attested research and a deterministic knowledge index. |
+| `research-handoff` | Propose research-grounded work and emit only items the user confirms. |
 
 ## Core behavior
 
-- Foundation documents contain current or intended future high-level truth, not
-  code-level implementation detail.
-- Grounded evidence lives in `.research/`, interactive requirements walkthroughs
-  live in `.mockups/`, and work items reference both.
-- UI directions are described through their felt qualities and concrete visual
-  decisions, not named style catalogs or examples to imitate.
-- Mockups become a working end-to-end walkthrough and receive browser/vision
-  refinement before user review when those tools are available.
-- Completed items immediately archive as stubs for summarized releases, or are
-  removed in projects with no release lifecycle.
-- Substantial design checks elimination, project principles, existing pattern
-  fit, emerging recurrence, and cohesive adjacent refactoring.
-- Pattern harvesting updates `.agents/skills/patterns/` at signal-rich feature,
-  autonomous-scope, and release boundaries rather than through fixed gates.
-- Commits follow coherent delivery boundaries rather than every workflow event.
-- Projects may optionally override six shorthand preferences in
-  `.work/CONVENTIONS.md`: interaction, rigor, review, capability, execution, and
-  commits. Explicit user direction overrides them for one request without
-  mutating the project defaults.
+- Natural language is the workflow surface; Workbench has no mandatory stages.
+- Human requirements gathering remains explicit. Ambiguous outcomes may route
+  through `ideate`; ordinary scoping stays in `work`.
+- Work may carry one or multiple epics to the requested finish line.
+- Useful findings outside the current scope are parked instead of silently
+  expanding delivery.
+- Testing focuses on meaningful behavior, contracts, boundaries, risks, and
+  regressions. Tests must earn their maintenance cost.
+- Cleanup and refactors are ordinary feature or story outcomes tagged
+  `cleanup` or `refactor`; behavior changes are not hidden inside refactors.
+- Root and sub-project foundations may live in `docs/`, `docs/<sub-project>/`,
+  or `<sub-project>/docs/` according to repository convention.
+- Research attestations ground externally fetched sources. Repository files are
+  project context, not external source attestations.
+- Setup removes superseded workflow files after verified conversion and leaves
+  one clean final state.
 
-Workbench and `agile-workflow` intentionally use different `.work/` schemas and
-must not be installed into the same project substrate.
+Workbench and `agile-workflow` use mutually exclusive `.work/` schemas.
 
 ## Installation
 
@@ -52,10 +49,7 @@ codex plugin install workbench
 
 # Pi
 pi install npm:@nklisch/pi-workbench
-# local development
-pi install -l ./plugins/workbench
 ```
 
-Start with `/workbench:setup`, then work naturally: “scope this,” “mock the full
-journey,” “implement this feature,” “scan authentication,” or “finish the active
-CLI work.”
+Start with `/workbench:setup`, or use `ideate` first when the intended project
+or outcome is still unclear.

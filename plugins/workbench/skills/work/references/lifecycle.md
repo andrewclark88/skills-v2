@@ -1,100 +1,62 @@
-# Work Item Lifecycle
+# Work Lifecycle
 
-## Active item
+## Relationships
+
+- `parent` expresses outcome hierarchy, not scheduling.
+- `blocked_by` names active prerequisites without which useful execution is
+  invalid.
+- `related_to` communicates useful context without controlling readiness.
+- `status: blocked` requires either an active prerequisite in `blocked_by` or
+  an exact `## Blocker` body section naming the concrete external blocker and
+  unblock condition.
+
+Structured relationships resolve to active items. Before closing an item,
+remove its id from remaining `blocked_by` and `related_to` lists. Do not close a
+parent while active children remain. Completed context belongs in prose or the
+version summary, not the active readiness graph.
+
+## Item shape
+
+Use an epic only when several independently meaningful outcomes benefit from a
+durable parent. Use a feature or story when independent status or relationship
+matters across sessions. These are outcome-hierarchy tiers only; they imply no
+stages or ceremonies. Do not mirror temporary agent tasks into the ledger.
+
+Active items use:
 
 ```yaml
 ---
-id: <kebab-case-id>
-kind: epic|feature|story|scan
+id: <stable-kebab-id>
+kind: epic|feature|story
 status: active|blocked
 tags: []
 parent: null
-hard_dependencies: []
-soft_dependencies: []
+blocked_by: []
+related_to: []
 research_refs: []
 mock_refs: []
-release: null
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
-
-# Title
-
-## Intent
-
-<desired outcome and why it matters>
 ```
 
-A `story` is the smallest durable outcome or concern worth tracking; it does not
-map automatically to an agent, size, review lane, or commit. Add body sections
-only when they carry useful state. Detailed research lives in
-`.research/`; interactive UI walkthroughs live in `.mockups/`; the optional refs
-arrays connect them to work. `status: blocked` requires a concrete `## Blocker`
-and the condition that would unblock it. There is no `done` status: completion
-is a filesystem transition.
+Ids are unique across all `.work/`. Keep one coherent outcome in one item.
+Split only when separate status, relationship, ownership, or summary treatment
+provides durable value. Use tags such as `audit`, `security`, or `performance`
+for focused investigations rather than another item kind.
 
-## Backlog item
+## Completion sweep
 
-```yaml
----
-id: <kebab-case-id>
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-tags: []
----
+At entry and exit, inspect `.work/active/` for stale completion claims or
+interrupted work. Verify actual repository evidence before closing; never infer
+completion from a stale label.
 
-<context worth preserving for later>
-```
+Close atomically:
 
-## Archive stub
+- `completed_items: summarize` → replace the active item with one
+  `.work/completed/` stub;
+- `completed_items: discard` → remove the active item.
 
-Used only with `release_mode: summarized`:
-
-```yaml
----
-id: <id>
-kind: <kind>
-tags: []
-parent: null
-release: null
-completed: YYYY-MM-DD
----
-
-# Title
-
-<one or two sentences describing the delivered outcome>
-```
-
-The stub is a release input, not a compressed design document. Foundation docs
-and code retain standing technical truth.
-
-## Terminal-item sweep
-
-Run at the beginning and end of substantive Workbench operations:
-
-1. inspect active files for invalid terminal labels, completion notes, or work
-   whose code and verification show it has already landed;
-2. never trust a stale `done` label by itself—verify repository state and
-   acceptance evidence;
-3. if complete, reconcile foundation docs and atomically archive or remove;
-4. if incomplete, normalize to `active` or `blocked` and record the next useful
-   action;
-5. include swept items in the current coherent delivery commit when related;
-   otherwise leave changes for the next authorized checkpoint rather than
-   manufacturing one commit per sweep.
-
-## Commit posture
-
-Follow the effective `commits` preference when project policy permits agent
-commits:
-
-- `delivery`: one coherent feature-sized outcome, including code, tests, item
-  completion, and affected foundation updates;
-- `checkpoint`: retain meaningful design, implementation, and integration
-  boundaries;
-- `granular`: favor independently reviewable or reversible units.
-
-A separate recovery commit remains valid when work is interrupted or risky.
-Do not automatically commit parking, scoping, body-section edits, review notes,
-status changes, or each child item merely because the substrate changed. Never rewrite shared history merely to make
-the commit graph aesthetically perfect.
+Run the Workbench validator after structural ledger changes. Never leave done
+or completed items active. Commit at coherent delivery boundaries when
+repository policy permits; item edits do not require their own commits.

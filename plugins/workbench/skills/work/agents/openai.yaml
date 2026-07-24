@@ -1,6 +1,6 @@
 interface:
-  display_name: "Workbench Work"
-  short_description: "Carry software work from requirements to outcome"
-  default_prompt: "Use $work to understand and complete the requested software work."
+  display_name: "Work"
+  short_description: "Drive scoped work or multiple epics to completion"
+  default_prompt: "Use $work to carry this requested outcome through verified completion."
 policy:
   allow_implicit_invocation: true
