@@ -1,7 +1,7 @@
 {
   "name": "workbench",
   "description": "Requirements-first delivery and externally grounded research through a lightweight work ledger, collaborative ideation, adaptive execution, and deterministic knowledge indexing.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "nklisch"
   },
