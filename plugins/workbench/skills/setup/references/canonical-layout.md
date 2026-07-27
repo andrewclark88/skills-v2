@@ -125,7 +125,8 @@ requests as the workflow. Consult `.knowledge/index.json` when present. Ask the
 human about consequential requirements and pause for the answer. Park useful
 out-of-scope findings instead of silently expanding scope. Test behavior at
 stable interfaces, verify the full requested boundary, reconcile affected
-foundation truth, and remove or summarize completed items immediately.
+foundation truth, apply the configured review weight to substantive design and
+implementation, and remove or summarize completed items immediately.
 <!-- workbench:end -->
 ```
 
