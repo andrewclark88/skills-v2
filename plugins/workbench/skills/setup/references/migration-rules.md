@@ -43,7 +43,8 @@ Examples of evidence-based proposals:
 - real external consumers exist → propose compatibility obligations;
 - data migrations recur → propose approval, backup, and rollback evidence;
 - UI journeys dominate regressions → propose browser-based journey checks;
-- foundation docs repeatedly drift → propose completion-time reconciliation.
+- foundation docs repeatedly drift → propose repository-specific affected-doc
+  or review evidence beyond Workbench's baseline completion reconciliation;
 - useful adjacent findings recur → propose an explicit park-with-evidence rule;
 - implementation-coupled tests churn → propose behavior-focused checks at
   stable interfaces where each test protects enough meaningful behavior or risk

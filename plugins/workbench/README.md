@@ -136,6 +136,12 @@ Code and foundation documents remain the technical truth. Git remains the
 history. Workbench records the delivery state needed to get from one to the
 other.
 
+When design or implementation changes durable project truth, the agent updates
+the affected root or sub-project foundations in place, checks them during
+review, and reports either the changes or why the existing assertions remain
+accurate. If indexed documentation changed, it also rebuilds and checks the
+knowledge index.
+
 Research attestations record what external sources actually support. Research
 briefs synthesize across those sources. The knowledge index makes durable
 material discoverable, but it is not evidence or project truth on its own.

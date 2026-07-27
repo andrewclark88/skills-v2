@@ -35,7 +35,9 @@ Load references only as needed:
   [references/maintenance.md](references/maintenance.md);
 - implementation completion or review →
   [references/verification.md](references/verification.md) and
-  [references/review.md](references/review.md).
+  [references/review.md](references/review.md);
+- durable project truth, foundation changes, or implementation completion →
+  [references/foundation-truth.md](references/foundation-truth.md).
 
 When substantive external investigation is necessary, use Workbench's
 `research` skill rather than creating an ungrounded project note.
@@ -121,8 +123,11 @@ resolve the effective `review_weight`, and apply its implementation-review
 policy. An explicit user request overrides the repository default. Verify and
 adjudicate reviewer findings rather than accepting them blindly.
 
-Reconcile affected foundation assertions before completion. Close every
-completed item immediately:
+Read [references/foundation-truth.md](references/foundation-truth.md).
+Reconcile affected foundation assertions against the integrated result before
+completion, rebuild `.knowledge/index.json` when indexed documentation changed,
+and include the reconciliation evidence in the report. Close every completed
+item immediately:
 
 - `completed_items: summarize` → replace it with a compact completed stub;
 - `completed_items: discard` → remove it.

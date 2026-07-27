@@ -24,14 +24,18 @@ before implementation becomes expensive to reverse. Review completed work at
 the integrated contract boundary. Small reversible work does not need a
 ceremonial design review merely because a design section exists.
 
+Read [foundation-truth.md](foundation-truth.md) when the design or implementation
+may affect durable project truth.
+
 Give reviewers the raw requirements, artifacts, diff, and verification
 evidence available at that point. Do not lead them with the suspected answer.
 For design, ask about requirements coverage, boundaries, alternatives,
 assumptions, failure modes, verification feasibility, migration or rollback,
-and unnecessary complexity. For implementation, ask about correctness, missing
-behavior, safety, integration risk, simplification, and relevant security,
-privacy, accessibility, performance, compatibility, data-integrity, and
-operational concerns.
+unnecessary complexity, and accurate foundation roll-forward. For
+implementation, ask about correctness, missing behavior, safety, integration
+risk, simplification, foundation drift, and relevant security, privacy,
+accessibility, performance, compatibility, data-integrity, and operational
+concerns.
 
 Treat findings as proposals. Reproduce or verify each substantive claim,
 accept changes that improve the work, and record why material findings were

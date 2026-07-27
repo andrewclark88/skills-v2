@@ -118,9 +118,11 @@ synthetic environment, or other substantial validation system without
 discussing it with the user, unless the addition is demonstrably small, cheap,
 and contained.
 
+Read
+[../work/references/foundation-truth.md](../work/references/foundation-truth.md).
 Update root or sub-project foundation assertions only when the design settles
-durable current or intended truth. Replace stale assertions in place; Git
-carries history.
+durable current or intended truth. Reconcile them in place and rebuild the
+knowledge index when required by that reference.
 
 ## Review the design
 
@@ -134,6 +136,10 @@ cost. Apply independent review as required by the effective weight before
 implementation becomes expensive to reverse. Give the reviewer raw
 requirements, the design, relevant foundations and code, and known evidence;
 do not lead with a suspected verdict.
+
+Require the reviewer to check whether proposed foundation changes accurately
+represent ownership, boundaries, current truth, and explicitly intended truth,
+and whether any affected foundation was missed.
 
 Adjudicate findings rather than accepting them blindly. Revise confirmed
 material problems and record rejected material proposals with a short

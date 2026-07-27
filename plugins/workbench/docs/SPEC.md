@@ -171,6 +171,24 @@ may be added directly. A new or materially expanded test framework, simulation
 platform, benchmark system, mock service, synthetic environment, or validation
 architecture requires user discussion.
 
+## Foundation reconciliation
+
+Foundation documents contain durable current behavior or explicitly intended
+project truth, not progress narration. Design rolls them forward only after
+durable truth is settled. Implementation closure reconciles affected assertions
+against the integrated result and reports either the updated foundations or why
+existing assertions remain accurate.
+
+Affected foundations are discovered from requirements, design, the final diff,
+and the knowledge index. Reconciliation replaces stale assertions in place,
+removes false claims, follows root or sub-project ownership, and links rather
+than duplicates cross-scope contracts. Git carries history.
+
+Independent design and implementation review check foundation alignment when
+the work affects durable project truth. When indexed documentation changes,
+the agent rebuilds `.knowledge/index.json` and verifies committed freshness with
+`--check`.
+
 ## Research
 
 An attestation uses:
