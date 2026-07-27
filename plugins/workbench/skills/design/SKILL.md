@@ -16,6 +16,11 @@ choices inline in `work`. This is conditional routing, not a mandatory project
 stage. A direct design request stops after the reviewed design; `work` may route
 here and then continue through implementation.
 
+Unless an instruction names a repository path or artifact, communicate with the
+user in the current conversation, including questions, offers, proposals,
+recommendations, explanations, summaries, and reports. Do not create report
+files or durable no-op records unless the user requests them.
+
 ## Resolve the design boundary
 
 Read `.work/CONVENTIONS.md`, the target item when present, project instructions,
@@ -62,7 +67,8 @@ the item, or foundation truth.
 Ask the human about product direction, supported behavior, external contracts,
 irreversible choices, or expensive trade-offs only they can settle, then pause
 for the answer. Resolve routine reversible implementation choices with judgment
-and record the rationale.
+and include rationale in the active item's design only when it helps future
+implementation or review.
 
 Prefer the simplest coherent design that reaches a maintainable intended state.
 Measure simplicity in durable concepts, operating cost, and verification cost,
@@ -73,7 +79,8 @@ before binding the design. In adaptive work, recommend the ideal state when it
 materially affects the current choice. In autonomous work, choose the strongest
 maintainable design inside the authorized outcome and park improvements that
 would expand it. Use a workaround only when a real constraint requires it, and
-record the constraint, consequence, and better future direction.
+record the constraint, consequence, and better future direction in the active
+item because they constrain future work.
 
 Name meaningful alternatives when the choice is consequential; do not
 manufacture options for obvious local work.
@@ -142,14 +149,16 @@ represent ownership, boundaries, current truth, and explicitly intended truth,
 and whether any affected foundation was missed.
 
 Adjudicate findings rather than accepting them blindly. Revise confirmed
-material problems and record rejected material proposals with a short
-repository-grounded reason.
+material problems. Explain rejected material proposals and the
+repository-grounded reason in the current conversation; persist the reason in
+the active item only when it constrains future implementation or review.
 
-## Handoff
+## Reply or return control
 
-For a direct design request, report the chosen approach, decisive trade-offs,
-effective review weight and evidence, unresolved decisions, and the next
-implementation boundary. Do not implement unless the user also requested
+For a direct design request, reply in the current conversation with the chosen
+approach, decisive trade-offs, effective review weight and evidence, unresolved
+decisions, and the next implementation boundary. This reply is not a separate
+design report artifact. Do not implement unless the user also requested
 delivery.
 
 When called from `work`, return control after the design and its required

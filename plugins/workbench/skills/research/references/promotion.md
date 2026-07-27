@@ -9,7 +9,8 @@ decisions, citations, or a brief merely because it exists.
 
 In an interactive run, explain the candidate skill, intended triggers, durable
 content, expected maintenance cost, and why a skill is better than a foundation
-document or convention. Ask the user whether to promote it and pause.
+document or convention in the current conversation. Ask the user whether to
+promote it and pause. Do not create a promotion proposal artifact.
 
 Never promote during an autonomous run. Never create or modify a skill without
 the user's explicit approval. After approval, use the repository's established

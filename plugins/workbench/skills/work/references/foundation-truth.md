@@ -35,9 +35,11 @@ For every affected assertion:
 5. Preserve no historical narration merely to explain the change. Git carries
    history; release summaries carry delivered outcomes.
 
-When no foundation changes are needed, state which durable surfaces were
-considered and why existing assertions remain accurate. A silent no-op is not
-reconciliation.
+First determine whether the work plausibly affects durable project truth. If it
+does not, no foundation-specific note is required. If an update was reasonably
+expected but existing assertions remain accurate, mention why briefly in the
+user-facing completion reply. Do not add no-op reconciliation sections to work
+items or foundation documents.
 
 ## Design, implementation, and review
 
@@ -61,7 +63,8 @@ with the Workbench `build-knowledge-index.py` script and run the same command
 with `--check`. Resolve the script from the loaded plugin package using
 Workbench's verified package-identity rule.
 
-Report updated foundations and index validation with completion evidence.
+Mention updated foundations and index validation in the user-facing completion
+reply. Persist only the actual foundation and generated-index changes.
 Foundation reconciliation belongs inside design and delivery; do not invent a
-separate documentation workflow, gate, or validation system unless the user
-chooses one.
+separate documentation workflow, gate, report, or validation system unless the
+user chooses one.

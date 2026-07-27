@@ -5,6 +5,11 @@ description: Capture useful context for later in a Workbench-owned project witho
 
 # Park Work
 
+Unless an instruction names a repository path or artifact, communicate with the
+user in the current conversation, including questions, offers, proposals,
+recommendations, explanations, summaries, and reports. Do not create report
+files or durable no-op records unless the user requests them.
+
 Confirm that `.work/CONVENTIONS.md` is owned by Workbench. If it is absent or
 another system owns it, stop and offer `setup`; do not invoke destructive
 conversion without the user's explicit choice.
@@ -25,5 +30,6 @@ relationship to current work. Do not invent priority, acceptance criteria,
 design, estimates, or assignment.
 
 If equivalent backlog context already exists, update it instead of creating a
-duplicate. Run the Workbench validator after writing the item. Report the
-captured item and return to the prior scope.
+duplicate. Run the Workbench validator after writing the item. Briefly identify
+the captured item in the current conversation, then return to the prior scope.
+Do not create a separate capture report.

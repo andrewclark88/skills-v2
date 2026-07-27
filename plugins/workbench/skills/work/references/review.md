@@ -38,6 +38,8 @@ accessibility, performance, compatibility, data-integrity, and operational
 concerns.
 
 Treat findings as proposals. Reproduce or verify each substantive claim,
-accept changes that improve the work, and record why material findings were
-rejected. Review never substitutes for behavioral verification, and a reviewer
-saying “looks good” is not evidence.
+accept changes that improve the work, and explain rejected material findings in
+the current conversation. Persist a rejection rationale in the active item only
+when it constrains future implementation or review. Review never substitutes
+for behavioral verification, and a reviewer saying “looks good” is not
+evidence.

@@ -12,8 +12,8 @@
 
 Structured relationships resolve to active items. Before closing an item,
 remove its id from remaining `blocked_by` and `related_to` lists. Do not close a
-parent while active children remain. Completed context belongs in prose or the
-version summary, not the active readiness graph.
+parent while active children remain. Completed context belongs in the
+completion-stub body or version summary, not the active readiness graph.
 
 ## Item shape
 

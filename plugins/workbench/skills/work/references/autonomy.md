@@ -42,7 +42,7 @@ not diff size.
 Do not choose a hack merely because it touches fewer files. Use a workaround
 only when scope, time, compatibility, missing authority, or another real
 constraint requires it. Record the constraint, consequence, and better future
-direction.
+direction in the active item's design because they constrain future work.
 
 In collaborative work, discuss the ideal state and the appropriately scoped
 option before the user chooses. In adaptive work, recommend the ideal state

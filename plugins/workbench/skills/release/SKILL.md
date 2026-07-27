@@ -9,6 +9,11 @@ description: >
 
 # Release Workbench Outcomes
 
+Unless an instruction names a repository path or artifact, communicate with the
+user in the current conversation, including questions, offers, proposals,
+recommendations, explanations, summaries, and reports. Do not create report
+files or durable no-op records unless the user requests them.
+
 Confirm Workbench ownership and `completed_items: summarize`. Read the selected
 completion stubs in `.work/completed/`, existing release history, and project
 delivery conventions.
@@ -24,6 +29,7 @@ chronology.
 
 Remove the selected individual completion stubs after the release summary is
 validated. Run the Workbench validator and project-defined release checks, then
-report the release path, included outcomes, verification, and any excluded
-items. Do not create a Git tag, publish an artifact, or deploy unless the user
-separately requests that action.
+reply in the current conversation with the release path, included outcomes,
+verification, and any excluded items. This reply is separate from the durable
+release summary and is not another repository artifact. Do not create a Git tag,
+publish an artifact, or deploy unless the user separately requests that action.

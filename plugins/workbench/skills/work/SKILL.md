@@ -8,6 +8,11 @@ description: Use in a Workbench-owned project to scope, clarify, implement, fix,
 Carry the user's natural-language boundary to its requested finish line. Never
 require them to choose a phase, worker topology, or workflow skill.
 
+Unless an instruction names a repository path or artifact, communicate with the
+user in the current conversation, including questions, offers, proposals,
+recommendations, explanations, summaries, and reports. Do not create report
+files or durable no-op records unless the user requests them.
+
 Read `.work/CONVENTIONS.md`, relevant work items, project instructions,
 foundation documents, `.knowledge/index.json` when present, and affected code
 before structural decisions. If the substrate is absent or owned by another
@@ -74,8 +79,8 @@ settled request language and prior answers as requirements, but still pause for
 missing human-only direction. Never treat missing structured-question tooling
 as permission to guess or continue.
 
-Record accepted outcomes, constraints, exclusions, and acceptance evidence
-without manufacturing a large template.
+Record accepted outcomes, constraints, exclusions, and acceptance evidence in
+the relevant active item without manufacturing a large template.
 
 ## Shape durable work
 
@@ -126,8 +131,8 @@ adjudicate reviewer findings rather than accepting them blindly.
 Read [references/foundation-truth.md](references/foundation-truth.md).
 Reconcile affected foundation assertions against the integrated result before
 completion, rebuild `.knowledge/index.json` when indexed documentation changed,
-and include the reconciliation evidence in the report. Close every completed
-item immediately:
+and include relevant reconciliation evidence in the user-facing completion
+reply. Close every completed item immediately:
 
 - `completed_items: summarize` → replace it with a compact completed stub;
 - `completed_items: discard` → remove it.
@@ -143,5 +148,8 @@ Before interruption, handoff, or context loss, update affected items with
 settled requirements, completed outcomes, current evidence, next actions, and
 blockers. On resume, reconcile that state against Git and code before acting.
 
-Report completed outcomes, meaningful decisions, verification, closure
-disposition, blockers, and intentionally parked follow-ups.
+Reply to the user in the current conversation with a concise completion summary:
+completed outcomes, meaningful decisions, verification, closure disposition,
+blockers, and intentionally parked follow-ups. This reply is chat prose, not a
+repository artifact. Do not create a completion-report file or add reporting
+sections to work items or foundation documents unless the user requests them.

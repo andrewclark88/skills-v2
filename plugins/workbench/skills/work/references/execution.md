@@ -1,7 +1,7 @@
 # Execution and Continuation
 
 For a multi-unit or multi-epic boundary, write only the coordination detail
-needed to maintain ownership and integration:
+needed to maintain ownership and integration in the relevant active item:
 
 ```markdown
 ## Execution approach

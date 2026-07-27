@@ -8,6 +8,11 @@ description: Conduct and maintain source-grounded research for unstable, unfamil
 Produce reusable research whose claims can be traced to sources fetched during
 the engagement.
 
+Unless an instruction names a repository path or artifact, communicate with the
+user in the current conversation, including questions, offers, proposals,
+recommendations, explanations, summaries, and reports. Do not create report
+files or durable no-op records unless the user requests them.
+
 Read [references/discipline.md](references/discipline.md) completely before
 engaging sources. Its grounding floor is mandatory at every depth.
 Read [references/promotion.md](references/promotion.md) before offering to turn
@@ -34,7 +39,7 @@ separate quick, deep, or program workflows to the user.
 
 Prefer current primary sources for load-bearing claims. When consequences or
 uncertainty are high, corroborate those claims with an independent source or
-state why corroboration was unavailable.
+state why corroboration was unavailable in the research brief.
 
 ## Acquire and attest
 
@@ -84,9 +89,10 @@ Resolve the script root from the loaded plugin package using the same
 identity-verification rule as Workbench setup; stop rather than guessing among
 ambiguous installations.
 
-Fix source-chain errors before calling the brief complete. Report the decision
-boundary, findings, contradictions, confidence limits, sources, and any
-research-handoff opportunity.
+Fix source-chain errors before calling the brief complete. Reply in the current
+conversation with the decision boundary, findings, contradictions, confidence
+limits, sources, and any research-handoff opportunity. This reply summarizes
+the durable brief; it is not a second research artifact.
 
 After an interactive research engagement, ask whether the user wants genuinely
 reusable method or domain guidance promoted into a project skill. Never promote
@@ -94,5 +100,6 @@ a skill during an autonomous run, and never create or update one without the
 user's explicit answer.
 
 For an index-only maintenance request, inspect source frontmatter, run the same
-lint first when `.research/` exists, rebuild the index, and report unresolved
-metadata or relationships without starting a new investigation.
+lint first when `.research/` exists, rebuild the index, and mention unresolved
+metadata or relationships in the current conversation without starting a new
+investigation or creating a report file.

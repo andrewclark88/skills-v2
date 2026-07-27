@@ -38,6 +38,18 @@ AGENTS.md
 
 Workbench and agile-workflow are mutually exclusive `.work/` owners.
 
+## Communication and durable state
+
+Unless a skill names a repository path or artifact, questions, offers,
+proposals, recommendations, explanations, summaries, and reports happen in the
+current conversation. These replies are chat prose, not repository artifacts.
+Workbench does not create report files or durable no-op records unless the user
+requests them.
+
+Durable state is limited to explicitly named work items, foundations, research
+artifacts, mockups, generated indexes, completion stubs, release summaries, and
+repository conventions.
+
 ## Work conventions
 
 `.work/CONVENTIONS.md` begins with:

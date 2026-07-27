@@ -31,7 +31,8 @@ and simplest coherent implementation shape.
 ## Performance
 
 - Do not design from intuition alone. Define a representative workload and
-  capture a baseline or record why measurement is blocked.
+  include a baseline or the reason measurement is blocked in the recorded
+  design.
 - Profile the symptom with probes appropriate to CPU, memory, I/O,
   serialization, synchronization, cache behavior, or runtime overhead.
 - Rank bottlenecks by measured impact and target the hot path.

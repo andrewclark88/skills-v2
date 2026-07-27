@@ -83,6 +83,11 @@ to park that finding rather than silently expanding the work.
 The durable record remains ordinary Markdown. You can read or edit it directly;
 the agent is responsible for keeping its structure valid.
 
+Conversational questions, proposals, progress summaries, and completion replies
+remain chat prose unless the workflow explicitly names a repository artifact.
+Workbench does not create report files or durable no-op records unless you ask
+for them.
+
 ## The durable project state
 
 Workbench keeps its state deliberately small:
