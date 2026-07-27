@@ -150,8 +150,9 @@ and whether any affected foundation was missed.
 
 Adjudicate findings rather than accepting them blindly. Revise confirmed
 material problems. Explain rejected material proposals and the
-repository-grounded reason in the current conversation; persist the reason in
-the active item only when it constrains future implementation or review.
+repository-grounded reason in the current conversation. When the reason reflects
+a durable constraint, fold that constraint into the design's `Chosen approach`
+or `Risks and recovery` rather than recording the adjudication.
 
 ## Reply or return control
 

@@ -5,11 +5,6 @@ description: Turn actionable findings from completed .research briefs into user-
 
 # Hand Research to Workbench
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 Read the relevant brief, cited attestations, `.work/CONVENTIONS.md`, and existing
 active and backlog items. Require `owner: workbench` before emitting work.
 

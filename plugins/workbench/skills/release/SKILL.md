@@ -9,11 +9,6 @@ description: >
 
 # Release Workbench Outcomes
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 Confirm Workbench ownership and `completed_items: summarize`. Read the selected
 completion stubs in `.work/completed/`, existing release history, and project
 delivery conventions.

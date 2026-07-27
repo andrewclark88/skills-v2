@@ -188,8 +188,8 @@ architecture requires user discussion.
 Foundation documents contain durable current behavior or explicitly intended
 project truth, not progress narration. Design rolls them forward only after
 durable truth is settled. Implementation closure reconciles affected assertions
-against the integrated result and reports either the updated foundations or why
-existing assertions remain accurate.
+against the integrated result, reporting updated foundations, or—where an update
+was reasonably expected—why existing assertions remain accurate.
 
 Affected foundations are discovered from requirements, design, the final diff,
 and the knowledge index. Reconciliation replaces stale assertions in place,

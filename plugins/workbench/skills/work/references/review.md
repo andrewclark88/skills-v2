@@ -39,7 +39,7 @@ concerns.
 
 Treat findings as proposals. Reproduce or verify each substantive claim,
 accept changes that improve the work, and explain rejected material findings in
-the current conversation. Persist a rejection rationale in the active item only
-when it constrains future implementation or review. Review never substitutes
-for behavioral verification, and a reviewer saying “looks good” is not
-evidence.
+the current conversation. When a rejection reflects a durable constraint, fold
+that constraint into the design's chosen approach or risks; keep no separate
+record of the adjudication. Review never substitutes for behavioral
+verification, and a reviewer saying “looks good” is not evidence.

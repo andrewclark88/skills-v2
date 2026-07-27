@@ -35,7 +35,7 @@ For every affected assertion:
 5. Preserve no historical narration merely to explain the change. Git carries
    history; release summaries carry delivered outcomes.
 
-First determine whether the work plausibly affects durable project truth. If it
+First determine whether the work affects durable project truth. If it
 does not, no foundation-specific note is required. If an update was reasonably
 expected but existing assertions remain accurate, mention why briefly in the
 user-facing completion reply. Do not add no-op reconciliation sections to work

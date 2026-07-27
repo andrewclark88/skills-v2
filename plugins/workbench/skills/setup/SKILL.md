@@ -8,11 +8,6 @@ description: Destructively consolidate, initialize, migrate, adopt, or refresh W
 Transform the repository from any starting state into one clean Workbench state.
 Detection changes the mapping, never the final outcome.
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 ## Establish the boundary
 
 Read [references/canonical-layout.md](references/canonical-layout.md) and

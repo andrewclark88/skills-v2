@@ -8,11 +8,6 @@ description: Conduct and maintain source-grounded research for unstable, unfamil
 Produce reusable research whose claims can be traced to sources fetched during
 the engagement.
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 Read [references/discipline.md](references/discipline.md) completely before
 engaging sources. Its grounding floor is mandatory at every depth.
 Read [references/promotion.md](references/promotion.md) before offering to turn

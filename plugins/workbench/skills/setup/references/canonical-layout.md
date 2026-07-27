@@ -126,11 +126,19 @@ Confirm `owner: workbench` in `.work/CONVENTIONS.md`. Track active outcomes in
 requests as the workflow. Consult `.knowledge/index.json` when present. Ask the
 human about consequential requirements according to the effective autonomy
 posture. Park useful
-out-of-scope findings instead of silently expanding scope. Test behavior at
-stable interfaces, verify the full requested boundary, reconcile affected
-foundation truth, rebuild the knowledge index when indexed documentation
-changes, apply the configured review weight to substantive design and
-implementation, and remove or summarize completed items immediately.
+out-of-scope findings instead of silently expanding scope.
+
+Durable state is limited to work items, foundation documents, research
+attestations and briefs, mockups, generated indexes, completion stubs, release
+summaries, and repository conventions; write these whenever a workflow names
+them. Everything else—questions, proposals, recommendations, explanations,
+progress summaries, and completion reports—belongs in your reply, not in a new
+file or a no-op record.
+
+Test behavior at stable interfaces, verify the full requested boundary,
+reconcile affected foundation truth, rebuild the knowledge index when indexed
+documentation changes, apply the configured review weight to substantive design
+and implementation, and remove or summarize completed items immediately.
 <!-- workbench:end -->
 ```
 

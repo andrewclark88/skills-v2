@@ -8,11 +8,6 @@ description: Collaboratively clarify, explore, or stress-test an uncertain proje
 Help the user discover what they actually want before turning the conversation
 into project state.
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 ## Explore
 
 Inspect relevant files, documents, code, `.knowledge/index.json` when present,

@@ -5,11 +5,6 @@ description: Capture useful context for later in a Workbench-owned project witho
 
 # Park Work
 
-Unless an instruction names a repository path or artifact, communicate with the
-user in the current conversation, including questions, offers, proposals,
-recommendations, explanations, summaries, and reports. Do not create report
-files or durable no-op records unless the user requests them.
-
 Confirm that `.work/CONVENTIONS.md` is owned by Workbench. If it is absent or
 another system owns it, stop and offer `setup`; do not invoke destructive
 conversion without the user's explicit choice.
