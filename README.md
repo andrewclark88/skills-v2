@@ -93,7 +93,7 @@ workflow handoffs.
 | Plugin | What it does | Guide |
 |---|---|---|
 | **agile-workflow** | Substrate-driven work tracking. Items as files in `.work/` with YAML frontmatter, late-binding releases, gates that produce items, goal-backed autopilot queue runner. | [docs/agile-workflow-guide.md](docs/agile-workflow-guide.md) |
-| **workbench** | Requirements-first delivery and externally grounded research. Natural language drives collaborative ideation, clean setup, one or several epics, parking, verification, and deterministic knowledge indexing. | [plugins/workbench/README.md](plugins/workbench/README.md) |
+| **workbench** | Requirements-first delivery and externally grounded research. Natural language drives collaborative ideation, lens-driven design, configurable review weight, one or several epics, parking, verification, and deterministic knowledge indexing. | [plugins/workbench/README.md](plugins/workbench/README.md) |
 | **ux-ui-design** | HTML/CSS/JS mockup-first UI design. Throwaway single-file mockups in `.mockups/` for alignment before any production code. Loosely integrated with agile-workflow. | [docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) |
 | **code-audit** | Standalone markdown-first code audits — deep multi-lane scans, bug/security/test scans, perf scouting, bold refactor proposals, and repo scorecards without `.work`. | [plugins/code-audit/README.md](plugins/code-audit/README.md) |
 | **nates-toolkit** | Standalone utility skills, no workflow lock-in — explain in plain language, reflect on tool & skill usage, author skills, and audit skill artifacts. | [plugins/nates-toolkit/README.md](plugins/nates-toolkit/README.md) |

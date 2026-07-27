@@ -14,6 +14,7 @@ from typing import Any
 FRONTMATTER = re.compile(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", re.DOTALL)
 ALLOWED_KINDS = {"epic", "feature", "story"}
 ALLOWED_STATUSES = {"active", "blocked"}
+ALLOWED_REVIEW_WEIGHTS = {"none", "light", "standard", "thorough", "maximum"}
 LEGACY_PATHS = (
     ".work/bin",
     ".work/active/epics",
@@ -96,6 +97,11 @@ def validate(project: Path) -> tuple[list[str], list[str]]:
     completed_items = config.get("completed_items")
     if completed_items not in {"summarize", "discard"}:
         errors.append("completed_items must be summarize or discard")
+    review_weight = config.get("review_weight", "standard")
+    if review_weight not in ALLOWED_REVIEW_WEIGHTS:
+        errors.append(
+            "review_weight must be none, light, standard, thorough, or maximum"
+        )
 
     for required in ("active", "backlog"):
         directory = work / required

@@ -1,7 +1,7 @@
 {
   "name": "workbench",
   "version": "0.2.0",
-  "description": "Requirements-first delivery and externally grounded research through a lightweight work ledger, collaborative ideation, adaptive execution, and deterministic knowledge indexing.",
+  "description": "Requirements-first delivery, lens-driven design, weighted review, and externally grounded research through a lightweight work ledger.",
   "author": {
     "name": "nklisch"
   },
@@ -10,8 +10,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Workbench",
-    "shortDescription": "Requirements-first delivery and grounded research",
-    "longDescription": "A compact workbench for collaborative ideation, clean repository setup, natural-language delivery across one or several epics, externally sourced research, and deterministic project-knowledge indexing.",
+    "shortDescription": "Design, deliver, review, and research",
+    "longDescription": "A compact workbench for collaborative ideation, lens-driven design, configurable review depth, natural-language delivery across one or several epics, and externally grounded research.",
     "developerName": "nklisch",
     "category": "Productivity",
     "capabilities": [
@@ -20,7 +20,7 @@
       "Bash"
     ],
     "defaultPrompt": [
-      "Use Workbench to clarify this request and carry the chosen outcome through grounded research and verified completion."
+      "Use Workbench to clarify, design, review, and carry this outcome through verified completion."
     ],
     "websiteURL": "https://github.com/nklisch/skills"
   }

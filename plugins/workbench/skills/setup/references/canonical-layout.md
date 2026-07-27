@@ -56,12 +56,15 @@ The research capability ships with Workbench. Setup may omit `.research/` and
 owner: workbench
 schema: 1
 completed_items: summarize|discard
+review_weight: none|light|standard|thorough|maximum
 ---
 ```
 
 Keep the body limited to authoritative verification commands, delivery rules,
 and Workbench-specific project guidance. Put repository-wide agent invariants
-in `AGENTS.md` and engineering principles in `docs/PRINCIPLES.md`.
+in `AGENTS.md` and engineering principles in `docs/PRINCIPLES.md`. Existing
+substrates without `review_weight` resolve it as `standard`; setup writes the
+user-confirmed value when refreshing them.
 
 ## Active-item frontmatter
 

@@ -58,6 +58,14 @@ Always ask how completed items should be retained. Recommend
 `completed_items: summarize` when the repository prepares release summaries;
 otherwise recommend `discard`. Record only the user's confirmed choice.
 
+Always ask for the repository's default `review_weight`: `none`, `light`,
+`standard`, `thorough`, or `maximum`. Recommend `standard` for most projects;
+recommend another weight only from concrete consequence, uncertainty,
+regulatory, safety, or operating evidence. Explain that the weight governs both
+implementation-shaping design review and completed implementation review, while
+explicit user direction may override it for one request. Existing Workbench
+projects without the field retain the backward-compatible `standard` default.
+
 Write confirmed rules to the narrowest authority:
 
 - repository-wide agent invariants → `AGENTS.md`;

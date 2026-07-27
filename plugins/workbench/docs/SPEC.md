@@ -47,13 +47,15 @@ Workbench and agile-workflow are mutually exclusive `.work/` owners.
 owner: workbench
 schema: 1
 completed_items: summarize|discard
+review_weight: none|light|standard|thorough|maximum
 ---
 ```
 
 Setup always asks the user how completed items should be retained and aligns
-repository-specific conventions. It may recommend conventions from repository
-evidence, including parking useful out-of-scope findings and behavior-focused
-testing, but writes no new convention without confirmation.
+repository-specific conventions, including review weight. It may recommend
+conventions from repository evidence, including parking useful out-of-scope
+findings and behavior-focused testing, but writes no new convention without
+confirmation. A missing `review_weight` resolves to `standard` for compatibility.
 
 ## Active items
 
@@ -90,6 +92,41 @@ Before closure, remaining active relationships are reconciled and active
 children are completed. `release` may collapse selected completion stubs into
 one `.work/releases/<version>.md`; it does not tag, publish, or deploy.
 
+## Design behavior
+
+`design` is callable directly or from `work`; it is not a required lifecycle
+stage. It keeps outcome-specific design in the active item and uses one primary
+lens:
+
+- new work;
+- refactor or cleanup;
+- performance;
+- defect or reliability;
+- UI/UX;
+- data, migration, or integration.
+
+Security, privacy, accessibility, operations, compatibility, and testing are
+conditional overlays. Designs separate requirements, facts, assumptions, and
+decisions; state meaningful alternatives only where choice matters; identify
+boundaries, verification, risk, and recovery; and prefer the simplest coherent
+shape.
+
+The effective `review_weight` resolves from explicit user direction,
+`.work/CONVENTIONS.md`, then `standard`:
+
+- `none` uses self-review only while preserving verification;
+- `light` permits at most one risk-warranted fresh-context pass;
+- `standard` gives substantive designs and completed changes one balanced
+  fresh-context pass;
+- `thorough` repeats review and correction until no confirmed material issue
+  remains;
+- `maximum` adds complementary, adversarial, and cross-model coverage when
+  available.
+
+Review implementation-shaping designs before implementation becomes expensive
+to reverse. Review completed implementation at its integrated contract
+boundary. Only `thorough` and `maximum` repeat independent passes.
+
 ## Work behavior
 
 `work` keeps a clear request in one workflow even when it requires requirements,
@@ -108,9 +145,8 @@ behavior changes require explicit requirements.
 
 Verification targets stable interfaces and meaningful user journeys. A test
 must protect enough behavior, contract, boundary, risk, or regression to justify
-its maintenance cost. Fresh-context or cross-model review is used when
-independent judgment is materially valuable, and findings are verified before
-acceptance.
+its maintenance cost. Review follows the effective weight, and findings are
+verified before acceptance.
 
 ## Research
 

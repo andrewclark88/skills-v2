@@ -1,6 +1,6 @@
 ---
 name: work
-description: Use in a Workbench-owned project to scope, clarify, design, implement, fix, refactor, simplify, clean up, review, audit, continue, finish one epic, drive several epics to done, or complete ready work inside a named delivery boundary. Gather consequential requirements from the human, coordinate execution, park valuable out-of-scope findings, verify behavior with proportionate independent or cross-model review, reconcile project truth, and continue until the full requested scope is complete or genuinely blocked.
+description: Use in a Workbench-owned project to scope, clarify, implement, fix, refactor, simplify, clean up, review, audit, continue, finish one epic, drive several epics to done, or complete ready work inside a named delivery boundary. Gather consequential requirements from the human, route substantial implementation-shaping design through design, coordinate execution, park valuable out-of-scope findings, verify behavior at the configured review weight, reconcile project truth, and continue until the full requested scope is complete or genuinely blocked.
 ---
 
 # Work
@@ -82,9 +82,12 @@ subsystems only when their status or verification can meaningfully diverge.
 
 ## Execute to the requested finish line
 
-Order work from real prerequisites. Research and design only to the depth needed
-for safe implementation. Parallelize only genuinely independent units with
-clear ownership and integration points.
+Order work from real prerequisites. Research only to the depth needed. Route
+substantial implementation-shaping design through Workbench's `design` skill;
+keep obvious local design inline. A direct user request to design stops after
+design, while an end-to-end delivery request resumes implementation after the
+design and its required review. Parallelize only genuinely independent units
+with clear ownership and integration points.
 
 Inspect actual changes and returned evidence. The orchestrating agent owns
 integration, acceptance, and the full requested scope. Do not stop because one
@@ -101,10 +104,10 @@ external blocker prevents meaningful progress.
 
 ## Verify, review, and close
 
-Verify behavior at stable interfaces, run required project checks, exercise
-meaningful user journeys, and review proportionately to consequence and
-uncertainty. Use fresh-context or cross-model review for substantive work when
-independent judgment is materially valuable or the user requests it. Verify and
+Verify behavior at stable interfaces, run required project checks, and exercise
+meaningful user journeys. Read [references/review.md](references/review.md),
+resolve the effective `review_weight`, and apply its implementation-review
+policy. An explicit user request overrides the repository default. Verify and
 adjudicate reviewer findings rather than accepting them blindly.
 
 Reconcile affected foundation assertions before completion. Close every

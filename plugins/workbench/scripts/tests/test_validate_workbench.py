@@ -20,7 +20,7 @@ class ValidateWorkbenchTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp())
         write(
             root / ".work/CONVENTIONS.md",
-            "---\nowner: workbench\nschema: 1\ncompleted_items: summarize\n---\n",
+            "---\nowner: workbench\nschema: 1\ncompleted_items: summarize\nreview_weight: standard\n---\n",
         )
         for directory in ("active", "backlog", "completed", "releases"):
             (root / ".work" / directory).mkdir(parents=True, exist_ok=True)
@@ -62,6 +62,29 @@ updated: 2026-07-24
         result = self.run_validator(self.make_project())
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("validation passed", result.stdout)
+
+    def test_missing_review_weight_defaults_to_standard(self) -> None:
+        root = self.make_project()
+        path = root / ".work/CONVENTIONS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("review_weight: standard\n", ""),
+            encoding="utf-8",
+        )
+        result = self.run_validator(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_invalid_review_weight_fails(self) -> None:
+        root = self.make_project()
+        path = root / ".work/CONVENTIONS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "review_weight: standard", "review_weight: exhaustive"
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_validator(root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("review_weight must be", result.stdout)
 
     def test_unresolved_dependency_fails(self) -> None:
         root = self.make_project()

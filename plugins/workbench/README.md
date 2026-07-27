@@ -8,12 +8,17 @@ Code, OpenAI Codex, and Pi.
 | Skill | Purpose |
 |---|---|
 | `setup` | Convert any repository into one clean Workbench state and align conventions with the user. |
-| `work` | Scope and drive a clear outcome, one epic, or several epics through verified completion. |
 | `ideate` | Collaboratively clarify an uncertain direction before creating project state. |
+| `design` | Shape and review new work, refactors, performance, defects, UI/UX, and data or integration changes without imposing a mandatory stage. |
+| `work` | Scope and drive a clear outcome, one epic, or several epics through verified completion. |
 | `park` | Preserve useful out-of-scope context in the backlog. |
 | `release` | Collapse completed outcome stubs into a release summary; it does not publish or deploy. |
 | `research` | Produce externally sourced, attested research and a deterministic knowledge index. |
 | `research-handoff` | Propose research-grounded work and emit only items the user confirms. |
+
+The six core workflow skills are `setup`, `ideate`, `design`, `work`, `park`,
+and `release`. Research and its confirmed handoff remain separate evidence
+capabilities inside the combined plugin.
 
 ## Core behavior
 
@@ -21,6 +26,12 @@ Code, OpenAI Codex, and Pi.
 - Human requirements gathering remains explicit. Ambiguous outcomes may route
   through `ideate`; ordinary scoping stays in `work`.
 - Work may carry one or multiple epics to the requested finish line.
+- Design uses one primary lens—new work, refactor/cleanup, performance,
+  defect/reliability, UI/UX, or data/integration—plus only relevant risk
+  overlays. It is callable directly and never becomes a mandatory stage.
+- One configurable `review_weight` (`none`, `light`, `standard`, `thorough`, or
+  `maximum`) governs both implementation-shaping design review and completed
+  implementation review; `standard` is the default.
 - Useful findings outside the current scope are parked instead of silently
   expanding delivery.
 - Testing focuses on meaningful behavior, contracts, boundaries, risks, and
@@ -51,5 +62,6 @@ codex plugin install workbench
 pi install npm:@nklisch/pi-workbench
 ```
 
-Start with `/workbench:setup`, or use `ideate` first when the intended project
-or outcome is still unclear.
+Start with `/workbench:setup`, use `ideate` when the intended outcome is still
+unclear, or invoke `design` directly for a clear implementation-shaping
+decision.

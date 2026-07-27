@@ -1,6 +1,10 @@
 ---
 name: release
-description: Prepare a Workbench release summary from completed outcome stubs. Use when the user asks to summarize completed work, prepare release notes, or bind outcomes to a version. Verify eligible outcomes, write one versioned summary under .work/releases, remove the selected completion stubs, and run repository-defined checks. This skill does not tag, publish, or deploy.
+description: >
+  Prepare a Workbench release summary from completed outcome stubs. Use when the user asks to
+  summarize completed work, prepare release notes, or bind outcomes to a version. Verifies eligible
+  outcomes, writes one versioned summary under .work/releases, removes the selected completion
+  stubs, and runs repository-defined checks. Does not tag, publish, or deploy.
 ---
 
 # Release Workbench Outcomes

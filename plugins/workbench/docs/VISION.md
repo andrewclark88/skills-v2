@@ -15,6 +15,14 @@ workflow stages or an orchestration topology.
 - **Ideation precedes premature scope.** A clear outcome remains in `work`; an
   outcome too ambiguous to form coherent work routes through `ideate`, which
   writes nothing until the user chooses a handoff.
+- **Design is available, not imposed.** A dedicated `design` skill selects a
+  new-work, refactor, performance, defect, UI/UX, or data/integration lens and
+  shapes implementation when that work materially benefits from design.
+  Obvious local work remains inline.
+- **Review depth is legible.** One repository `review_weight` governs design
+  and implementation review, while explicit user direction can override it for
+  a request. `standard` gives substantive work one independent pass without
+  manufacturing convergence.
 - **The ledger stays small.** `.work/` tracks active outcomes, deferred context,
   completion summaries, and release summaries with three item kinds and two
   active statuses.
