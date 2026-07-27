@@ -48,7 +48,7 @@
     {
       "name": "workbench",
       "source": "./plugins/workbench",
-      "description": "Requirements-first delivery, lens-driven design, weighted review, and externally grounded research through a lightweight work ledger.",
+      "description": "Requirements-first delivery with semantic autonomy, lens-driven design, weighted review, and externally grounded research.",
       "category": "productivity",
       "policy": {
         "installation": "AVAILABLE",

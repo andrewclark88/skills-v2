@@ -57,14 +57,16 @@ owner: workbench
 schema: 1
 completed_items: summarize|discard
 review_weight: none|light|standard|thorough|maximum
+autonomy: adaptive|collaborative|autonomous
 ---
 ```
 
 Keep the body limited to authoritative verification commands, delivery rules,
 and Workbench-specific project guidance. Put repository-wide agent invariants
 in `AGENTS.md` and engineering principles in `docs/PRINCIPLES.md`. Existing
-substrates without `review_weight` resolve it as `standard`; setup writes the
-user-confirmed value when refreshing them.
+substrates without `review_weight` resolve it as `standard`, and those without
+`autonomy` resolve it as `adaptive`; setup writes user-confirmed values when
+refreshing them.
 
 ## Active-item frontmatter
 
@@ -122,7 +124,8 @@ Maintain one marked Workbench section in the canonical root `AGENTS.md`:
 Confirm `owner: workbench` in `.work/CONVENTIONS.md`. Track active outcomes in
 `.work/active/` and deferred context in `.work/backlog/`. Treat natural-language
 requests as the workflow. Consult `.knowledge/index.json` when present. Ask the
-human about consequential requirements and pause for the answer. Park useful
+human about consequential requirements according to the effective autonomy
+posture. Park useful
 out-of-scope findings instead of silently expanding scope. Test behavior at
 stable interfaces, verify the full requested boundary, reconcile affected
 foundation truth, apply the configured review weight to substantive design and

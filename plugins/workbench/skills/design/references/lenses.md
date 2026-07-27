@@ -41,6 +41,8 @@ and simplest coherent implementation shape.
 - State expected metric movement and regression budget.
 - Design repeatable benchmarks plus end-to-end evidence; a microbenchmark is
   evidence, not proof.
+- Reuse existing benchmark and load-test machinery. Discuss a new performance
+  laboratory or substantial harness before building it.
 
 ## Defect or reliability
 
@@ -90,4 +92,5 @@ Apply only when evidence warrants them:
 - **Compatibility:** verified external consumers, durable data, deployment
   skew, and contractual obligations.
 - **Testing:** stable interfaces, meaningful behavior, demonstrated risks, and
-  regression history. Every proposed test must earn its upkeep.
+  regression history. Every proposed test must earn its upkeep. Reuse existing
+  machinery; add only small, cheap, contained evidence without discussion.

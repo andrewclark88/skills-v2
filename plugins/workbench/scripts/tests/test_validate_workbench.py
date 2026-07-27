@@ -20,7 +20,7 @@ class ValidateWorkbenchTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp())
         write(
             root / ".work/CONVENTIONS.md",
-            "---\nowner: workbench\nschema: 1\ncompleted_items: summarize\nreview_weight: standard\n---\n",
+            "---\nowner: workbench\nschema: 1\ncompleted_items: summarize\nreview_weight: standard\nautonomy: adaptive\n---\n",
         )
         for directory in ("active", "backlog", "completed", "releases"):
             (root / ".work" / directory).mkdir(parents=True, exist_ok=True)
@@ -85,6 +85,29 @@ updated: 2026-07-24
         result = self.run_validator(root)
         self.assertEqual(result.returncode, 1)
         self.assertIn("review_weight must be", result.stdout)
+
+    def test_missing_autonomy_defaults_to_adaptive(self) -> None:
+        root = self.make_project()
+        path = root / ".work/CONVENTIONS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("autonomy: adaptive\n", ""),
+            encoding="utf-8",
+        )
+        result = self.run_validator(root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_invalid_autonomy_fails(self) -> None:
+        root = self.make_project()
+        path = root / ".work/CONVENTIONS.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "autonomy: adaptive", "autonomy: unlimited"
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_validator(root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("autonomy must be", result.stdout)
 
     def test_unresolved_dependency_fails(self) -> None:
         root = self.make_project()

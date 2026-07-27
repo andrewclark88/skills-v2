@@ -48,14 +48,16 @@ owner: workbench
 schema: 1
 completed_items: summarize|discard
 review_weight: none|light|standard|thorough|maximum
+autonomy: adaptive|collaborative|autonomous
 ---
 ```
 
 Setup always asks the user how completed items should be retained and aligns
-repository-specific conventions, including review weight. It may recommend
+repository-specific conventions, including review weight and autonomy. It may recommend
 conventions from repository evidence, including parking useful out-of-scope
 findings and behavior-focused testing, but writes no new convention without
-confirmation. A missing `review_weight` resolves to `standard` for compatibility.
+confirmation. A missing `review_weight` resolves to `standard`; missing
+`autonomy` resolves to `adaptive`.
 
 ## Active items
 
@@ -94,9 +96,11 @@ one `.work/releases/<version>.md`; it does not tag, publish, or deploy.
 
 ## Design behavior
 
-`design` is callable directly or from `work`; it is not a required lifecycle
-stage. It keeps outcome-specific design in the active item and uses one primary
-lens:
+Design reasoning is always required. `design` is callable directly or from
+`work` whenever implementation shape is consequential; obvious, local,
+reversible choices remain inline. This is conditional routing, not a required
+lifecycle stage. It keeps outcome-specific design in the active item and uses
+one primary lens:
 
 - new work;
 - refactor or cleanup;
@@ -109,7 +113,20 @@ Security, privacy, accessibility, operations, compatibility, and testing are
 conditional overlays. Designs separate requirements, facts, assumptions, and
 decisions; state meaningful alternatives only where choice matters; identify
 boundaries, verification, risk, and recovery; and prefer the simplest coherent
-shape.
+maintainable shape rather than the smallest diff.
+
+Effective autonomy resolves from explicit request language, repository
+conventions, then `adaptive`:
+
+- `collaborative` discusses ideal and scoped states before binding;
+- `adaptive` asks about consequential human-owned choices and resolves routine
+  reversible decisions;
+- `autonomous` chooses the strongest maintainable solution inside the
+  authorized outcome and parks improvements outside it.
+
+Autonomy never expands scope, authority, safety boundaries, or quality
+obligations. Workarounds require a real constraint and retain the constraint,
+consequence, and better future direction.
 
 The effective `review_weight` resolves from explicit user direction,
 `.work/CONVENTIONS.md`, then `standard`:
@@ -130,10 +147,10 @@ boundary. Only `thorough` and `maximum` repeat independent passes.
 ## Work behavior
 
 `work` keeps a clear request in one workflow even when it requires requirements,
-design, implementation, review, integration, or several epics. It asks the
-human at least one focused question about consequential choices, pauses for the
-answer, and continues until the full named boundary is complete or externally
-blocked.
+design, implementation, review, integration, or several epics. It resolves
+autonomy from the request and conventions, gathers human input for
+consequential human-owned choices, and continues until the full named boundary
+is complete or externally blocked.
 
 If the outcome, ownership boundary, or success shape cannot yet form coherent
 work, `work` routes through `ideate`. Ideate preserves a no-write boundary until
@@ -147,6 +164,12 @@ Verification targets stable interfaces and meaningful user journeys. A test
 must protect enough behavior, contract, boundary, risk, or regression to justify
 its maintenance cost. Review follows the effective weight, and findings are
 verified before acceptance.
+
+Verification reuses existing tests, fixtures, commands, environments,
+observability, and benchmark machinery first. Small, cheap, contained evidence
+may be added directly. A new or materially expanded test framework, simulation
+platform, benchmark system, mock service, synthetic environment, or validation
+architecture requires user discussion.
 
 ## Research
 

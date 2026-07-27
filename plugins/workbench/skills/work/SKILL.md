@@ -21,6 +21,8 @@ user explicitly selects a Workbench handoff.
 
 Load references only as needed:
 
+- every substantive request and continuation boundary →
+  [references/autonomy.md](references/autonomy.md);
 - requirements or consequential ambiguity →
   [references/requirements.md](references/requirements.md);
 - item creation, relationships, blocking, completion, or summaries →
@@ -40,6 +42,11 @@ When substantive external investigation is necessary, use Workbench's
 
 ## Resolve the requested boundary
 
+Read [references/autonomy.md](references/autonomy.md) and resolve the effective
+autonomy posture before deciding when to ask, act, or continue. Autonomy does
+not broaden the requested boundary or authorize production, real-data,
+irreversible, or external actions.
+
 Keep narrow requests narrow. Treat “finish,” “drive to done,” and “handle end
 to end” as instructions to reach the requested finish line.
 
@@ -56,11 +63,14 @@ or several foundational decisions.
 
 ## Gather requirements from the human
 
-Learn discoverable facts from the repository and current sources. Ask the user
-at least one focused question for product direction, preferences, supported
-behavior, consequential trade-offs, or other choices only they can settle, then
-pause for the answer. Never treat missing structured-question tooling as
-permission to guess or continue.
+Learn discoverable facts from the repository and current sources. Gather human
+input for product direction, preferences, supported behavior, consequential
+trade-offs, or other choices only the user can settle. In collaborative work,
+surface ideal states and meaningful alternatives. In adaptive work, ask only
+when the answer materially affects the outcome. In autonomous work, treat
+settled request language and prior answers as requirements, but still pause for
+missing human-only direction. Never treat missing structured-question tooling
+as permission to guess or continue.
 
 Record accepted outcomes, constraints, exclusions, and acceptance evidence
 without manufacturing a large template.
@@ -84,10 +94,11 @@ subsystems only when their status or verification can meaningfully diverge.
 
 Order work from real prerequisites. Research only to the depth needed. Route
 substantial implementation-shaping design through Workbench's `design` skill;
-keep obvious local design inline. A direct user request to design stops after
-design, while an end-to-end delivery request resumes implementation after the
-design and its required review. Parallelize only genuinely independent units
-with clear ownership and integration points.
+design reasoning is always required, but only obvious, local, reversible
+choices stay inline. A direct user request to design stops after design, while
+an end-to-end delivery request resumes implementation after the design and its
+required review. Parallelize only genuinely independent units with clear
+ownership and integration points.
 
 Inspect actual changes and returned evidence. The orchestrating agent owns
 integration, acceptance, and the full requested scope. Do not stop because one

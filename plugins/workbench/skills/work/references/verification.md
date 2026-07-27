@@ -22,6 +22,20 @@ branch, implementation path, or trivial accessor. Concentrate evidence where a
 failure would matter, and remove or reshape tests whose signal no longer
 justifies their brittleness and upkeep.
 
+Use the smallest credible evidence surface. Prefer existing tests, commands,
+fixtures, environments, and observability. A small local test, fixture, probe,
+or benchmark may be added when it is cheap, contained, and protects meaningful
+behavior. Remove temporary probes after they answer the uncertainty unless
+their ongoing signal earns maintenance.
+
+Do not invent or materially expand a test framework, simulation platform,
+benchmark system, mock service, synthetic environment, or validation
+architecture merely to prove one change. Discuss that investment with the user
+before building it. Autonomous execution does not authorize hidden
+verification-infrastructure scope. If existing evidence is insufficient, use a
+bounded alternative, propose the smallest useful addition, or report the
+limitation; never pretend the work is verified.
+
 Apply security, privacy, accessibility, performance, compatibility, data
 integrity, and operational-readiness lenses when the affected surface or
 discovered risk warrants them. These are lenses, not fixed gates.

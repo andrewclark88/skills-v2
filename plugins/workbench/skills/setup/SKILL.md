@@ -66,6 +66,13 @@ implementation-shaping design review and completed implementation review, while
 explicit user direction may override it for one request. Existing Workbench
 projects without the field retain the backward-compatible `standard` default.
 
+Always ask for the repository's default `autonomy`: `adaptive`,
+`collaborative`, or `autonomous`. Recommend `adaptive` unless the repository has
+clear operating reasons for a different default. Explain that explicit request
+language overrides the default and that autonomy never expands scope, quality
+obligations, permissions, or safety boundaries. Existing Workbench projects
+without the field retain the backward-compatible `adaptive` default.
+
 Write confirmed rules to the narrowest authority:
 
 - repository-wide agent invariants → `AGENTS.md`;

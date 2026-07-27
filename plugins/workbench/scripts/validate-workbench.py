@@ -15,6 +15,7 @@ FRONTMATTER = re.compile(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", re.DOTALL)
 ALLOWED_KINDS = {"epic", "feature", "story"}
 ALLOWED_STATUSES = {"active", "blocked"}
 ALLOWED_REVIEW_WEIGHTS = {"none", "light", "standard", "thorough", "maximum"}
+ALLOWED_AUTONOMY = {"adaptive", "collaborative", "autonomous"}
 LEGACY_PATHS = (
     ".work/bin",
     ".work/active/epics",
@@ -102,6 +103,9 @@ def validate(project: Path) -> tuple[list[str], list[str]]:
         errors.append(
             "review_weight must be none, light, standard, thorough, or maximum"
         )
+    autonomy = config.get("autonomy", "adaptive")
+    if autonomy not in ALLOWED_AUTONOMY:
+        errors.append("autonomy must be adaptive, collaborative, or autonomous")
 
     for required in ("active", "backlog"):
         directory = work / required

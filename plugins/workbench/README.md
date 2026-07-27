@@ -28,14 +28,20 @@ capabilities inside the combined plugin.
 - Work may carry one or multiple epics to the requested finish line.
 - Design uses one primary lens—new work, refactor/cleanup, performance,
   defect/reliability, UI/UX, or data/integration—plus only relevant risk
-  overlays. It is callable directly and never becomes a mandatory stage.
+  overlays. Design reasoning always applies; the dedicated skill is invoked
+  when implementation shape is consequential without becoming a mandatory
+  lifecycle stage.
 - One configurable `review_weight` (`none`, `light`, `standard`, `thorough`, or
   `maximum`) governs both implementation-shaping design review and completed
   implementation review; `standard` is the default.
+- One `autonomy` convention (`adaptive`, `collaborative`, or `autonomous`)
+  combines with the current request to determine when the agent discusses,
+  decides, and continues. It never expands scope or authority.
 - Useful findings outside the current scope are parked instead of silently
   expanding delivery.
 - Testing focuses on meaningful behavior, contracts, boundaries, risks, and
-  regressions. Tests must earn their maintenance cost.
+  regressions. Tests must earn their maintenance cost, and substantial new
+  verification infrastructure requires user alignment.
 - Cleanup and refactors are ordinary feature or story outcomes tagged
   `cleanup` or `refactor`; behavior changes are not hidden inside refactors.
 - Root and sub-project foundations may live in `docs/`, `docs/<sub-project>/`,

@@ -19,6 +19,13 @@ workflow stages or an orchestration topology.
   new-work, refactor, performance, defect, UI/UX, or data/integration lens and
   shapes implementation when that work materially benefits from design.
   Obvious local work remains inline.
+- **Autonomy follows intent.** Current request language and one repository
+  default determine whether work is collaborative, adaptive, or autonomous.
+  Autonomy changes participation and continuation, never permissions, scope,
+  safety, or quality.
+- **Simplicity is durable.** Prefer maintainable intended states with fewer
+  concepts and lower operating and verification cost, not merely smaller diffs.
+  Do not hide hacks or oversized validation systems inside autonomous work.
 - **Review depth is legible.** One repository `review_weight` governs design
   and implementation review, while explicit user direction can override it for
   a request. `standard` gives substantive work one independent pass without
@@ -39,7 +46,8 @@ workflow stages or an orchestration topology.
   foundations; durable sub-project truth may live in `docs/<sub-project>/` or
   `<sub-project>/docs/` according to repository convention.
 - **Tests earn their keep.** Prefer meaningful behavior, contracts, boundaries,
-  risks, and regressions over line coverage and implementation coupling.
+  risks, and regressions over line coverage and implementation coupling. Reuse
+  existing verification machinery and discuss substantial new infrastructure.
 - **Maintenance follows evidence.** Cohesive cleanup can travel with delivery;
   standalone cleanup and refactors are normal bounded work; broader findings
   are parked.

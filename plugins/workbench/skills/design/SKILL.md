@@ -10,10 +10,11 @@ description: >
 
 # Design
 
-Shape work enough to make implementation safe, coherent, and economical.
-Design is an optional capability, not a mandatory stage. A direct design
-request stops after the reviewed design; `work` may route here and then continue
-through implementation.
+Design reasoning is always required. Use this dedicated skill whenever
+implementation shape is consequential; keep only obvious, local, reversible
+choices inline in `work`. This is conditional routing, not a mandatory project
+stage. A direct design request stops after the reviewed design; `work` may route
+here and then continue through implementation.
 
 ## Resolve the design boundary
 
@@ -22,6 +23,10 @@ foundation documents, relevant code and tests, and `.knowledge/index.json` when
 present. Reconcile stale item claims against the repository before designing.
 If `.work/` is absent or owned by another system, stop and offer `setup`; do not
 create Workbench state or convert a competing substrate implicitly.
+
+Read [../work/references/autonomy.md](../work/references/autonomy.md) and resolve
+the effective autonomy posture. Autonomy governs how decisions are discussed,
+not whether design quality, review, safety, or authority boundaries apply.
 
 Keep a clear narrow request narrow. If the outcome, ownership boundary, or
 success shape cannot yet form coherent work, route through `ideate`. If a clear
@@ -59,9 +64,19 @@ irreversible choices, or expensive trade-offs only they can settle, then pause
 for the answer. Resolve routine reversible implementation choices with judgment
 and record the rationale.
 
-Prefer the smallest design that satisfies the accepted outcome. Name meaningful
-alternatives when the choice is consequential; do not manufacture options for
-obvious local work.
+Prefer the simplest coherent design that reaches a maintainable intended state.
+Measure simplicity in durable concepts, operating cost, and verification cost,
+not diff size. Do not choose a hack merely because it touches fewer files.
+
+In collaborative work, discuss ideal states and appropriately scoped options
+before binding the design. In adaptive work, recommend the ideal state when it
+materially affects the current choice. In autonomous work, choose the strongest
+maintainable design inside the authorized outcome and park improvements that
+would expand it. Use a workaround only when a real constraint requires it, and
+record the constraint, consequence, and better future direction.
+
+Name meaningful alternatives when the choice is consequential; do not
+manufacture options for obvious local work.
 
 ## Record the design
 
@@ -94,6 +109,14 @@ document. Add only useful sections:
 
 Use exact paths, interfaces, or schemas only when they reduce implementation
 ambiguity. Avoid speculative code listings that merely pre-write the change.
+
+Design the smallest credible verification approach alongside implementation.
+Reuse existing tests, commands, fixtures, environments, and observability
+first. Add lightweight evidence when its confidence clearly exceeds its upkeep.
+Do not invent a test framework, benchmark platform, mock service, simulation,
+synthetic environment, or other substantial validation system without
+discussing it with the user, unless the addition is demonstrably small, cheap,
+and contained.
 
 Update root or sub-project foundation assertions only when the design settles
 durable current or intended truth. Replace stale assertions in place; Git
