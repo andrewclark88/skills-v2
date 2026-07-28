@@ -135,6 +135,10 @@ them. Everything else—questions, proposals, recommendations, explanations,
 progress summaries, and completion reports—belongs in your reply, not in a new
 file or a no-op record.
 
+Keep human-facing documents and designs clean and self-contained. Do not expose
+agent work history, review-correction notes, or revision narration. Agent-facing
+documents may retain process prose only when it adds material value.
+
 Test behavior at stable interfaces, verify the full requested boundary,
 reconcile affected foundation truth, rebuild the knowledge index when indexed
 documentation changes, apply the configured review weight to substantive design
