@@ -1,5 +1,16 @@
 # Agile-Workflow Guide
 
+> ## Maintenance mode (KTLO)
+>
+> `agile-workflow` is stable and **supported in maintenance mode**: bug fixes
+> and compatibility work land, but no new feature development is planned.
+> Existing projects keep working and this guide remains accurate.
+>
+> **New projects** should adopt [`workbench`](../plugins/workbench/README.md)
+> — requirements-first delivery driven by ordinary conversation, with
+> grounded research built in. Workbench's `setup` skill consolidates an
+> existing agile-workflow substrate into one clean state.
+
 How to use the `agile-workflow` plugin to track and ship software work using
 a markdown-based substrate that lives in your repo.
 
@@ -131,8 +142,11 @@ Install `agile-workflow` through the channel you are using:
 codex plugin marketplace add https://github.com/nklisch/skills
 codex plugin install agile-workflow
 
-# Pi
-pi install npm:@nklisch/pi-agile-workflow
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add agile-workflow@nklisch-skills --scope user
 # or, from a local checkout:
 pi install -l ./plugins/agile-workflow
 ```

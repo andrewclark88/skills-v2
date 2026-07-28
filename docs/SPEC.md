@@ -118,10 +118,9 @@ The single-source-of-truth rules that keep the catalog coherent:
 
 - **Supported:** `workbench` (centerpiece — requirements-first delivery and
   grounded research), `ux-ui-design`, `code-audit`, `nates-toolkit`,
-  `agentic-research`, `agent-coordination`, `prose-craft`, and `zai-research`
-  (skill + cross-harness MCP combo; its Pi-native extension publishes from
-  `nklisch/pi-extensions`). Pi-native tool packages such as
-  `pi-background-tasks` live in the `nklisch/pi-extensions` repo, not here.
+  `agentic-research`, `agent-coordination`, and `prose-craft`. Pi-native tool
+  packages (`pi-background-tasks`, `pi-zai-research`, `pi-plugins` itself)
+  live in the `nklisch/pi-extensions` repo, not here.
 - **Supported, maintenance mode (KTLO):** `agile-workflow`. It receives bug
   fixes and compatibility work so existing projects keep running, but no new
   feature development is planned — new workflow capability lands in

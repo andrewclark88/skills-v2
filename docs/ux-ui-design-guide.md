@@ -5,8 +5,9 @@ production code — using throwaway, single-file HTML mockups that open in any
 browser.
 
 This guide is for humans collaborating with an agent on visual / interaction
-design. It works on its own, and it gets even better paired with
-`agile-workflow` (see the last section).
+design. It works on its own — including alongside `workbench`, which keeps
+optional UI walkthroughs in the same `.mockups/` layout — and it gets even
+better paired with `agile-workflow` (see the last section).
 
 ## What this is
 
@@ -82,8 +83,11 @@ You don't need any other plugin. The whole loop:
 # OpenAI Codex
 codex plugin install ux-ui-design
 
-# Pi
-pi install npm:@nklisch/pi-ux-ui-design
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add ux-ui-design@nklisch-skills --scope user
 # or, from a local checkout:
 pi install -l ./plugins/ux-ui-design
 
@@ -138,6 +142,10 @@ That's it. No design tool to learn, no Figma round-tripping, no theme picker
 config. The artifact is a `.html` file you can keep, share, or throw away.
 
 ## Plugged into agile-workflow
+
+> `agile-workflow` is in maintenance mode; this section remains accurate for
+> projects that already use it. On `workbench` projects, use the same skills
+> standalone — `.mockups/` is Workbench's optional UI-alignment layer.
 
 The plugin works standalone, but it really clicks when paired with
 `agile-workflow`. The `ux-ui-design` skills slot into the substrate at four

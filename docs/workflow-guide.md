@@ -6,16 +6,19 @@
 > features or bug fixes will land here. This guide is kept for reference
 > only.
 >
-> **New projects** should use [`agile-workflow`](agile-workflow-guide.md) —
-> substrate-driven work tracking with late-binding releases, gates that
-> produce items, and an autopilot queue runner. Pair it with
-> [`ux-ui-design`](ux-ui-design-guide.md) for mockup-first UI alignment.
+> **New projects** should adopt
+> [`workbench`](../plugins/workbench/README.md) — requirements-first delivery
+> driven by ordinary conversation, with grounded research built in. Pair it
+> with [`ux-ui-design`](ux-ui-design-guide.md) for mockup-first UI alignment.
 >
-> **Existing `workflow` projects** can migrate by running
-> `/agile-workflow:convert` — it detects the legacy `docs/designs/` +
-> `docs/ROADMAP.md` + `docs/PROGRESS.md` layout and migrates phases into
-> epics, designs into features, and completed designs into a retro-release.
-> See the [migration matrix](../plugins/agile-workflow/docs/MIGRATION.md).
+> **Existing `workflow` projects** can migrate to agile-workflow (maintenance
+> mode) by running `/agile-workflow:convert` — it detects the legacy
+> `docs/designs/` + `docs/ROADMAP.md` + `docs/PROGRESS.md` layout and
+> migrates phases into epics, designs into features, and completed designs
+> into a retro-release. See the
+> [migration matrix](../plugins/agile-workflow/docs/MIGRATION.md). To move to
+> Workbench instead, run `/workbench:setup`, which consolidates older
+> workflows into one clean state.
 
 How to use the workflow skills together to build software projects.
 

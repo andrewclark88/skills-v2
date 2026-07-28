@@ -9,13 +9,14 @@ plugin-internal architecture lives in each plugin's own `docs/ARCHITECTURE.md`.
 ```
 .
 ├── plugins/                 # the shippable plugins (one directory each)
-│   ├── agile-workflow/       # flagship — structured substrate work tracking
-│   ├── workbench/            # flexible requirements-first work ledger
+│   ├── workbench/            # centerpiece — requirements-first delivery + research
+│   ├── agile-workflow/       # structured substrate work tracking (maintenance mode)
 │   ├── ux-ui-design/         # standalone mockup-first UI design
 │   ├── code-audit/           # standalone markdown code audits
 │   ├── nates-toolkit/        # standalone utility skills
 │   ├── agentic-research/     # grounded research discipline + .research substrate
 │   ├── agent-coordination/   # sparse cross-agent coordination ledger
+│   ├── prose-craft/          # prose drafting, lens review, refine cycle
 │   └── workflow/             # DEPRECATED, frozen, kept for existing installs
 ├── .agents/skills/          # standalone reference-skill library (non-plugin)
 ├── .claude-plugin/
@@ -45,20 +46,18 @@ and harness-specific components:
 plugins/<name>/
 ├── .claude-plugin/plugin.json   # Claude Code manifest
 ├── .codex-plugin/plugin.json    # Codex manifest
-├── package.json                 # Pi package metadata
 ├── skills/                      # SKILL.md units  — shared
 ├── commands/                    # slash commands  — Claude-specific
 ├── hooks/                       # event hooks     — harness-specific
-├── extensions/                  # Pi extensions   — Pi-specific, when needed
-├── prompts/                     # Pi prompt templates, when needed
 ├── docs/                        # plugin foundation docs (optional)
 ├── CHANGELOG.md
 └── README.md
 ```
 
 The shared/harness-specific split is the rule from `docs/SPEC.md`: skills cross
-all three harnesses; command, hook, extension, prompt, theme, and agent surfaces
-are exposed only where the target harness supports them.
+all three harnesses; command, hook, and agent surfaces are exposed only where
+the target harness supports them. Pi-native runtime extensions live in the
+`nklisch/pi-extensions` repo, not here.
 
 ## Distribution wiring
 
@@ -75,19 +74,20 @@ channel-appropriate source shapes:
   plugin's channel metadata in lockstep and refuses to act on a dirty plugin
   directory.
 
-Pi distribution is package-native. A plugin's Pi package metadata lives beside
-the Claude and Codex manifests in that plugin directory, points at the same
-`skills/` tree, and adds Pi-native extensions or prompt templates only when they
-improve the user experience beyond raw skill loading. The root Pi aggregate
-keeps `agile-workflow` as its default `.work/` owner and omits the mutually
-exclusive `workbench` skills; users install Workbench's package individually.
-External companions such as `peeragent` are not re-exported by this repo's root Pi package; Pi users
-install them from their own package roots, for example
-`pi install git:github.com/nklisch/peeragent@v0.4.1`.
+Pi installation flows through the bridge, not through packages published from
+this tree. The `@nklisch/pi-plugins` manager (source in `nklisch/pi-extensions`)
+registers the same two marketplace catalogs — `/plugins marketplace add
+nklisch/skills` — and installs the same plugin entries, including the external
+`git-subdir` companions, with `/plugins add <name>@nklisch-skills`. A plugin
+that is well-formed for Claude and Codex is well-formed for Pi; the bridge
+discovers skills by directory convention. Pi-native tool packages
+(`pi-plugins`, `pi-background-tasks`, `pi-zai-research`) publish to npm from
+`nklisch/pi-extensions`, which is also where Pi runtime extensions are
+developed.
 
 ## The substrate-access model
 
-The flagship's substrate is plain files: `.work/` items as markdown with YAML
+agile-workflow's substrate is plain files: `.work/` items as markdown with YAML
 frontmatter, which are the single source of truth. Two surfaces read that one
 substrate, each tuned for a different consumer:
 
@@ -107,10 +107,11 @@ not pinned here.
 
 ## Where internals live
 
-- Structured substrate lifecycle, gates, releases, and the work-view query
-  model → `plugins/agile-workflow/docs/{ARCHITECTURE,SPEC,PRINCIPLES}.md`.
-- Flexible requirements-first work, research references, UI walkthroughs, and
+- Requirements-first delivery, research evidence, UI walkthroughs, and
   compact release summaries → `plugins/workbench/docs/{VISION,SPEC}.md`.
+- Structured substrate lifecycle, gates, releases, and the work-view query
+  model (maintenance mode) →
+  `plugins/agile-workflow/docs/{ARCHITECTURE,SPEC,PRINCIPLES}.md`.
 - Standalone mockup-first design layout → the `ux-ui-design` plugin.
 - Standalone markdown audit reports → the `code-audit` plugin.
 - Grounded research substrate and citation discipline → the `agentic-research`

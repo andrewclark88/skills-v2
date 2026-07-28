@@ -16,13 +16,16 @@ Brief (prose-draft)
   - This repo no longer publishes npm packages; Pi installation goes through
     the pi-plugins marketplace manager (maintained in nklisch/pi-extensions).
   - The Pi-native tool packages pi-background-tasks and pi-zai-research are
-    published to npm from the nklisch/pi-extensions repo.
+    published to npm from the nklisch/pi-extensions repo; neither lives in
+    this tree anymore.
   - workbench and agile-workflow are mutually exclusive `.work/` owners.
   - agile-workflow is supported but in maintenance (KTLO): fixes and
     compatibility, no new feature development.
   - The `workflow` plugin is deprecated; `/agile-workflow:convert` migrates
     existing projects, and workbench `setup` consolidates older workflows.
-  - peeragent is an external companion: `pi install git:github.com/nklisch/peeragent@v0.4.1`.
+  - peeragent is an external companion, installable through the bridge
+    (`/plugins add peeragent@nklisch-skills`) or from its own repo:
+    `pi install git:github.com/nklisch/peeragent@v0.4.1`.
 - Out of scope: per-plugin skill catalogs and deep workflow detail (deferred
   to plugin READMEs and docs/ guides); agile-workflow's full pipeline
   reference (lives in docs/agile-workflow-guide.md).
@@ -111,7 +114,12 @@ pi install npm:@nklisch/pi-zai-research       # Z.ai research tools
 ```
 
 **peeragent** (cross-harness peer delegation and review) is an external
-companion that lives in [its own repository](https://github.com/nklisch/peeragent):
+companion. Install it through the bridge or from
+[its own repository](https://github.com/nklisch/peeragent):
+
+```text
+/plugins add peeragent@nklisch-skills --scope user
+```
 
 ```bash
 pi install git:github.com/nklisch/peeragent@v0.4.1
@@ -173,7 +181,7 @@ Zod v4, Biome v2, Drizzle, Hono, the TanStack family, Zustand, citty,
 
 ```
 plugins/<name>/          # one directory per plugin, each with shared skills/
-                         # plus Claude, Codex, and Pi channel metadata
+                         # plus Claude and Codex channel metadata
 .agents/skills/          # standalone reference-skill library (non-plugin)
 .claude-plugin/          # Claude Code marketplace catalog
 .agents/plugins/         # Codex marketplace catalog
@@ -182,7 +190,8 @@ docs/                    # repo-level vision, spec, architecture, and guides
 ```
 
 Every supported plugin ships the same `skills/` directory to all three
-harnesses and keeps its Claude, Codex, and Pi metadata in version lockstep.
+harnesses and keeps its Claude and Codex manifests in version lockstep; the
+Pi bridge consumes the same catalogs.
 The distribution rules live in [docs/SPEC.md](docs/SPEC.md); the layout and
 wiring live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the purpose and
 dogfooding thesis live in [docs/VISION.md](docs/VISION.md).
