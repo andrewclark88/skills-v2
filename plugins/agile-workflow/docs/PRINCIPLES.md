@@ -460,6 +460,14 @@ inventory: silence about a capability is allowed. They roll forward when an
 assertion becomes false, stale, or contradictory. Git carries history; the doc
 carries truth.
 
+Write foundations from the reader's world toward the technical model. Define
+each load-bearing data object, domain model, interface, or object group by what
+it represents and why it matters before using its technical shape. When
+provider vocabulary matters, map provider terms through project concepts to
+generic real-world terms at the object or system level before field mappings.
+Compare representative providers or standards when their models shape the
+project. Define only terms the intended audience cannot safely assume.
+
 ### Two timing styles
 
 Both are legitimate; the project picks one or mixes per change size:

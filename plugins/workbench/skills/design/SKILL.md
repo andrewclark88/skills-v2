@@ -118,6 +118,12 @@ Use exact paths, interfaces, or schemas only when they reduce implementation
 ambiguity. Avoid speculative code listings that merely pre-write the change.
 Write the design prose in the plain technical style of
 [../work/references/writing-style.md](../work/references/writing-style.md).
+For data models, domain objects, interfaces, and external integrations, establish
+the real-world and business meaning before schemas or field mappings. If a
+provider's vocabulary materially shapes the model, use `research` to compare
+representative providers or standards. Map provider terms through the project's
+concepts to generic real-world terms instead of adopting one provider's ontology
+by default. Use a short real-world scenario when relationships remain abstract.
 
 Design the smallest credible verification approach alongside implementation.
 Reuse existing tests, commands, fixtures, environments, and observability

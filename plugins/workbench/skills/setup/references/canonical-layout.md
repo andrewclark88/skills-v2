@@ -139,6 +139,13 @@ Keep human-facing documents and designs clean and self-contained. Do not expose
 agent work history, review-correction notes, or revision narration. Agent-facing
 documents may retain process prose only when it adds material value.
 
+Frame human-facing documents from real-world and business meaning before
+technical representation. Define load-bearing data, domain, and interface
+concepts before using them. When provider terms matter, map the provider term to
+the project concept and a generic real-world term at the object level before
+field details. Do not define ordinary terms the intended audience can safely
+know.
+
 Test behavior at stable interfaces, verify the full requested boundary,
 reconcile affected foundation truth, rebuild the knowledge index when indexed
 documentation changes, apply the configured review weight to substantive design

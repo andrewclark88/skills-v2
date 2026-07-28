@@ -31,6 +31,12 @@ grants them.*
 - Does the draft assume knowledge the audience doesn't have (undisclosed
   prerequisites)?
 - Is every piece of jargon defined on first use, or safe for this audience?
+- Does each load-bearing data object, domain model, interface, or object group
+  first say what it represents in the real world and why it matters?
+- Where provider vocabulary appears, does the document map provider terms
+  through project concepts to generic real-world terms before field details?
+- When relationships remain abstract, does a short real-world scenario establish
+  the mental model before diagrams or schemas?
 - Can the reader find their next action within the first screen?
 - Does the entry path work? Whatever leads a reader here, does the doc
   catch them?
@@ -44,6 +50,8 @@ grants them.*
   drifts into reference)?
 - Does the opening state purpose and reader payoff before details?
 - Are sections ordered by reader need, not by the system's internals?
+- Can readers follow the document collection in its intended order without
+  waiting for a later page to define an earlier load-bearing concept?
 - Do headings carry information (not "Overview", "Misc")?
 - Is anything the brief promised missing? Anything present the brief
   excluded?

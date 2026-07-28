@@ -17,6 +17,28 @@ output. Not for marketing copy or essays — the style strips voice on purpose.
 
 ## Rules
 
+### Concept grounding
+
+- Treat a document, or an ordered collection of documents, as a reader will
+  encounter it. Do not rely on hidden project context or a later document to
+  define a load-bearing term.
+- Before technical detail, explain what each important data object, domain
+  model, interface, or object group represents in the real world and why it
+  matters to a user or the business. Work the definition into the prose when a
+  glossary would feel forced.
+- When an external provider has its own vocabulary, map the provider term to
+  the project's concept and a generic real-world term. Explain the mapping at
+  the object or system level before field-level mappings.
+- When provider models materially shape the design, compare representative
+  providers or standards through current-source research. Do not inherit one
+  provider's ontology without making that choice explicit.
+- When relationships remain abstract, use a short real-world scenario before
+  diagrams, schemas, or field detail. Add only enough example to establish the
+  mental model.
+- Define only terms that carry meaning or may be unfamiliar to the intended
+  audience. Assume ordinary knowledge and avoid turning the document into a
+  dictionary.
+
 ### Words
 
 - Use one name for one thing. Do not call the same item by two names.
