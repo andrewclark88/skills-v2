@@ -104,8 +104,10 @@ From there, direct the agent in ordinary language: "Implement this feature,"
 "Drive the onboarding epic to done," or "Research the prior art for this
 decision."
 
-The [Workbench README](plugins/workbench/README.md) covers its project model,
-autonomy settings, review weights, and research workflow.
+The [Workbench guide](docs/workbench-guide.md) walks through adopting a
+repo and driving work; the [plugin README](plugins/workbench/README.md)
+covers the mental model — autonomy settings, review weights, design lenses,
+and the research discipline.
 
 ## Choose one `.work/` owner
 
@@ -127,7 +129,7 @@ mutually exclusive within one project. Pick one:
 
 | Plugin | What it does | More |
 |---|---|---|
-| **workbench** | Requirements-first delivery. Plain-language outcomes drive design, weighted review, and externally grounded research tracked in `.work/` and `.research/`. | [plugins/workbench/README.md](plugins/workbench/README.md) |
+| **workbench** | Requirements-first delivery. Plain-language outcomes drive design, weighted review, and externally grounded research tracked in `.work/` and `.research/`. | [Guide](docs/workbench-guide.md) · [README](plugins/workbench/README.md) |
 | **ux-ui-design** | Mockup-first UI design. Throwaway single-file HTML mockups in `.mockups/` to align on direction before production code. | [docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) |
 | **code-audit** | Markdown-first audits with no workflow dependency: deep code, bug, security, and test scans; perf scouting; repo scorecards. | [plugins/code-audit/README.md](plugins/code-audit/README.md) |
 | **nates-toolkit** | Project-agnostic utilities — plain-language re-explanation, agent self-reflection, skill authoring and auditing. | [plugins/nates-toolkit/README.md](plugins/nates-toolkit/README.md) |
