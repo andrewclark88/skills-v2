@@ -67,6 +67,8 @@ grants them.*
 - Concrete verbs over nominalizations ("decide", not "make a decision").
 - One idea per paragraph; the paragraph's point is its first sentence.
 - No hedging pile-ups, throat-clearing openings, or double negatives.
+- Contrastive corrections such as “X, not Y” add a necessary distinction
+  instead of repeating a rhetorical pattern.
 - Terms consistent. Same thing, same name, every time.
 
 ## 4. Accuracy
@@ -91,6 +93,10 @@ grants them.*
   "simply", "just".
 - Confidence without arrogance; limitations stated plainly, not buried.
 - Person and tense consistent (second person imperative for instructions).
+- Analogies and metaphors fit the subject. Flag stock words such as “seam,”
+  “spine,” “load-bearing,” “bridge,” or “north star” when literal domain
+  language would be clearer. Preserve metaphors the user requested or the
+  domain genuinely uses.
 - Humor, if any, never gates comprehension.
 
 ## 6. Accessibility

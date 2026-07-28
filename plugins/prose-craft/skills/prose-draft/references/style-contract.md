@@ -49,6 +49,12 @@ style guides. It is a working contract rather than an exhaustive style manual.
 - Use one term for each concept and use it consistently.
 - Prefer common words. Write "use" instead of "utilize" and "start" instead of
   "commence".
+- Use contrastive correction only when the distinction prevents a real
+  misunderstanding. If “X, not Y” or “X does A, not B” merely adds emphasis,
+  state the positive claim and stop.
+- Prefer literal domain language to stock metaphors such as “seam,” “spine,”
+  “load-bearing,” “bridge,” or “north star.” Keep a metaphor when the user
+  requests it, the domain already uses it, or it makes the concept clearer.
 - Do not use hype or minimizers such as "simply", "just", "easy", "seamless",
   or "powerful". Delete them or replace them with the fact they obscure.
 - Omit "please" from instructions and be direct.
