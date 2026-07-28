@@ -279,6 +279,14 @@ For each unit, specify:
 - **Implementation notes** for non-obvious logic
 - **Acceptance criteria** as testable assertions
 
+For data models, domain objects, interfaces, and external integrations, define
+the real-world thing or process and its business or user meaning before the
+technical shape. Map provider terms through the project's concepts to generic
+real-world terms at the object or system level before field mappings. If a
+provider model materially shapes the design, compare representative providers
+or standards rather than inheriting one provider's ontology by default. Use a
+short real-world scenario when relationships remain abstract.
+
 Make strong decisions about abstractions, naming, and module boundaries.
 
 #### 5d. Elimination and cleanup pass

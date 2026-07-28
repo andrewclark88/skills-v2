@@ -46,6 +46,10 @@ Every re-writer receives the current draft, the full brief, the style contract
 (`prose-draft`'s `references/doc-types.md`), and the lens checklists for the
 selected weight
 (`prose-review`'s `references/lenses.md`).
+Give every re-writer the style contract's concept-grounding requirement
+explicitly. Require the rewrite to define load-bearing domain terms from
+real-world and business meaning before technical use, without over-explaining
+terms the audience can safely know.
 
 ## The round loop (cap: 3 rounds)
 
@@ -67,7 +71,8 @@ Each round:
    strongest versions. Must-keeps are invariant. Reject or repair in place any
    rewrite that changes one. Then normalize the voice of the woven draft so it
    reads as one author. Reject a rewrite that replaces the draft's tells with
-   the re-writer's model-family tics.
+   the re-writer's model-family tics. Keep change logs and reviewer process out
+   of the woven document.
 3. **Measure the delta.** Classify the accepted changes. If all are micro-edits,
    consisting of tell fixes, word swaps, or punctuation changes, the document
    has converged. Exit the loop. Otherwise, continue to the next round at its

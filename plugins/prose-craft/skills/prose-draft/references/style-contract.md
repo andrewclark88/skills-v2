@@ -11,6 +11,27 @@ style guides. It is a working contract rather than an exhaustive style manual.
 - Organize around the reader's task, not the system's internal structure.
 - Explain within the first screen why the reader should continue.
 
+## Ground concepts before details
+
+- Treat the document, and any ordered collection it belongs to, as the reader
+  will encounter it. Do not rely on hidden project context or a later page to
+  define a load-bearing term.
+- Before technical detail, explain what each important data object, domain
+  model, interface, or object group represents in the real world and why it
+  matters to a user or the business. Work definitions into the prose when a
+  glossary would feel forced.
+- When a provider uses its own vocabulary, map the provider term to the
+  project's concept and a generic real-world term. Explain major objects and
+  systems before mapping individual fields.
+- When provider models shape the document's concepts, compare representative
+  providers or standards through current-source research. Do not let one
+  provider's model silently become the project's model.
+- When relationships remain abstract, use a short real-world scenario before
+  diagrams, schemas, or field detail. Add only enough example to establish the
+  mental model.
+- Define terms that carry meaning or may be unfamiliar to the audience. Assume
+  ordinary knowledge and do not explain every common term.
+
 ## Sentences
 
 - Use active voice. Use second person ("you") for instructions.
