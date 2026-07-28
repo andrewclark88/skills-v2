@@ -1,8 +1,22 @@
 # Architecture
 
-How this repo is organized and how one git tree resolves into installable
-plugins and packages for three agent harnesses. This is the meta map;
-plugin-internal architecture lives in each plugin's own `docs/ARCHITECTURE.md`.
+This is the meta map for the `nklisch/skills` repository. It explains how
+one git tree resolves into installable plugins for three agent harnesses
+— Claude Code, OpenAI Codex, and Pi — and where each concern lives.
+Plugin-internal architecture stays in each plugin's own `docs/`.
+
+The repo is built around one shape: a single source tree, three install
+pipelines. A few terms carry the rest of this document:
+
+- **Harness** — an agent runtime: Claude Code, Codex, or Pi.
+- **Channel** — a harness's install pipeline. Each harness reads its own
+  catalog and resolves plugins to its own format.
+- **Catalog** — a JSON file listing installable plugins and their source.
+  Two native catalogs live in this repo; Pi reads them through a bridge.
+- **Manifest** — a per-plugin JSON file declaring identity, version, and
+  surface to one channel.
+- **Substrate** — the plain-file state a workflow plugin reads and writes.
+  agile-workflow uses `.work/`; agentic-research uses `.research/`.
 
 ## Repo layout
 
@@ -20,102 +34,129 @@ plugin-internal architecture lives in each plugin's own `docs/ARCHITECTURE.md`.
 │   └── workflow/             # DEPRECATED, frozen, kept for existing installs
 ├── .agents/skills/          # standalone reference-skill library (non-plugin)
 ├── .claude-plugin/
-│   └── marketplace.json     # native Claude Code install index
+│   └── marketplace.json     # native Claude Code install catalog
 ├── .agents/plugins/
-│   └── marketplace.json     # native Codex install index
+│   └── marketplace.json     # native Codex install catalog
 ├── scripts/
-│   └── bump-version.sh      # the version gate (bumps channel metadata together)
-├── docs/                    # this meta layer (VISION, SPEC, ARCHITECTURE)
-├── .claude/                 # repo-level Claude config + instructions
+│   └── bump-version.sh      # version gate — bumps both manifests in lockstep
+├── docs/                    # this meta layer (VISION, SPEC, ARCHITECTURE) + guides
 └── README.md
 ```
 
-`.agents/skills/` holds the curated reference library — library references
-(`zod-v4`, `hono-v4`, `drizzle-v0`, the tanstack family, `bun`, `biome-v2`,
-`smol-toml`, `citty`, `clack-prompts`, `schemars`, `claude-cli-sdk`),
-ecosystem-research skills (`claude-code-marketplace`, `codex-plugin-format`),
-and a few standalone workflow skills (`clean-memory`, `design-pages`). These
-auto-load on relevant context and are not part of any plugin.
+`.agents/skills/` is the curated reference library. It holds API references
+(`zod-v4`, `hono-v4`, `drizzle-v0`, the tanstack family, `bun`,
+`biome-v2`, `smol-toml`, `citty`, `clack-prompts`, `schemars`,
+`claude-cli-sdk`, `zustand-v5`), ecosystem-research skills
+(`claude-code-marketplace`, `codex-plugin-format`), and a few standalone
+workflow skills (`clean-memory`, `design-pages`, `patterns`,
+`repo-skill-style`). They auto-load on relevant context and belong to no
+plugin. The marketplaces distribute plugins, not loose skills, so a
+reference skill that needs distribution is folded into a plugin.
 
-## Plugin anatomy
+## How a plugin is structured
 
-Each `plugins/<name>/` directory carries channel metadata and a mix of shared
-and harness-specific components:
+Each `plugins/<name>/` directory carries two channel manifests plus a mix
+of shared and harness-specific components:
 
 ```
 plugins/<name>/
-├── .claude-plugin/plugin.json   # Claude Code manifest
+├── .claude-plugin/plugin.json   # Claude manifest
 ├── .codex-plugin/plugin.json    # Codex manifest
 ├── skills/                      # SKILL.md units  — shared
 ├── commands/                    # slash commands  — Claude-specific
+├── agents/                      # subagent defs   — Claude-specific
 ├── hooks/                       # event hooks     — harness-specific
 ├── docs/                        # plugin foundation docs (optional)
+├── scripts/                     # plugin tooling (optional)
 ├── CHANGELOG.md
 └── README.md
 ```
 
-The shared/harness-specific split is the rule from `docs/SPEC.md`: skills cross
-all three harnesses; command, hook, and agent surfaces are exposed only where
-the target harness supports them. Pi-native runtime extensions live in the
-`nklisch/pi-extensions` repo, not here.
+Two facts own the rest:
 
-## Distribution wiring
+- **Two manifests, no `package.json`.** Each plugin declares itself to
+  Claude Code and Codex through one manifest each. Pi packaging moved to
+  the `nklisch/pi-extensions` repo, so this tree carries no per-plugin
+  `package.json`. `scripts/bump-version.sh` treats the Claude manifest as
+  the canonical version source.
+- **Shared surface first, harness-specific after.** `skills/` is the bulk
+  of every plugin's durable value. It crosses all three harnesses through
+  the open Agent Skills standard. Commands, hooks, and agent definitions
+  are exposed only where the target harness supports them; in other
+  harnesses they degrade to absent, never to broken. Pi-native runtime
+  extensions belong in `nklisch/pi-extensions`, not here.
 
-Two native catalogs carry the same ordered plugin identities with
-channel-appropriate source shapes:
+## How plugins reach three harnesses
 
-- `.claude-plugin/marketplace.json` uses Claude Code's string-path source for
-  local plugins (`"./plugins/<name>"`).
-- `.agents/plugins/marketplace.json` uses Codex's explicit local source objects.
-- External plugins (`krometrail`, `peeragent`, `skilltap`) are federated in both
-  catalogs through semantically equivalent `git-subdir` sources pointing at
-  their own repositories.
-- **Version integrity** flows through `scripts/bump-version.sh`, which keeps a
-  plugin's channel metadata in lockstep and refuses to act on a dirty plugin
-  directory.
+Two native catalogs live in this repo. They carry the same ordered plugin
+identities and differ only in the source shape each harness expects:
 
-Pi installation flows through the bridge, not through packages published from
-this tree. The `@nklisch/pi-plugins` manager (source in `nklisch/pi-extensions`)
-registers the same two marketplace catalogs — `/plugins marketplace add
-nklisch/skills` — and installs the same plugin entries, including the external
-`git-subdir` companions, with `/plugins add <name>@nklisch-skills`. A plugin
-that is well-formed for Claude and Codex is well-formed for Pi; the bridge
-discovers skills by directory convention. Pi-native tool packages
-(`pi-plugins`, `pi-background-tasks`, `pi-zai-research`) publish to npm from
-`nklisch/pi-extensions`, which is also where Pi runtime extensions are
-developed.
+| Catalog | Read by | Local source shape |
+|---|---|---|
+| `.claude-plugin/marketplace.json` | Claude Code | string path: `"./plugins/<name>"` |
+| `.agents/plugins/marketplace.json` | Codex | object: `{ "source": "local", "path": "./plugins/<name>" }` |
 
-## The substrate-access model
+Both catalogs also federate the same three external companions
+(`krometrail`, `peeragent`, `skilltap`) through `git-subdir` sources that
+point at their own repositories.
 
-agile-workflow's substrate is plain files: `.work/` items as markdown with YAML
-frontmatter, which are the single source of truth. Two surfaces read that one
-substrate, each tuned for a different consumer:
+Pi does not get a third catalog in this tree. It consumes the same two
+through the `@nklisch/pi-plugins` bridge, maintained in
+`nklisch/pi-extensions`. A Pi user installs the bridge once, registers the
+catalog, then adds plugins by name:
 
-- **Agent surface — the `work-view` CLI.** Built for agent ergonomics: terse,
-  parseable, scriptable output, and dependency-aware filtering. This is what the
-  design, implement, review, and autopilot skills call to decide what to act on.
-- **Human surface — the `work-view board` web view.** A live localhost board
-  for people to see the substrate at a glance, served by the compiled
-  `work-view` adapter over the same `.work/` files.
+```
+pi install npm:@nklisch/pi-plugins
+/plugins marketplace add nklisch/skills
+/plugins add <name>@nklisch-skills --scope user
+```
 
-The shape is deliberate: one substrate, two adapters, distinct ergonomics for
-distinct consumers — the Ports & Adapters and Single-Source-of-Truth principles
-agile-workflow defines for itself, applied to its own tooling. How those
-surfaces are built, and how they evolve, is owned by
-`plugins/agile-workflow/docs/ARCHITECTURE.md` and tracked as work in `.work/` —
-not pinned here.
+The bridge discovers skills by directory convention, so a plugin that is
+well-formed for Claude and Codex is well-formed for Pi. Pi-native tool
+packages (`pi-plugins` itself, `pi-background-tasks`, `pi-zai-research`)
+publish to npm from `nklisch/pi-extensions`, which is also where Pi
+runtime extensions are developed.
 
-## Where internals live
+**Version integrity.** A plugin's two manifests must agree on identity and
+version. `scripts/bump-version.sh <plugin> <major|minor|patch>` enforces
+this: it reads the Claude manifest's version, requires the Codex manifest
+to match before bumping, writes both, and commits the change. It refuses
+to run on a dirty plugin directory so the published bump commit carries
+only the version change. For `agile-workflow` and `agentic-research` it
+also projects the new semver into each plugin's compiled-view version
+stamp and bash fallback. Full distribution rules and semver policy live in
+`docs/SPEC.md`.
 
-- Requirements-first delivery, research evidence, UI walkthroughs, and
-  compact release summaries → `plugins/workbench/docs/{VISION,SPEC}.md`.
+## The .work substrate: one source, two surfaces
+
+agile-workflow's substrate is plain files. Items in `.work/` are markdown
+with YAML frontmatter, and that directory is the single source of truth.
+Two surfaces read it, each tuned to its consumer:
+
+- **Agent surface — `work-view`.** A CLI built for agent ergonomics: terse
+  parseable output and dependency-aware filtering. The design, implement,
+  review, and autopilot skills call it to decide what to act on.
+- **Human surface — `work-view board`.** A localhost web view of the same
+  `.work/` files, served by a small board adapter so people can see state
+  at a glance.
+
+The shape is one substrate, two adapters, distinct ergonomics for distinct
+consumers — the Ports & Adapters and Single-Source-of-Truth principles
+applied to agile-workflow's own tooling. How those surfaces are built,
+shipped as prebuilt binaries, and evolved is owned by
+`plugins/agile-workflow/docs/ARCHITECTURE.md`, not pinned here.
+
+## Where to read next
+
+- Requirements-first delivery, research evidence, and compact release
+  summaries → `plugins/workbench/docs/{VISION,SPEC}.md`.
 - Structured substrate lifecycle, gates, releases, and the work-view query
   model (maintenance mode) →
   `plugins/agile-workflow/docs/{ARCHITECTURE,SPEC,PRINCIPLES}.md`.
 - Standalone mockup-first design layout → the `ux-ui-design` plugin.
 - Standalone markdown audit reports → the `code-audit` plugin.
-- Grounded research substrate and citation discipline → the `agentic-research`
-  plugin.
+- Grounded research substrate and citation discipline → the
+  `agentic-research` plugin.
 - Sparse cross-agent handoffs and claims → the `agent-coordination` plugin.
 - Distribution constraints and versioning rules → `docs/SPEC.md`.
 - Purpose and the dogfooding thesis → `docs/VISION.md`.

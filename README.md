@@ -1,36 +1,3 @@
-<!--
-Brief (prose-draft)
-- Audience: developers evaluating agent tooling for Claude Code, OpenAI Codex,
-  or Pi. Comfortable with software and agent workflows; has not read this repo.
-- Venue: README (sanctioned hybrid: one-screen pitch, install quickstart,
-  links to deeper docs).
-- Purpose: after reading, the reader can install Workbench on their harness
-  and knows what else the catalog offers and which workflow plugin fits them.
-- Must-keeps:
-  - Install commands for all three channels, correct as printed:
-    `/plugin marketplace add nklisch/skills`,
-    `codex plugin marketplace add https://github.com/nklisch/skills`,
-    and for Pi: `pi install npm:@nklisch/pi-plugins` then
-    `/plugins marketplace add nklisch/skills` and
-    `/plugins add workbench@nklisch-skills --scope user`.
-  - This repo no longer publishes npm packages; Pi installation goes through
-    the pi-plugins marketplace manager (maintained in nklisch/pi-extensions).
-  - The Pi-native tool packages pi-background-tasks and pi-zai-research are
-    published to npm from the nklisch/pi-extensions repo; neither lives in
-    this tree anymore.
-  - workbench and agile-workflow are mutually exclusive `.work/` owners.
-  - agile-workflow is supported but in maintenance (KTLO): fixes and
-    compatibility, no new feature development.
-  - The `workflow` plugin is deprecated; `/agile-workflow:convert` migrates
-    existing projects, and workbench `setup` consolidates older workflows.
-  - peeragent is an external companion, installable through the bridge
-    (`/plugins add peeragent@nklisch-skills`) or from its own repo:
-    `pi install git:github.com/nklisch/peeragent@v0.4.1`.
-- Out of scope: per-plugin skill catalogs and deep workflow detail (deferred
-  to plugin READMEs and docs/ guides); agile-workflow's full pipeline
-  reference (lives in docs/agile-workflow-guide.md).
--->
-
 # nklisch/skills
 
 A catalog of plugins and reference skills for AI coding agents — **Claude

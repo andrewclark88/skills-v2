@@ -1,19 +1,3 @@
-<!--
-Brief (prose-draft)
-- Audience: contributors and prospective adopters who want to know what this
-  repo is for and how to orient in it.
-- Venue: foundation doc (explanation mode). States what the repo is and
-  intends; no history.
-- Purpose: after reading, the reader can explain why the catalog exists, what
-  it centers on, and how it proves itself.
-- Must-keeps: the dogfooding thesis (this repo runs on the plugins it ships,
-  tracked in Workbench's own .work/ substrate); three equal distribution
-  channels; the "what this is not" boundaries (not a product, not a monolith,
-  not a roadmap repository); thin meta layer that defers to plugin docs.
-- Out of scope: distribution mechanics (docs/SPEC.md), layout wiring
-  (docs/ARCHITECTURE.md), plugin internals (each plugin's docs/).
--->
-
 # Vision
 
 **A curated workshop for agent tooling — skills and plugins that make AI coding

@@ -1,144 +1,212 @@
-# Specification
+# Plugin distribution specification
 
-Repo-level distribution constraints and the decisions that keep one git tree
-shippable to three agent harnesses. Plugin internals are out of scope here —
-each plugin's own `docs/` owns those (see "Where internals live").
+This page is the reference for changing plugin metadata safely. It describes
+how this repository distributes one git tree to Claude Code, OpenAI Codex, and
+Pi. Plugin behavior belongs to each plugin's own documentation.
 
-## Distribution channels
+## Channel map
 
-The catalog ships through two native marketplace channels plus a Pi bridge,
-all resolving from this git tree:
+| Channel | Install index | Plugin metadata |
+| --- | --- | --- |
+| Claude Code | `.claude-plugin/marketplace.json` | `plugins/<name>/.claude-plugin/plugin.json` |
+| OpenAI Codex | `.agents/plugins/marketplace.json` | `plugins/<name>/.codex-plugin/plugin.json` |
+| Pi | The `@nklisch/pi-plugins` bridge registers both catalogs | The bridge consumes the catalog entries and plugin directory conventions |
 
-- **Claude Code marketplace** — `/plugin install` against
-  `.claude-plugin/marketplace.json`.
-- **OpenAI Codex marketplace** — `codex plugin marketplace add` reads the same
-  `.claude-plugin/marketplace.json`.
-- **Pi (via bridge)** — the `@nklisch/pi-plugins` manager (maintained in the
-  `nklisch/pi-extensions` repo) reads the same marketplace catalogs and
-  installs plugins from them: `/plugins marketplace add nklisch/skills`, then
-  `/plugins add <name>@nklisch-skills`.
+Claude Code uses `/plugin` commands. Codex uses `codex plugin marketplace`
+commands. Pi users install the bridge, add this marketplace, and then add a
+plugin:
 
-No channel is secondary. This repo does not publish npm packages; Pi-native
-tool packages (`pi-plugins`, `pi-background-tasks`, `pi-zai-research`) publish
-from `nklisch/pi-extensions`. Skills are authored to the open Agent Skills
-standard (agentskills.io) so a `SKILL.md` works unchanged across Claude Code,
-Codex, and Pi.
+```text
+pi install npm:@nklisch/pi-plugins
+/plugins marketplace add nklisch/skills
+/plugins add <name>@nklisch-skills
+```
 
-## Plugin manifests
+This repository publishes no npm packages. Pi-native packages such as
+`pi-plugins`, `pi-background-tasks`, and `pi-zai-research` are published from
+the separate `nklisch/pi-extensions` repository. Pi installation of the
+plugins in this repository remains bridge-based.
 
-Every supported plugin ships channel metadata under `plugins/<name>/`:
+## Plugin directory requirements
 
-- `.claude-plugin/plugin.json` — Claude Code.
-- `.codex-plugin/plugin.json` — Codex. Must declare `"skills": "./skills/"`
-  explicitly (Codex does not auto-discover) and an `interface` block for
-  marketplace presentation.
+Each local plugin in this repository distributed through the native catalogs has two channel manifests:
 
-Both carry the **same `version`**. They must never disagree about a plugin's
-identity. This is the load-bearing invariant of the whole repo. The Pi bridge
-consumes these same manifests and catalogs; there is no Pi-specific metadata
-in this tree.
+```text
+plugins/<name>/
+├── .claude-plugin/plugin.json   # Claude Code
+├── .codex-plugin/plugin.json    # OpenAI Codex
+└── skills/                      # shared SKILL.md units
+```
 
-## Marketplace registration
+Keep the two manifests aligned:
 
-`.claude-plugin/marketplace.json` is the install index for Claude Code and
-Codex:
+- They describe the same plugin identity.
+- They carry the **same `version`**. This is the load-bearing version
+  invariant.
+- The Codex manifest declares `"skills": "./skills/"` explicitly. Codex does
+  not auto-discover this directory.
+- The Codex manifest includes an `interface` block for marketplace
+  presentation.
+- Do not add a root `package.json`. This repository does not package its
+  plugins for npm.
 
-- **Local plugins** use the string-path source form: `"source":
-  "./plugins/<name>"`. Claude Code does **not** support the object form
-  `{ "source": "local", "path": "..." }`; the only valid object-form source
-  types are `github`, `url`, `git-subdir`, and `npm`.
-- **External plugins** federate in via `git-subdir` from their own repos
-  (currently `krometrail`, `peeragent`, and `skilltap`), so the marketplace can
-  offer plugins that do not live in this tree.
+`SKILL.md` files in `skills/` are the shared surface. They follow the open
+Agent Skills standard and work across the three harnesses. Commands, hooks,
+and agent definitions are harness-specific; keep them absent rather than
+making another harness depend on an unsupported surface.
 
-Pi installation is bridge-based rather than package-based: `@nklisch/pi-plugins`
-(from `nklisch/pi-extensions`) registers this repo's marketplace catalogs and
-installs the same plugin entries a Claude or Codex user sees, including the
-external `git-subdir` companions. External companions such as `peeragent` also
-document their own install commands in their own repositories.
+## Marketplace catalog rules
+
+The two native catalogs represent the same ordered set of plugin identities.
+They are maintained separately because each catalog has a different source
+shape. Neither catalog is generated from the other.
+
+### Claude Code catalog
+
+In `.claude-plugin/marketplace.json`, a local plugin uses the string path form:
+
+```json
+{
+  "name": "<name>",
+  "source": "./plugins/<name>"
+}
+```
+
+Do not replace that value with a local-source object. Claude Code does not
+support `{ "source": "local", "path": "..." }`. The valid object-form
+source types used by Claude Code are `github`, `url`, `git-subdir`, and `npm`.
+
+External plugins are registered with `git-subdir` sources. They remain in the
+catalog even though their plugin directories are outside this repository.
+
+### Codex catalog
+
+In `.agents/plugins/marketplace.json`, a local plugin uses an explicit local
+source object:
+
+```json
+{
+  "name": "<name>",
+  "source": {
+    "source": "local",
+    "path": "./plugins/<name>"
+  }
+}
+```
+
+Codex uses its native category casing and source objects. For every entry,
+keep the plugin identity and source semantically equivalent to the Claude
+catalog entry at the same position. External `git-subdir` entries must point
+to the corresponding repository and subdirectory in both catalogs.
+
+### Registering a plugin
+
+When adding a plugin, make all of these changes together:
+
+1. Add both channel manifests under `plugins/<name>/`.
+2. Declare the explicit `skills` path and Codex `interface` metadata.
+3. Add the entry to `.claude-plugin/marketplace.json` using Claude's source
+   shape.
+4. Add the corresponding entry to `.agents/plugins/marketplace.json` using
+   Codex's source shape.
+5. Insert both entries at the same catalog position and preserve semantic
+   equivalence.
+6. Do not add npm packaging metadata to this repository.
+
+A missing catalog entry makes the plugin unavailable through that native
+marketplace. A reordered or semantically different entry makes the two
+catalogs drift.
 
 ## Shared and harness-specific surfaces
 
-What crosses harnesses and what does not is a hard boundary, not a preference:
+Use the shared surface for behavior that every harness can consume:
 
-- **Shared across all three:** `SKILL.md` files and the `skills/` directory.
-  This is the bulk of every plugin's durable value.
-- **Claude-specific:**
-  - `commands/<name>.md` — the Codex manifest has no `commands` field.
-  - Claude hook behavior and compatibility shims.
-  - `agents/<name>.md` subagent definitions when a plugin needs them.
-- **Codex-specific:**
-  - `.codex-plugin/plugin.json` interface metadata.
-  - `agents/openai.yaml` skill polish and invocation policy.
-- **Pi:** whatever the pi-plugins bridge can consume from the shared and
-  Claude/Codex surfaces. Pi-native runtime extensions belong in
-  `nklisch/pi-extensions`, not in this tree.
+- `skills/SKILL.md` — portable skill instructions.
+- `skills/` — the plugin's shared skill directory.
 
-Harness-specific surfaces degrade to absent in other harnesses, never to broken.
+Keep host-specific behavior in its owning surface:
 
-## Versioning
+- **Claude Code:** `commands/<name>.md`, Claude hook behavior, and Claude
+  agent definitions where present.
+- **Codex:** `.codex-plugin/plugin.json` presentation metadata and
+  `agents/openai.yaml` skill presentation or invocation policy.
+- **Pi:** capabilities consumed by the `@nklisch/pi-plugins` bridge. Pi-native
+  runtime extensions belong in `nklisch/pi-extensions`, not in this tree.
 
-`scripts/bump-version.sh <plugin> <major|minor|patch>` bumps both channel
-manifests at once and refuses to run if versions are already out of sync.
+A harness-specific surface must degrade to absent in other harnesses, never to
+broken. Do not fork portable `SKILL.md` content to mention one harness; put
+native ergonomics in that harness's metadata or extension layer.
 
-- **Order matters:** commit feature changes *before* bumping. The script
-  auto-commits and pushes the bump on its own and refuses to run with a dirty
-  plugin directory, so pending work would be stranded outside the published bump
-  commit.
-- **Semver policy:**
-  - `patch` — a new skill, a bug fix, or a minor update to an existing skill.
-  - `minor` — a significant new capability or a breaking change to a skill's
-    workflow.
-  - `major` — a plugin restructure or backwards-incompatible change.
+## Version integrity and releases
 
-When a skill changes, the version of the plugin it belongs to bumps.
+Use the repository script to bump a plugin version:
+
+```text
+./scripts/bump-version.sh <plugin> <major|minor|patch>
+```
+
+The script treats the Claude manifest as the canonical version source. It
+refuses an invalid bump type, refuses to run when the plugin directory has
+uncommitted changes, and checks that an existing Codex manifest has the same
+version before changing it. It then writes the new version to both manifests,
+creates the bump commit, and pushes it.
+
+### Required order
+
+1. Make and verify the feature or metadata changes.
+2. Commit those changes.
+3. Run `bump-version.sh` with the appropriate bump type.
+4. Let the script create and push the separate version-bump commit.
+
+Commit before bumping. The script owns the bump commit and rejects a dirty
+plugin directory. Running it before the feature commit would separate the
+published version bump from the work it is meant to release.
+
+### Bump policy
+
+| Bump | Use when |
+| --- | --- |
+| `patch` | Adding a skill, fixing a bug, or making a minor update to an existing skill |
+| `minor` | Adding a significant capability or making a breaking change to a skill's workflow |
+| `major` | Restructuring a plugin or making a backwards-incompatible change |
+
+When a skill changes, bump the version of the plugin that owns it.
+
+For `agile-workflow` and `agentic-research`, the script also updates the
+repository's version stamp and shell fallback. It does not rebuild their
+compiled distribution binaries. Rebuild those binaries from the post-bump
+commit before publishing a release.
 
 ## Standalone reference skills
 
-Non-plugin skills live in `.agents/skills/<name>/`, auto-load on relevant
-context, and follow the agentskills.io standard. They are a curated in-tree
-reference library — usable within this repo and by direct reference. The
-marketplaces distribute plugins, not loose skills, so these are not separately
-published; a reference skill that needs distribution is folded into a plugin.
+Skills under `.agents/skills/<name>/` are standalone reference skills. They
+are available in this repository by direct reference and are not individual
+marketplace entries. If a reference skill needs plugin distribution, place it
+inside the owning plugin's `skills/` directory and register that plugin
+through both catalogs.
 
-## Catalog invariants
+Skill names may repeat across plugins by design. Always identify the owning
+plugin before changing a skill or interpreting its behavior.
 
-The single-source-of-truth rules that keep the catalog coherent:
+## Plugin status
 
-- A plugin's Claude manifest and Codex manifest agree on identity and
-  version (enforced by `bump-version.sh`).
-- Registering a new plugin touches all channel metadata plus both native
-  catalogs: `.claude-plugin/marketplace.json` and
-  `.agents/plugins/marketplace.json`. Missing any one breaks distribution.
-- Skill names may repeat across plugins by design; the owning plugin sets a
-  skill's semantics. Orient to which plugin a skill lives in before reasoning
-  about it.
-
-## Status and deprecation
-
-- **Supported:** `workbench` (centerpiece — requirements-first delivery and
-  grounded research), `ux-ui-design`, `code-audit`, `nates-toolkit`,
-  `agentic-research`, `agent-coordination`, and `prose-craft`. Pi-native tool
-  packages (`pi-background-tasks`, `pi-zai-research`, `pi-plugins` itself)
-  live in the `nklisch/pi-extensions` repo, not here.
-- **Supported, maintenance mode (KTLO):** `agile-workflow`. It receives bug
-  fixes and compatibility work so existing projects keep running, but no new
-  feature development is planned — new workflow capability lands in
-  `workbench`. New projects should adopt `workbench`.
-- **Deprecated and frozen:** `workflow`. It stays in the tree so existing
-  installs keep working; it gets no new features or fixes. New work does not
-  extend it, and new docs do not cite it as a sibling.
+| Status | Plugins and meaning |
+| --- | --- |
+| Supported; centerpiece | `workbench` is the requirements-first delivery and grounded-research centerpiece. |
+| Supported; KTLO | `agile-workflow` is in keep-the-lights-on maintenance mode: bug fixes and compatibility work continue, but new workflow capability belongs in `workbench`. |
+| Supported | `ux-ui-design`, `code-audit`, `nates-toolkit`, `agentic-research`, `agent-coordination`, and `prose-craft`. |
+| Frozen | `workflow` is deprecated and frozen. It remains for existing installs, receives no new features or fixes, and must not be extended or cited as a sibling in new documentation. |
 
 ## Where internals live
 
-This SPEC governs distribution, not behavior. For what a plugin *does* and how it
-is built internally, defer to its own docs:
+This specification governs distribution, not plugin behavior. Consult the
+plugin documentation for implementation details:
 
-- Requirements-first work ledger, artifact references, research evidence
-  tier, and compact release lifecycle →
-  `plugins/workbench/docs/{VISION,SPEC}.md`.
-- Structured substrate model, item lifecycle, gates, releases (maintenance
-  mode) → `plugins/agile-workflow/docs/{SPEC,ARCHITECTURE,PRINCIPLES}.md`.
-- Other plugins → their own directory, README/docs where present, and manifests.
+- Workbench requirements-first delivery, research evidence, and release
+  lifecycle: `plugins/workbench/docs/{VISION,SPEC}.md`.
+- Agile Workflow substrate lifecycle, gates, releases, and work-view query
+  model: `plugins/agile-workflow/docs/{ARCHITECTURE,SPEC,PRINCIPLES}.md`.
+- Other plugins: their own `README.md`, `docs/`, and manifests.
 
-Repo layout and the substrate-access model live in `docs/ARCHITECTURE.md`.
+The repository-level layout and cross-channel wiring are summarized in
+`docs/ARCHITECTURE.md`.

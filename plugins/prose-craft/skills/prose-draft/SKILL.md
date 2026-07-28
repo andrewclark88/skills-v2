@@ -63,3 +63,16 @@ travels whenever it was stated. That is the fifth field: required at pinning
 time, optional only in transport when never stated. A reviewer receiving a
 brief without these
 fields should treat the brief as incomplete and pin them before judging.
+
+### The brief's lifecycle
+
+The carried comment is a working artifact, not part of the published
+document. It stays with the draft through draft, review, and refine. When
+the document is published — committed as final, not merely written — strip
+the comment and preserve the brief in the commit message (or the work item
+that commissioned the document), so intent remains recoverable from history
+without living in the file. Do not ship documents with drafting scaffolding
+left in place; a stale brief misleads later editors exactly the way a stale
+comment does. A later review of the published document re-pins the brief
+from the document, the repository, and the user — which also forces a
+fresh check that the audience and venue are still right.

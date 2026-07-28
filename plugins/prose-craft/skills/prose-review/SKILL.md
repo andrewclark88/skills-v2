@@ -21,8 +21,10 @@ not edit the document.
   judging any part.
 - **The brief**: audience, venue, purpose, must-keeps. Look for a brief
   carried with the draft (an HTML comment at the top, or a companion note).
-  If none exists, ask the user for audience and venue, or infer them and say
-  you did. If a brief exists but lacks audience, venue, purpose, or
+  Published documents normally carry no brief — `prose-draft` strips the
+  working comment at publication — so a missing brief is expected, not a
+  defect. If none exists, ask the user for audience and venue, or infer them
+  and say you did. If a brief exists but lacks audience, venue, purpose, or
   must-keeps, treat it as incomplete: pin the missing fields (ask, or infer
   and say so) before judging.
 - **Lens selection.** Default (standard): audience, structure, clarity,
