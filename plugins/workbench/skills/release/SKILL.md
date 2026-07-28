@@ -20,7 +20,8 @@ an actual delivered outcome.
 Write `.work/releases/<version>.md` with the date, concise outcome summary,
 selected item ids, meaningful compatibility or operational notes, and
 repository-defined verification. Prefer user-visible behavior over commit
-chronology.
+chronology. Write the summary in the plain technical style of
+[../work/references/writing-style.md](../work/references/writing-style.md).
 
 Remove the selected individual completion stubs after the release summary is
 validated. Run the Workbench validator and project-defined release checks, then

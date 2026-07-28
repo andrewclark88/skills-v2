@@ -116,6 +116,8 @@ document. Add only useful sections:
 
 Use exact paths, interfaces, or schemas only when they reduce implementation
 ambiguity. Avoid speculative code listings that merely pre-write the change.
+Write the design prose in the plain technical style of
+[../work/references/writing-style.md](../work/references/writing-style.md).
 
 Design the smallest credible verification approach alongside implementation.
 Reuse existing tests, commands, fixtures, environments, and observability

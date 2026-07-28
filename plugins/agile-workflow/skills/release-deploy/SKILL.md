@@ -482,7 +482,10 @@ Group changes:
 - **Internal** — anything else worth noting; otherwise omit
 
 Use concise bullets — one per logical change, not per commit. Omit noise:
-version-bump commits, merge commits, typo/formatting-only commits.
+version-bump commits, merge commits, typo/formatting-only commits. Write the
+bullets in the plain technical style of
+[../prose-author/references/writing-style.md](../prose-author/references/writing-style.md)
+— one name per thing, active voice, no marketing adjectives.
 
 Format the entry header as `## v<version>` and prepend to CHANGELOG.md (preserve
 existing content). If CHANGELOG.md doesn't exist, create it with this entry.

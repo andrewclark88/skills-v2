@@ -42,7 +42,10 @@ Load references only as needed:
   [references/verification.md](references/verification.md) and
   [references/review.md](references/review.md);
 - durable project truth, foundation changes, or implementation completion →
-  [references/foundation-truth.md](references/foundation-truth.md).
+  [references/foundation-truth.md](references/foundation-truth.md);
+- durable prose in items, design sections, foundation docs, or release
+  summaries →
+  [references/writing-style.md](references/writing-style.md).
 
 When substantive external investigation is necessary, use Workbench's
 `research` skill rather than creating an ungrounded project note.

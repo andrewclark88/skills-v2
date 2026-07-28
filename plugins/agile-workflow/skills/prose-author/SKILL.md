@@ -117,6 +117,11 @@ touches conventions or project-facing claims, and any sibling doc the feature
 revises. One pass, skim. **Do NOT** spawn exploratory sub-agents — there is no code
 surface to map.
 
+Read [references/writing-style.md](references/writing-style.md) and author the
+deliverable in that style — strict mode for procedures, runbooks, and error
+messages; flavored mode otherwise. Run its self-lint before finishing the
+authoring stride.
+
 ### Phase 4: Confirm the brief is a sufficient spec
 
 The brief from `scope` is usually the whole spec for prose work. Read it and
@@ -189,3 +194,6 @@ In conversation:
   `docs/designs/<name>.md` — agile-workflow uses item-IS-the-work.
 - Prose features implement **inline**, never via the orchestrator. Flag the
   no-coordination property so the implement step takes the lean path.
+- All deliverable prose follows [references/writing-style.md](references/writing-style.md).
+  Strict mode for procedures, runbooks, and error messages; flavored mode
+  otherwise. Never ship prose that fails its self-lint.

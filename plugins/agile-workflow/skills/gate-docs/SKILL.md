@@ -204,6 +204,9 @@ returns structured findings.
 > - Required edits ENFORCE rolling-foundation: replace stale assertions in
 >   place. Do NOT propose adding "previously" or "in v1.x" prose. Git is the
 >   audit trail; the doc carries the active truth.
+> - Write every required edit in plain technical style — short sentences,
+>   active voice, one name per thing, no marketing adjectives (see the
+>   prose-author writing-style reference).
 > - For generated files, the required edit is the regeneration command, not
 >   a manual edit.
 > - Skip already-tracked findings.
