@@ -17,6 +17,20 @@ output. Not for marketing copy or essays — the style strips voice on purpose.
 
 ## Rules
 
+### Document integrity
+
+- Keep human-facing documents and designs clean and self-contained. Describe
+  the subject, decisions, and rationale, not the agent process that produced
+  them.
+- Apply review corrections to the final content without recording the
+  correction cycle. Do not preserve agent work history, reviewer correction
+  notes, prompt or transcript details, revision narration, or internal
+  adjudication.
+- Workbench items and other explicitly agent-facing documents may retain
+  process prose when it adds material value for future implementation, review,
+  or operation. Discourage it otherwise. Prefer the resolved decision,
+  constraint, or risk over its history.
+
 ### Words
 
 - Use one name for one thing. Do not call the same item by two names.
