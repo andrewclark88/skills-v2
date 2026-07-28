@@ -1,73 +1,46 @@
+---
+owner: workbench
+schema: 1
+completed_items: discard
+---
+
 # Project Conventions
 
-## Release mapping
-none
+## Completion checks (authoritative)
 
-Shipping happens through `scripts/bump-version.sh` (per-plugin semver bump,
-auto-commit + push). `release-deploy` runs the gates and archives bound items
-but does not tag or branch — publishing stays with the bump script.
+Match the check to the change's blast radius — CI enforces the same set on
+every push, so a local pass means a green pipeline:
 
-## Tag taxonomy
-- refactor    behavior-preserving structural change ONLY — fails the black-box test (any observable behavior change for callers) means NOT a refactor — routes to refactor-design
-- perf        throughput, latency, memory — routes to perf-design
-- skill       authoring or changing an individual skill (a SKILL.md and its references)
-- plugin      plugin-level work: manifests, structure, marketplace wiring, versioning
-- tooling     substrate tooling — work-view, the board, the planned binary, scripts/
-- docs        guides, foundation docs, READMEs
+- **Workbench substrate changes** (`.work/`, `.research/`, AGENTS.md managed
+  section): `python3 <workbench-plugin-root>/scripts/validate-workbench.py .`
+  plus `lint-research.py .` and `build-knowledge-index.py . --check` when
+  `.research/` content changed.
+- **Plugin script changes** (`plugins/*/scripts/**`): the owning plugin's unit
+  tests (e.g. `python3 -m unittest discover -s plugins/<plugin>/scripts/tests -v`)
+  plus `python3 -m py_compile` on touched scripts.
+- **Rust changes** (`plugins/agile-workflow/work-view/`,
+  `plugins/agentic-research/research-view/`): `cargo test --workspace` in the
+  crate root.
+- **GitHub workflow changes** (`.github/workflows/**`): actionlint (as in
+  `lint-github-actions.yml`).
+- **Pi package / manifest changes** (`plugins/*/package.json`, marketplace
+  catalogs): the checks in `check-pi-packages.yml` and
+  `check-extension-deps.yml`.
 
-### deep-code-scan reserved tags
+## Delivery rules
 
-The `deep-code-scan` skill owns these. `scan` marks the engagement-owned scan scaffold and is
-**load-bearing**: `work-view --ready`/`--blocked` (and therefore autopilot) exclude any `[scan]`-tagged
-item, so the scaffold is never drained as ordinary work. Do not hand-apply `scan` to normal work.
+- Shipping happens through `scripts/bump-version.sh <plugin> <major|minor|patch>`
+  (per-plugin semver, auto-commit + push). Commit feature changes **before**
+  bumping — the script refuses a dirty plugin dir.
+- Completed items are **discarded** after verification; git history is the
+  audit trail. No completion stubs, no release summaries.
+- Workbench does not tag or publish; versioning stays with the bump script.
 
-- scan          engagement-owned scan-campaign scaffold (excluded from --ready/--blocked)
-- correctness · tests · performance · security · quality · structure · architecture · custom
-                scan lanes (one per scan feature)
-- leaf · module · subsystem · system
-                scan altitude bands (on scan stories)
+## Project guidance
 
-## Slug conventions
-kebab-case. Children are prefixed with their parent's slug
-(e.g. `epic-substrate-tooling` → `feature-substrate-tooling-cli`).
-
-## Stage overrides
-none
-
-## Review weight
-review_weight: standard
-
-## Linkage fields
-
-Two optional frontmatter fields connect `.work/` items to `.research/` artifacts,
-mirroring `gate_origin`. Both are inert when absent — missing → `[]` / `null`
-with no validation warning.
-
-- **`research_refs: [<slug>, ...]`** — the research artifacts (`.research/` slugs
-  or handles) this work item tracks or consumes (Arrow 1, coordination). Queryable
-  via `work-view --research-refs <slug>` (membership, like `--blocking`).
-- **`research_origin: <slug>|null`** — the research artifact that spawned this
-  work item (Arrow 2, grounding). Mirrors `gate_origin`. Queryable via
-  `work-view --research-origin <slug>` (or `null`).
-- **`scan_origin: <slug>|null`** — the scan campaign (`scan-<goal>`) that produced
-  this work item (the `deep-code-scan` linkage). Mirrors `research_origin`. Queryable
-  via `work-view --scan-origin <slug>` (or `null`).
-
-These fields are the schema substrate for the research↔work handoff arrows. The
-arrows themselves are implemented in the `agentic-research` plugin (Arrow 2 = the
-`research-handoff` emission skill; Arrow 1 = the commissioning convention in
-HANDOFF.md) and are **live**. For the cross-tier pairing contract, see
-`plugins/agentic-research/docs/HANDOFF.md`.
-
-## Gate config
-gates_for_release: [tests, cruft, docs, patterns]
-
-## Research completion
-research_completion: close-to-done
-
-When the `agentic-research` orchestrator completes a `[research]` commissioning
-item, it advances the item per this key. `close-to-done` (default) flips it
-straight to `stage: done` — verification ran inline in the orchestrator's stack,
-so the review→bind path adds nothing. `route-to-review` advances to `stage: review`
-instead, for deployments whose review stage carries sign-off / governance meaning.
-See `plugins/agentic-research/docs/HANDOFF.md` Arrow 1.
+- Item ids are kebab-case slugs; children are prefixed with their parent's slug
+  (e.g. `epic-substrate-tooling` → `feature-substrate-tooling-cli`).
+- Tags are informational only (no routing semantics): `refactor`, `perf`,
+  `skill`, `plugin`, `tooling`, `docs`, `bug`, `testing`, `documentation`,
+  `prose`, `release-gates`.
+- `research_refs` entries are repo-relative paths to `.research/` artifacts.

@@ -1,9 +1,9 @@
 ---
 id: test-review-retention-branching
-created: 2026-06-09
 tags: [tooling, testing]
+created: 2026-06-09
+updated: 2026-06-09
 ---
-
 # Test that review's archive step honors CONVENTIONS Terminal-tier retention
 
 The review skill's substrate-side-effects reference now branches the archive step on the

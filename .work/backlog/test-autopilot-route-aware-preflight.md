@@ -1,9 +1,9 @@
 ---
 id: test-autopilot-route-aware-preflight
-created: 2026-06-09
 tags: [tooling, testing]
+created: 2026-06-09
+updated: 2026-06-09
 ---
-
 # Test the route-aware foundation-doc preflight
 
 The autopilot foundation-doc prerequisite is now route-aware (halts only when the resolved

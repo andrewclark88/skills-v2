@@ -1,0 +1,203 @@
+# Generated from .research/attestations. Do not edit by hand.
+schema: 1
+sources:
+  - source_handle: actions-stale-github
+    title: "The official GitHub Actions `stale` action automates the management of inactive issues and pull requ…"
+    source_url: "https://github.com/actions/stale"
+    fetched: "2026-06-15"
+  - source_handle: agile-alliance-refinement
+    title: "The Agile Alliance glossary entry for backlog refinement covers the terminology evolution from \"groo…"
+    source_url: "https://agilealliance.org/glossary/backlog-refinement/"
+    fetched: "2026-06-15"
+  - source_handle: ai-metropolis-priority-queue
+    title: "AI Metropolis is a simulation framework that executes LLM-based multi-agent workloads using out-of-o…"
+    source_url: "https://arxiv.org/abs/2411.03519"
+    fetched: "2026-06-15"
+  - source_handle: augmentcode-ai-backlog-grooming
+    title: "A practitioner guide from an AI coding tools vendor describing seven automation capabilities for bac…"
+    source_url: "https://www.augmentcode.com/guides/ai-backlog-grooming"
+    fetched: "2026-06-15"
+  - source_handle: backlog-antipatterns-age-of-product
+    title: "A numbered catalog of product backlog anti-patterns, covering both backlog content problems (over-si…"
+    source_url: "https://age-of-product.com/28-product-backlog-anti-patterns/"
+    fetched: "2026-06-15"
+  - source_handle: bmw-agents-task-queue
+    title: "BMW Agents is a multi-agent framework for task automation that uses a Planner Agent to decompose use…"
+    source_url: "https://arxiv.org/abs/2406.20041"
+    fetched: "2026-06-15"
+  - source_handle: cargo-profiles
+    title: "Profiles"
+    source_url: "https://doc.rust-lang.org/cargo/reference/profiles.html"
+    fetched: "2026-06-03"
+  - source_handle: cito-paper
+    title: "CiTO, the Citation Typing Ontology."
+    source_url: "https://jbiomedsem.biomedcentral.com/articles/10.1186/2041-1480-1-S1-S6"
+    fetched: "2026-06-04"
+  - source_handle: cito-spec
+    title: "CiTO, the Citation Typing Ontology"
+    source_url: "https://sparontologies.github.io/cito/current/cito.html"
+    fetched: "2026-06-04"
+  - source_handle: cost-of-delay-planview
+    title: "A practitioner-oriented explanation of Cost of Delay (CoD) as a prioritization metric. Defines CoD a…"
+    source_url: "https://www.planview.com/resources/articles/lkdc-cost-delay/"
+    fetched: "2026-06-15"
+  - source_handle: deep-cohn
+    title: "Mike Cohn's Mountain Goat Software post independently covers the DEEP framework, collaboratively dev…"
+    source_url: "https://www.mountaingoatsoftware.com/blog/make-the-product-backlog-deep"
+    fetched: "2026-06-15"
+  - source_handle: deep-pichler
+    title: "Roman Pichler's blog post introduces the DEEP acronym as a quality framework for product backlogs: D…"
+    source_url: "https://www.romanpichler.com/blog/make-the-product-backlog-deep/"
+    fetched: "2026-06-15"
+  - source_handle: devcommunity-agents-backlog-coffee
+    title: "A practitioner account of running Forge DevKit's autopilot module to drain a feature backlog using m…"
+    source_url: "https://dev.to/reumbra/i-ran-4-ai-agents-on-my-backlog-and-went-for-coffee-4n63"
+    fetched: "2026-06-15"
+  - source_handle: dosu-issue-triage
+    title: "Dosu's blog post describes their AI-powered issue triage system for GitHub repositories. The system…"
+    source_url: "https://dosu.dev/blog/automating-github-issue-triage/"
+    fetched: "2026-06-15"
+  - source_handle: dyntaskmas-priority-calculation
+    title: "DynTaskMAS introduces a dynamic task graph framework for asynchronous parallel execution of LLM-base…"
+    source_url: "https://arxiv.org/abs/2503.07675"
+    fetched: "2026-06-15"
+  - source_handle: genai-backlog-grooming-empirical
+    title: "An empirical study of a Jira plugin that applies GenAI to backlog grooming tasks: duplicate detectio…"
+    source_url: "https://arxiv.org/abs/2507.10753"
+    fetched: "2026-06-15"
+  - source_handle: github-models-maintainer-survey
+    title: "GitHub blog post reporting findings from a survey of over 500 open source project maintainers about…"
+    source_url: "https://github.blog/open-source/maintainers/how-github-models-can-help-open-source-maintainers-focus-on-what-matters/"
+    fetched: "2026-06-15"
+  - source_handle: gocodeo-dependency-graphs-orchestration
+    title: "A practitioner technical explainer on how dependency graphs, orchestration, and control flow mechani…"
+    source_url: "https://www.gocodea.com/post/dependency-graphs-orchestration-and-control-flows-in-ai-agent-frameworks"
+    fetched: "2026-06-15"
+  - source_handle: ibis-kunz-rittel
+    title: "The what and whence of issue-based information systems"
+    source_url: "https://eight2late.com/2009/07/08/the-what-and-whence-of-issue-based-information-systems/"
+    fetched: "2026-06-04"
+  - source_handle: kano-foldingburritos
+    title: "A comprehensive practitioner guide to the Kano model, covering the survey methodology (functional/dy…"
+    source_url: "https://foldingburritos.com/blog/kano-model/"
+    fetched: "2026-06-15"
+  - source_handle: large-backlog-scrumalliance
+    title: "A Scrum Alliance article presenting four tactical steps for managing overgrown backlogs: Split, Limi…"
+    source_url: "https://resources.scrumalliance.org/Article/manage-large-product-backlog"
+    fetched: "2026-06-15"
+  - source_handle: metabase-reprobot-triage
+    title: "An engineering blog post from Metabase describing their internally built Repro-Bot, a GitHub Actions…"
+    source_url: "https://www.metabase.com/blog/reprobot-github-issue-triage-agent"
+    fetched: "2026-06-15"
+  - source_handle: min-sized-rust
+    title: "min-sized-rust"
+    source_url: "https://github.com/johnthagen/min-sized-rust"
+    fetched: "2026-06-03"
+  - source_handle: moscow-dsdm-agile-business
+    title: "The canonical DSDM framework definition of MoSCoW, including the four categories, recommended effort…"
+    source_url: "https://www.agilebusiness.org/dsdm-project-framework/moscow-prioritisation.html"
+    fetched: "2026-06-15"
+  - source_handle: moscow-horkan-critique
+    title: "A critical analysis of the MoSCoW method covering its origin in the DSDM ecosystem and three main fa…"
+    source_url: "https://horkan.com/2023/08/29/moscow-prioritization-history-overview-and-critical-analysis"
+    fetched: "2026-06-15"
+  - source_handle: okf-ap7i-plugin
+    title: "Google's Open Knowledge Format, and the Plugin I Built for It (ap7i)"
+    source_url: "https://ap7i.com/posts/open-knowledge-format-okf-claude-code-plugin/"
+    fetched: "2026-07-20"
+  - source_handle: okf-google-announcement
+    title: "How the Open Knowledge Format can improve data sharing"
+    source_url: "https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing"
+    fetched: "2026-07-20"
+  - source_handle: okf-mattrx-prepstack
+    title: "Stop Chunking Documents: The Open Knowledge Format (OKF) for Enterprise AI (Mattrx)"
+    source_url: "https://prepstack.co.in/blog/open-knowledge-format-okf-enterprise-ai"
+    fetched: "2026-07-20"
+  - source_handle: okf-moselwal
+    title: "Open Knowledge Format: agent knowledge as Markdown (Moselwal)"
+    source_url: "https://moselwal.com/blog/open-knowledge-format-okf-agenten-wissen-als-code"
+    fetched: "2026-07-20"
+  - source_handle: okf-opentechhub-strings
+    title: "Google's Open Knowledge Format Comes With Strings"
+    source_url: "https://www.opentechhub.io/google-released-a-folder-of-text-files/"
+    fetched: "2026-07-20"
+  - source_handle: okf-saschb2b-bundles
+    title: "saschb2b/okf-bundles (GitHub README)"
+    source_url: "https://github.com/saschb2b/okf-bundles"
+    fetched: "2026-07-20"
+  - source_handle: okf-searchscore-not-rushing
+    title: "Google's OKF AI Format: Why We're Not Rushing"
+    source_url: "https://searchscore.io/research/okf-google-ai-format/"
+    fetched: "2026-07-20"
+  - source_handle: okf-spec
+    title: "Open Knowledge Format (OKF) v0.1 Specification"
+    source_url: "https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md"
+    fetched: "2026-07-19"
+  - source_handle: okf-totto-problems
+    title: "Google's Open Knowledge Format and the problems it deliberately doesn't solve"
+    source_url: "https://wiki.totto.org/blog/2026/06/17/googles-open-knowledge-format-and-the-problems-it-deliberately-doesnt-solve/"
+    fetched: "2026-07-20"
+  - source_handle: ordered-backlog-agileplays
+    title: "An argument for managing the backlog as a strictly ordered list rather than a categorically prioriti…"
+    source_url: "https://agileplays.co.uk/managing-backlog-as-an-ordered-list/"
+    fetched: "2026-06-15"
+  - source_handle: planning-poker-mountaingoat
+    title: "Mike Cohn's canonical description of Planning Poker — the process, card values, simultaneous reveal…"
+    source_url: "https://www.mountaingoatsoftware.com/agile/planning-poker"
+    fetched: "2026-06-15"
+  - source_handle: planning-poker-wikipedia
+    title: "Wikipedia's article on Planning Poker, covering origin, Fibonacci card values, process mechanics, an…"
+    source_url: "https://en.wikipedia.org/wiki/Planning_poker"
+    fetched: "2026-06-15"
+  - source_handle: priority-flags-agilefixer
+    title: "An argument against categorical priority flags (P1/P2/P3, Blocker/High/Medium/Low) as queue-ordering…"
+    source_url: "https://agilefixer.com/2017/02/20/why-priority-flags-dont-work-and-what-to-use-instead/"
+    fetched: "2026-06-15"
+  - source_handle: priority-inflation-agileforall
+    title: "Bob Hartman's description of the \"everything is P1\" antipattern: why categorical priority flags infl…"
+    source_url: "https://agileforall.com/agile-antipattern-everything-is-priority-1/"
+    fetched: "2026-06-15"
+  - source_handle: rice-intercom
+    title: "The canonical introduction of the RICE scoring model by Sean McBride at Intercom. The post defines t…"
+    source_url: "https://www.intercom.com/blog/rice-simple-prioritization-for-product-managers/"
+    fetched: "2026-06-15"
+  - source_handle: saga-workflow-atomic-scheduling
+    title: "SAGA introduces \"program-level\" scheduling for AI agent workloads, treating entire agent workflows a…"
+    source_url: "https://arxiv.org/abs/2605.00528"
+    fetched: "2026-06-15"
+  - source_handle: scrum-guide-2020-refinement
+    title: "The 2020 Scrum Guide defines the Product Backlog as \"an emergent, ordered list of what is needed to…"
+    source_url: "https://scrumguides.org/scrum-guide.html"
+    fetched: "2026-06-15"
+  - source_handle: semver-spec
+    title: "Semantic Versioning 2.0.0"
+    source_url: "https://semver.org"
+    fetched: "2026-06-04"
+  - source_handle: skos-reference
+    title: "SKOS Simple Knowledge Organization System Reference"
+    source_url: "https://www.w3.org/TR/skos-reference/"
+    fetched: "2026-06-04"
+  - source_handle: story-points-agility-at-scale
+    title: "A critique of how story points, originally designed as a psychological safety mechanism to decouple…"
+    source_url: "https://agility-at-scale.com/principles/agile-planning-story-points/"
+    fetched: "2026-06-15"
+  - source_handle: thebotcompany-self-organizing-mas
+    title: "This paper introduces TheBotCompany, a framework for continuous multi-agent software development. Un…"
+    source_url: "https://arxiv.org/abs/2603.25928"
+    fetched: "2026-06-15"
+  - source_handle: toulmin-argument
+    title: "The Uses of Argument."
+    source_url: "https://courses.lumenlearning.com/suny-englishcomp2kscopexmaster/chapter/toulmins-argument-model/"
+    fetched: "2026-06-04"
+  - source_handle: value-effort-savio
+    title: "A practitioner guide to the Value vs. Effort (Impact vs. Effort) 2x2 prioritization matrix, includin…"
+    source_url: "https://www.savio.io/product-roadmap/value-vs-effort-matrix/"
+    fetched: "2026-06-15"
+  - source_handle: wsjf-blackswanfarming
+    title: "A practitioner explanation of Weighted Shortest Job First (WSJF) and its CD3 variant, tracing the fo…"
+    source_url: "https://blackswanfarming.com/wsjf-weighted-shortest-job-first/"
+    fetched: "2026-06-15"
+  - source_handle: wsjf-yip-safe-critique
+    title: "A critique by Jason Yip of how SAFe adapts Reinertsen's CD3 into a relative-scoring system. The arti…"
+    source_url: "https://jchyip.medium.com/problems-i-have-with-safe-style-wsjf-772df2beaf02"
+    fetched: "2026-06-15"

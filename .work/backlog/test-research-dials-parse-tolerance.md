@@ -1,9 +1,9 @@
 ---
 id: test-research-dials-parse-tolerance
-created: 2026-06-09
 tags: [tooling, testing]
+created: 2026-06-09
+updated: 2026-06-09
 ---
-
 # Lock the `research_dials:` parse-tolerance contract with fixtures
 
 The registration-carrying `[research]` work-item contract claims `work-view` "tolerates the

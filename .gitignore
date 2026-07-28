@@ -11,11 +11,7 @@ node_modules/
 
 # .research/ raw source fetches — never travel; only derived material is committed.
 # Scoped to .research/ (not global) so source PDFs elsewhere in the repo are unaffected.
-.research/reference/**/raw/
 .research/**/*.pdf
 .research/**/*.epub
 .research/**/*.azw3
 .research/**/*.mobi
-
-# deep-code-scan in-flight scanner packets; final summaries live in .work items.
-.work/scan-artifacts/

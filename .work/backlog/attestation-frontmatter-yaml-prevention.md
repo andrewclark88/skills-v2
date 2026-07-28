@@ -1,10 +1,9 @@
 ---
 id: attestation-frontmatter-yaml-prevention
+tags: [tooling]
 created: 2026-06-25
 updated: 2026-06-25
-tags: [tooling]
 ---
-
 # Prevent invalid-YAML attestation frontmatter (template default + lint check)
 
 ## The recurring bug

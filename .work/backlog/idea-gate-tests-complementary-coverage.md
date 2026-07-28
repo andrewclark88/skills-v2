@@ -1,9 +1,9 @@
 ---
 id: idea-gate-tests-complementary-coverage
-created: 2026-06-04
 tags: [testing]
+created: 2026-06-04
+updated: 2026-06-04
 ---
-
 gate-tests (pre-merge, 2026-06-04) Low-priority complementary coverage — covered
 elsewhere, file for parity:
 - **`--research-origin null` (IsNull) has no integration test**, unlike its mirror

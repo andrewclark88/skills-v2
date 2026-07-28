@@ -1,9 +1,9 @@
 ---
 id: test-research-routing-lane
-created: 2026-06-09
 tags: [tooling, testing]
+created: 2026-06-09
+updated: 2026-06-09
 ---
-
 # Test coverage for the `[research]` routing lane
 
 `convert-content-integrity.test.sh` (the check cited at the lane's PR time) covers the

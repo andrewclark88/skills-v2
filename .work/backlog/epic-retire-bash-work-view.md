@@ -1,9 +1,9 @@
 ---
 id: epic-retire-bash-work-view
-created: 2026-06-03
 tags: [tooling]
+created: 2026-06-03
+updated: 2026-06-03
 ---
-
 # Retire the bash work-view fallback — go fully Rust-only
 
 Parked from `feature-work-view-scope`. We dropped bash<->Rust parity and froze

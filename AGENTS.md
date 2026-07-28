@@ -4,7 +4,7 @@ This repo contains agent skills distributed via the Claude Code plugin marketpla
 
 ## Orient first — `ls plugins/` before assuming
 
-**There are TEN distinct plugins under `plugins/`, not one.** Before designing on top of any plugin, run `ls plugins/` and read the target plugin's `plugin.json` + `docs/` (if it has them). Skill names overlap between plugins by design; the plugin a skill lives in determines its semantics.
+**There are ELEVEN distinct plugins under `plugins/`, not one.** Before designing on top of any plugin, run `ls plugins/` and read the target plugin's `plugin.json` + `docs/` (if it has them). Skill names overlap between plugins by design; the plugin a skill lives in determines its semantics.
 
 ### Plugin map
 
@@ -18,6 +18,7 @@ This repo contains agent skills distributed via the Claude Code plugin marketpla
 | `plugins/agentic-research/` | `agentic-research` | supported | Agentic Research Discipline (ARD) as a plugin — grounded, verifiable AI research: an anti-fabrication floor, selectable verification gates, and a `.research/` substrate tier paralleling `.work/`. Fully supported alongside the other current plugins; ARD is the plugin's internal, empirically-warranted discipline, maintained as the single source of truth in `plugins/agentic-research/ard-core/` (absorbed — no separate framework repo or vendoring pin). |
 | `plugins/agent-coordination/` | `agent-coordination` | supported | Sparse cross-agent coordination ledger for shared repositories. Defines deliberate GitHub Discussion events for claims, handoffs, blockers, review summaries, and merge summaries. Lightly aware of agile-workflow `.work` IDs, but not coupled to the substrate. |
 | `plugins/background-tasks/` | `background-tasks` *(Pi package only)* | supported | **Pi-native runtime tools** (not a workflow skill set, and **not** a Claude/Codex plugin — the tools are pi-runtime-only with no cross-harness equivalent). A pi extension registering three agent tools — `background` (run a command detached, wake on exit or first pattern match), `monitor` (poll a command until a condition holds or it times out), and `jobs` (list/tail/status/cancel) — plus a portable skill describing when to reach for them. Distributed as a Pi package only; in other harnesses the skill is informational. |
+| `plugins/prose-craft/` | `prose-craft` | supported | Standalone prose craftsmanship for human-facing documentation — `prose-draft` (doc brief + plain-language style contract, Diátaxis doc types), `prose-review` (six editorial lenses, severity-tagged findings as proposals), and `prose-refine` (multi-model rewrite-and-weave cycle — diverse model-class re-writers, one-voice weave, shrinking rounds, 3-round cap). No substrate dependency. |
 | `plugins/zai-research/` | `zai-research` | supported | **Pi-native Z.ai research tools.** A pi extension wrapping Z.ai's web-search-prime, web-reader, and zread MCP servers via the bundled MCP SDK client (pi has no built-in MCP), re-exposed as `web_search`, `fetch_content` (webReader + local unpdf for PDFs), `search_repo_docs`, `get_repo_structure`, `read_repo_file`. Auth is the configured `zai` provider key. Replaces `pi-web-access`'s web-search/fetch surface. |
 | `plugins/workflow/` | `workflow` | **DEPRECATED — no longer supported** | Doc-driven software workflow with design docs as artifacts in `docs/designs/`. Kept in tree so existing installs don't break. No new features or fixes will land. New projects should use `agile-workflow`; existing `workflow` projects migrate via `/agile-workflow:convert`. |
 
@@ -144,93 +145,19 @@ When creating a new plugin (a new directory under `plugins/`), register it in **
 
 Verify both catalogs preserve the same ordered plugin identities and semantically equivalent sources before considering the plugin shippable.
 
-<!-- agile-workflow:start -->
-## Agile-Workflow Substrate
+<!-- workbench:start -->
+## Workbench
 
-Work tracked in `.work/` as markdown items with YAML frontmatter
-(`kind, stage, tags, parent, depends_on, release_binding, research_refs, research_origin`).
-Layout: `.work/active/{epics,features,stories}/`, `.work/backlog/`,
-`.work/releases/<version>/`, `.work/archive/`.
+Confirm `owner: workbench` in `.work/CONVENTIONS.md`. Track active outcomes in
+`.work/active/` and deferred context in `.work/backlog/`. Treat natural-language
+requests as the workflow. Consult `.knowledge/index.json` when present. Ask the
+human about consequential requirements and pause for the answer. Park useful
+out-of-scope findings instead of silently expanding scope. Test behavior at
+stable interfaces, verify the full requested boundary, reconcile affected
+foundation truth, and remove or summarize completed items immediately.
+<!-- workbench:end -->
 
-**Primary query tool:** `.work/bin/work-view` filters by stage, tag, kind,
-parent, and dependency. Common patterns:
-- `work-view --ready` — items ready to work (deps satisfied)
-- `work-view --stage review` — items waiting on user
-- `work-view --parent <id>` / `--blocking <id>` — hierarchy / sequencing
-- `work-view --scope all` — include terminal tiers: `releases/` (one summary doc per version) and
-  `archive/` (bodyless ref stubs). Full bodies live in git history. Default shows only active +
-  backlog; `--release` / `--gate` auto-widen to all tiers.
-- `work-view --help` for the full flag set
-
-Foundation docs in `docs/` describe the system's current state or intended
-future state, never the past; git history is the audit trail. Review existing
-assertions only: missing coverage and unimplemented future intent are not drift;
-flag only false, stale, or contradictory claims. Item files are
-the durable state: update the body with implementation discoveries, review
-findings, blockers, and decisions instead of relying on chat history.
-
-Project-level agent rules live in this file (the canonical agent instruction
-file). Do not create or maintain `.claude/rules/*.md` as a source of truth;
-reusable structural patterns belong in `.agents/skills/patterns/`.
-
-Project-specific refactor style conventions belong in this file under
-`## Refactor Style Conventions`. Detailed refactor convention references belong
-in `.agents/skills/refactor-conventions/` and extend `refactor-design`'s
-defaults; they do not replace the built-in scan and they do not create
-standalone plan docs.
-
-### Tag semantics
-
-The `tags` field on items routes them to the right design skill. A few tags
-carry load-bearing routing semantics — get these right:
-
-- **`[refactor]`** — behavior-preserving structural change ONLY. Apply the
-  black-box test: would any observable behavior change for a caller of the
-  public surface? If yes, this is NOT a refactor — drop the tag and let the
-  item route through `feature-design`.
-  - Counts as refactor: extract a helper to dedupe, split a god file, rename
-    for clarity, remove dead code, inline a one-call abstraction.
-  - Does NOT count as refactor (even if it feels "structural"): change an API
-    signature, swap a storage backend with different consistency guarantees,
-    replace a silent failure with an explicit error, split a function in a
-    way that changes call-site contracts, "major rework of X."
-- **`[perf]`** — performance work. Routes to `perf-design`.
-- **`[prose]`** — no-code-surface deliverable (docs, conventions / rules,
-  research write-ups, copy, config-as-prose). Routes to `prose-author`, the
-  no-code authoring lane that skips the Explore / pre-mortem / question gate
-  and advances on the brief alone. Work-nature, not domain: apply the black-box
-  test — if the feature has a real code surface (an interface, types, an
-  integration seam, an architectural choice), it is NOT prose; drop the tag and
-  let it route through `feature-design`. Prose items also implement **inline**
-  (`implement`), never via the orchestrator. **Token is reserved by the
-  plugin's routing** — it activates unconditionally (prose-author ships inside
-  the plugin; there is no missing-plugin degrade). A project already using
-  `prose` as a domain tag should retag that usage before adopting this plugin
-  (the tag name may change before v1.0 if the collision proves common).
-- **`[research]`** — a grounded research engagement: an *input* that grounds
-  other work (a decision, a design, an adoption call), not a shippable
-  deliverable. Routes **cross-plugin** to `agentic-research:research-orchestrator`
-  (the dynamic ARD research orchestrator), not a design-family skill. The work
-  item carries the **commissioning subset** of the engagement registration in a
-  `research_dials:` block (the four scoping fields: scope_authority,
-  verification_rigor, intent, output_kind) — **scoping the item IS the dispatch
-  act**; the orchestrator reads those dials at kickoff and settles the rest at
-  dispatch. A
-  `[research]` item **does not bind to a release** (it is an input, not a bundle
-  member) and its verification **gates run inline** in the orchestrator's stack
-  (it never reaches `release-deploy`). Requires the `agentic-research` plugin;
-  without it, `[research]` is an inert project tag — drop it and the item routes
-  through `feature-design`. See the agentic-research plugin's `docs/HANDOFF.md`
-  for the pairing. **At `kind: epic`:** an epic carrying `[research]` is a
-  research-program epic — it routes to `epic-design` as normal epic decomposition,
-  whose children are `[research]` features each carrying their own `research_dials:`
-  registration; the tag at epic level signals program decomposition, never an
-  epic-level registration.
-
-All other tags are project-specific (see `.work/CONVENTIONS.md`) and do not
-affect skill routing.
-
-### Engineering posture
+## Engineering posture
 
 Prefer short, clear code and context-appropriate rigor over speculative
 generality. Not every project needs exhaustive invariants, edge handling, firm
@@ -250,26 +177,21 @@ compat shims for surfaces the project owns; change them in place. Real-data
 migrations are planned by the agent but approved and executed by the user for
 production data; do not run production transforms autonomously.
 
-Release-bound items define a gate's focus, not a hard scan boundary. Gates may
-follow concrete evidence into adjacent dependencies, shared infrastructure, or
-system-wide mechanisms. Bind release-relevant findings; route merely ambient
-discoveries to the unbound backlog so a scan does not silently expand a release.
-
-### Test integrity
+## Test integrity
 
 When running, writing, or modifying tests:
 
 - **File real production bugs as backlog items.** When a test failure
   surfaces an actual product bug (not a stale fixture, drifted assertion,
-  or broken mock), park it via `/agile-workflow:park` instead of silently
+  or broken mock), park it in `.work/backlog/` instead of silently
   fixing it inline mid-test-pass. The backlog item is the audit trail.
 - **Fix bad tests in-session.** Stale fixtures, drifted assertions, broken
   mocks, and outdated snapshots are test debt, not product bugs. Repair
   them as you go so the suite stays meaningful.
 - **Then drain small backlog bugs with a full pass.** Once tests are
   green again, if a parked production bug is small enough for a single
-  stride, pick it up immediately as `/agile-workflow:scope` → design →
-  implement. Larger bugs stay in backlog for prioritization.
+  stride, pick it up immediately. Larger bugs stay in backlog for
+  prioritization.
 - **Tests must earn their upkeep.** Prefer tests at stable interfaces,
   regression tests for real bugs, and unit tests for genuinely complex units.
   Do not add tests merely to cover every line or surface; remove duplicate,
@@ -282,24 +204,13 @@ When running, writing, or modifying tests:
   code happens to return, no deleting a test as "flaky" without
   root-causing first.
 
-Cross-model advisory review: explicit user/project review instructions
-override agile-workflow defaults. When peeragent is available with a different
-model class, large/risky autopilot design decisions may use one advisory pass;
-small/low-risk work skips it. Review weight defaults to `standard`: features,
-epics, and final completion bundles get one independent pass, then receiver
-adjudication, fixes for material blockers, verification, and `done` without
-re-review. An epic's pass is broader than a feature's but is still one pass at
-`standard`. Only `thorough` and `maximum` use multi-pass review; continue until
-a pass has no receiver-confirmed material current-cycle blockers. Smaller
-findings are parked unbound, kept as nits, or rejected by judgment and do not
-keep the loop open. Reviewer findings are proposals: the receiving orchestrator
-verifies them against repository context and actual risk. Same-model peers fall
-back to local sub-agents instead. Claude Opus peeragent calls can take 10 to 30
-minutes on large reviews; no return after a few minutes is not evidence that the
-call has hung.
+Foundation docs in `docs/` describe the system's current state or intended
+future state, never the past; git history is the audit trail. Review existing
+assertions only: missing coverage and unimplemented future intent are not drift;
+flag only false, stale, or contradictory claims. Item files are
+the durable state: update the body with implementation discoveries, review
+findings, blockers, and decisions instead of relying on chat history.
 
-Broad entry points:
-`/agile-workflow:ideate`, `/agile-workflow:epicize`,
-autopilot goals such as "Use agile-workflow autopilot to drain --all",
-and `/agile-workflow:release-deploy`.
-<!-- agile-workflow:end -->
+Project-level agent rules live in this file (the canonical agent instruction
+file). Do not create or maintain `.claude/rules/*.md` as a source of truth;
+reusable structural patterns belong in `.agents/skills/patterns/`.

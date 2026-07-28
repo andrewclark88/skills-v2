@@ -1,9 +1,9 @@
 ---
 id: handoff-emission-must-cover-synthesis-corrections
-created: 2026-06-15
 tags: [research, documentation]
+created: 2026-06-15
+updated: 2026-06-15
 ---
-
 # Arrow-2 emission must enumerate ALL parent.md corrected positions, not just claims-delta rows
 
 ## The gap (mechanism side)

@@ -1,9 +1,9 @@
 ---
 id: idea-doc-crosslink-ci-check
-created: 2026-06-04
 tags: [testing, documentation]
+created: 2026-06-04
+updated: 2026-06-04
 ---
-
 gate-tests (pre-merge, 2026-06-04) Low: the handoff-live-fields docs roll-forward
 asserts "all cross-links resolve" (item
 `epic-research-work-handoff-live-fields-docs`) — the new `.work/CONVENTIONS.md`

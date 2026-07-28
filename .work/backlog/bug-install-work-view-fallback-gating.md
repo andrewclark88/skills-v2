@@ -1,10 +1,9 @@
 ---
 id: bug-install-work-view-fallback-gating
+tags: []
 created: 2026-06-20
 updated: 2026-06-20
-tags: []
 ---
-
 # install-work-view.sh never reaches the bash fallback on prebuilt failure
 
 ## Symptom

@@ -1,17 +1,9 @@
 ---
 id: epic-agentic-research-skill-ceremony-streamline
-kind: epic
-stage: drafting
 tags: [plugin]
-parent: null
-depends_on: []
-release_binding: null
-gate_origin: null
-research_origin: null
 created: 2026-07-20
 updated: 2026-07-21
 ---
-
 # Streamline agentic-research skills/ceremony — conventions + high-level guidelines over skill proliferation
 
 ## Brief

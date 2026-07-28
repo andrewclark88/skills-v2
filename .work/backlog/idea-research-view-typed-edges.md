@@ -1,9 +1,9 @@
 ---
 id: idea-research-view-typed-edges
-created: 2026-06-04
 tags: [tooling]
+created: 2026-06-04
+updated: 2026-06-04
 ---
-
 Teach `research-view` to parse the optional `related:` typed-edge graph (ARD SPEC
 §10.5; defined in `.research/CONVENTIONS.md`) and offer graph queries over it —
 traverse a given predicate, and derive the reverse view (artifacts author edges

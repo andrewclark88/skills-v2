@@ -37,11 +37,11 @@ skills, and federated external plugins.
 
 ## The dogfooding thesis
 
-This repo runs on the plugin it ships. Its own work is tracked in
-agile-workflow's `.work/` substrate — the same files, gates, and flow any
-adopter gets. The first thing that substrate tracks is the construction of
-agile-workflow's own tooling. If the flagship cannot carry the weight of
-building itself, that is a signal worth catching before an adopter hits it.
+This repo runs on the plugins it ships. Its own work is tracked in
+Workbench's `.work/` substrate — the same files and flow any adopter gets —
+and its grounded evidence lives in Workbench's `.research/` tier. If the
+catalog's own workflow tooling cannot carry the weight of building the
+catalog, that is a signal worth catching before an adopter hits it.
 
 ## What this is not
 

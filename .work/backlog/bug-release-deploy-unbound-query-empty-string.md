@@ -1,9 +1,9 @@
 ---
 id: bug-release-deploy-unbound-query-empty-string
-created: 2026-06-03
 tags: [tooling, bug]
+created: 2026-06-03
+updated: 2026-06-03
 ---
-
 # release-deploy "unbound done items" query uses `--release ""` (returns nothing)
 
 `release-deploy/SKILL.md:82` lists release candidates with:

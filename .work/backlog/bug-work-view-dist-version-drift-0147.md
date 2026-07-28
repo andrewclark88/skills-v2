@@ -1,10 +1,9 @@
 ---
 id: bug-work-view-dist-version-drift-0147
+tags: [bug, tooling]
 created: 2026-06-21
 updated: 2026-06-21
-tags: [bug, tooling]
 ---
-
 # Refresh stale work-view dist binaries for current manifest
 
 ## Symptom

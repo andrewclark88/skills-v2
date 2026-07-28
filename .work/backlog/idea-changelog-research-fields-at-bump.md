@@ -1,9 +1,9 @@
 ---
 id: idea-changelog-research-fields-at-bump
-created: 2026-06-04
 tags: [documentation]
+created: 2026-06-04
+updated: 2026-06-04
 ---
-
 gate-docs (pre-merge, 2026-06-04) Medium, deferred-to-release: when the
 agile-workflow plugin is next version-bumped to ship the handoff-live-fields
 work, its `CHANGELOG.md` should gain an entry noting the `research_refs`/
