@@ -19,6 +19,8 @@ document's own voice, not into your model family's voice.
 ## 1. Construction tics
 
 - "Not X, but Y" and "It's not just X — it's Y" as a recurring move.
+- Declarative correction as emphasis: “X establishes A, not B” when B was
+  never a plausible reading. Keep the contrast when it resolves real ambiguity.
 - Rule-of-three everywhere: triadic lists in sentence after sentence.
 - Em-dash density: em-dashes as the default connective, several per
   paragraph.
@@ -42,6 +44,10 @@ document's own voice, not into your model family's voice.
   intuitive platform".
 - False precision of enthusiasm: "incredibly easy", "blazingly fast",
   without a measurement.
+- Stock architecture metaphors imported into unrelated prose: seam, spine,
+  load-bearing, bridge, north star, foundation, pillar. Keep established domain
+  terms and user-requested analogies; flag repetition or metaphor that obscures
+  the literal relationship.
 
 ## 3. Structure tics
 
