@@ -1,0 +1,27 @@
+{
+  "name": "@nklisch/pi-prose-craft",
+  "version": "0.1.0",
+  "description": "Standalone prose craftsmanship for human-facing documentation — style-contract drafting, editorial lens review, and a multi-agent refine cycle.",
+  "author": {
+    "name": "nklisch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nklisch/skills.git",
+    "directory": "plugins/prose-craft"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "pi-package",
+    "agent-skills",
+    "prose-craft"
+  ],
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  }
+}

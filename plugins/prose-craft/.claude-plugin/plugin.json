@@ -1,0 +1,10 @@
+{
+  "name": "prose-craft",
+  "description": "Standalone prose craftsmanship for human-facing documentation — draft docs to a plain-language style contract (prose-draft), review drafts through editorial lenses (prose-review), and run a multi-model rewrite-and-weave cycle to publication quality (prose-refine). No substrate dependency.",
+  "version": "0.1.0",
+  "author": {
+    "name": "nklisch"
+  },
+  "repository": "https://github.com/nklisch/skills",
+  "license": "MIT"
+}

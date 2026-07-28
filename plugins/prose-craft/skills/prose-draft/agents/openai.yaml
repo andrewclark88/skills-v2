@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prose Draft"
+  short_description: "Draft human-facing docs to a style contract"
+  default_prompt: "Use $prose-draft to draft this document."
+policy:
+  allow_implicit_invocation: true

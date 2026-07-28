@@ -77,6 +77,7 @@ pi install -l ./plugins/agentic-research
 pi install -l ./plugins/agent-coordination
 pi install -l ./plugins/background-tasks
 pi install -l ./plugins/zai-research
+pi install -l ./plugins/prose-craft
 ```
 
 Pi packages can load executable extensions in addition to shared skills. The root
@@ -101,6 +102,7 @@ workflow handoffs.
 | **agent-coordination** | Sparse cross-agent coordination ledger for shared repos — deliberate claims, handoffs, blockers, review summaries, and merge summaries without turning Discussions into chat. Lightly aware of agile-workflow `.work` IDs when present. | [plugins/agent-coordination/README.md](plugins/agent-coordination/README.md) |
 | **background-tasks** | Pi-native background command, monitor, and job-registry tools. | [plugins/background-tasks/README.md](plugins/background-tasks/README.md) |
 | **zai-research** | Pi-native Z.ai web, URL/PDF, JSON/API, and GitHub repository research tools. | [plugins/zai-research/README.md](plugins/zai-research/README.md) |
+| **prose-craft** | Standalone prose craftsmanship for human-facing docs — style-contract drafting, six-lens editorial review, and a multi-model rewrite-and-weave cycle to publication quality. | [plugins/prose-craft/README.md](plugins/prose-craft/README.md) |
 
 ## External companion plugins
 
@@ -367,6 +369,7 @@ plugins/code-audit/skills/         # standalone markdown-first code audit skills
 plugins/nates-toolkit/skills/      # standalone utility skills (plainspeak, agent-reflection, write-tool-skill, skill-auditor)
 plugins/agentic-research/          # grounded research discipline + .research substrate
 plugins/agent-coordination/skills/ # sparse cross-agent coordination ledger
+plugins/prose-craft/skills/        # standalone prose drafting, lens review, and multi-agent refine cycle
 plugins/workflow/                  # DEPRECATED — doc-driven, no longer supported
 .agents/skills/                    # reference, principle, and utility skills
 .claude-plugin/                    # Claude Code plugin manifest (root)
