@@ -30,10 +30,11 @@ projects with `/agile-workflow:convert`.
 codex plugin marketplace add https://github.com/nklisch/skills
 codex plugin install agile-workflow
 
-# Pi
-pi install npm:@nklisch/pi-agile-workflow
-# or, from this repository:
-pi install -l ./plugins/agile-workflow
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add agile-workflow@nklisch-skills --scope user
 ```
 
 Pi loads the same shared skills and `hooks/hooks.json` command hooks through a

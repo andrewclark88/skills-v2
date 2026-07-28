@@ -1,3 +1,0 @@
-# Keep locally generated Python bytecode out of the published Pi package.
-**/__pycache__/
-*.py[cod]

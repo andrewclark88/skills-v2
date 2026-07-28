@@ -392,8 +392,11 @@ Install from the `nklisch/skills` marketplace:
 codex plugin marketplace add https://github.com/nklisch/skills
 codex plugin install workbench
 
-# Pi
-pi install npm:@nklisch/pi-workbench
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add workbench@nklisch-skills --scope user
 ```
 
 Then ask:

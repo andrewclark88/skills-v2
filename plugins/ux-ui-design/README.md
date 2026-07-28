@@ -112,15 +112,14 @@ codex plugin install ux-ui-design
 ### Pi
 
 ```bash
-pi install npm:@nklisch/pi-ux-ui-design
-
-# Local checkout/development install
-pi install -l ./plugins/ux-ui-design
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add ux-ui-design@nklisch-skills --scope user
 ```
 
-All three channels consume the same shared `skills/` directory. This plugin has
-no Pi-only executable extension; Pi receives the same mockup-first skills as
-Claude Code and Codex.
+All channels consume the same shared `skills/` directory. Pi receives the same
+mockup-first skills as Claude Code and Codex.
 
 ### Bootstrap a project
 

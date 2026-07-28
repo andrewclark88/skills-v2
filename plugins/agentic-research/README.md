@@ -63,13 +63,13 @@ codex plugin install agentic-research
 ### Pi
 
 ```bash
-pi install npm:@nklisch/pi-agentic-research
-
-# Local checkout/development install
-pi install -l ./plugins/agentic-research
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add agentic-research@nklisch-skills --scope user
 ```
 
-All three channels load the same shared `skills/` directory.
+All channels load the same shared `skills/` directory.
 
 ## research-view binary
 

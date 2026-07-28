@@ -44,11 +44,10 @@ codex plugin install nates-toolkit
 ### Pi
 
 ```bash
-pi install npm:@nklisch/pi-nates-toolkit
-
-# Local checkout/development install
-pi install -l ./plugins/nates-toolkit
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add nates-toolkit@nklisch-skills --scope user
 ```
 
-All three channels load the same shared `skills/` directory. Under Pi, the
-extensions above are auto-discovered from `extensions/`.
+All channels load the same shared `skills/` directory.

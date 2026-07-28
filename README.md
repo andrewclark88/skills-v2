@@ -1,32 +1,65 @@
+<!--
+Brief (prose-draft)
+- Audience: developers evaluating agent tooling for Claude Code, OpenAI Codex,
+  or Pi. Comfortable with software and agent workflows; has not read this repo.
+- Venue: README (sanctioned hybrid: one-screen pitch, install quickstart,
+  links to deeper docs).
+- Purpose: after reading, the reader can install Workbench on their harness
+  and knows what else the catalog offers and which workflow plugin fits them.
+- Must-keeps:
+  - Install commands for all three channels, correct as printed:
+    `/plugin marketplace add nklisch/skills`,
+    `codex plugin marketplace add https://github.com/nklisch/skills`,
+    and for Pi: `pi install npm:@nklisch/pi-plugins` then
+    `/plugins marketplace add nklisch/skills` and
+    `/plugins add workbench@nklisch-skills --scope user`.
+  - This repo no longer publishes npm packages; Pi installation goes through
+    the pi-plugins marketplace manager (maintained in nklisch/pi-extensions).
+  - The Pi-native tool packages pi-background-tasks and pi-zai-research are
+    published to npm from the nklisch/pi-extensions repo.
+  - workbench and agile-workflow are mutually exclusive `.work/` owners.
+  - agile-workflow is supported but in maintenance (KTLO): fixes and
+    compatibility, no new feature development.
+  - The `workflow` plugin is deprecated; `/agile-workflow:convert` migrates
+    existing projects, and workbench `setup` consolidates older workflows.
+  - peeragent is an external companion: `pi install git:github.com/nklisch/peeragent@v0.4.1`.
+- Out of scope: per-plugin skill catalogs and deep workflow detail (deferred
+  to plugin READMEs and docs/ guides); agile-workflow's full pipeline
+  reference (lives in docs/agile-workflow-guide.md).
+-->
+
 # nklisch/skills
 
-A software development workflow suite for Claude Code, OpenAI Codex, and Pi —
-work tracking, UI/UX design, grounded research, markdown code audits, and
-standalone utility skills, designed to tee up autonomous agent runs that
-actually ship the right thing.
+A catalog of plugins and reference skills for AI coding agents — **Claude
+Code**, **OpenAI Codex**, and **Pi**. The plugins cover requirements-first
+delivery, grounded research, UI mockups, code audits, prose craftsmanship, and
+cross-agent coordination.
 
-Available as **Claude Code plugins**, **Codex plugins**, and **Pi packages**.
+The centerpiece is **Workbench**. You describe an outcome in plain language;
+the agent learns the repository, asks you for the decisions that belong to
+you, and drives the agreed scope to a verified finish. Decisions, evidence,
+and delivery state live in the repository, not in the chat that produced them.
 
 ## Install
 
-All supported plugins ship through three channels. The shared `skills/`
-directory is the portable surface; each harness adds only its native metadata or
-ergonomics.
+You need Claude Code with Task/Agent tool support, the OpenAI Codex CLI, or
+Pi. To adopt Workbench in a project, that project must be a Git repository.
+
+Pick your harness below. Install Workbench first, then add any standalone
+plugins you want.
 
 ### Claude Code
 
 ```bash
 /plugin marketplace add nklisch/skills
 
-# Choose one mutually exclusive .work/ owner:
-/plugin install agile-workflow@nklisch-skills    # structured work tracking + autopilot
-# or: /plugin install workbench@nklisch-skills   # flexible requirements-first delivery
-
-/plugin install ux-ui-design@nklisch-skills      # standalone mockup-first UI design
-/plugin install code-audit@nklisch-skills        # standalone markdown code audits
-/plugin install nates-toolkit@nklisch-skills     # standalone utility skills
-/plugin install agentic-research@nklisch-skills  # grounded research discipline
-/plugin install agent-coordination@nklisch-skills # sparse cross-agent ledger
+/plugin install workbench@nklisch-skills          # the centerpiece
+/plugin install ux-ui-design@nklisch-skills       # mockup-first UI design
+/plugin install code-audit@nklisch-skills         # markdown code audits
+/plugin install nates-toolkit@nklisch-skills      # utility skills
+/plugin install agentic-research@nklisch-skills   # grounded research discipline
+/plugin install agent-coordination@nklisch-skills # cross-agent ledger
+/plugin install prose-craft@nklisch-skills        # prose drafting and review
 ```
 
 ### OpenAI Codex
@@ -34,349 +67,122 @@ ergonomics.
 ```bash
 codex plugin marketplace add https://github.com/nklisch/skills
 
-# Choose one mutually exclusive .work/ owner:
-codex plugin install agile-workflow
-# or: codex plugin install workbench
-
+codex plugin install workbench
 codex plugin install ux-ui-design
 codex plugin install code-audit
 codex plugin install nates-toolkit
 codex plugin install agentic-research
 codex plugin install agent-coordination
+codex plugin install prose-craft
 ```
 
 ### Pi
 
+Pi installs go through [`pi-plugins`](https://github.com/nklisch/pi-extensions),
+the plugin marketplace and lifecycle manager. This repo no longer publishes
+npm packages — `pi-plugins` does.
+
 ```bash
-# Install the compatible default Pi package set (agile-workflow-based)
-pi install git:github.com/nklisch/skills
+pi install npm:@nklisch/pi-plugins
+```
 
-# Or install individual published packages. Choose one .work/ owner:
-pi install npm:@nklisch/pi-agile-workflow
-# or: pi install npm:@nklisch/pi-workbench
+Then, inside Pi:
 
-pi install npm:@nklisch/pi-ux-ui-design
-pi install npm:@nklisch/pi-code-audit
-pi install npm:@nklisch/pi-nates-toolkit
-pi install npm:@nklisch/pi-agentic-research
-pi install npm:@nklisch/pi-agent-coordination
-pi install npm:@nklisch/pi-background-tasks
-pi install npm:@nklisch/pi-zai-research
+```text
+/plugins marketplace add nklisch/skills
+/plugins add workbench@nklisch-skills --scope user
+/plugins add ux-ui-design@nklisch-skills --scope user
+/plugins add code-audit@nklisch-skills --scope user
+/plugins add nates-toolkit@nklisch-skills --scope user
+/plugins add agentic-research@nklisch-skills --scope user
+/plugins add agent-coordination@nklisch-skills --scope user
+/plugins add prose-craft@nklisch-skills --scope user
+```
 
-# External companion plugin: peeragent lives in its own repo/package
+Use `--scope project` instead of `--scope user` to enable a plugin for one
+repository only.
+
+The Pi-native tool packages publish to npm from the
+[pi-extensions](https://github.com/nklisch/pi-extensions) repository:
+
+```bash
+pi install npm:@nklisch/pi-background-tasks   # background jobs and monitors
+pi install npm:@nklisch/pi-zai-research       # Z.ai research tools
+```
+
+**peeragent** (cross-harness peer delegation and review) is an external
+companion that lives in [its own repository](https://github.com/nklisch/peeragent):
+
+```bash
 pi install git:github.com/nklisch/peeragent@v0.4.1
-
-# Local checkout/development installs
-pi install -l .
-pi install -l ./plugins/agile-workflow
-pi install -l ./plugins/workbench
-pi install -l ./plugins/ux-ui-design
-pi install -l ./plugins/code-audit
-pi install -l ./plugins/nates-toolkit
-pi install -l ./plugins/agentic-research
-pi install -l ./plugins/agent-coordination
-pi install -l ./plugins/background-tasks
-pi install -l ./plugins/zai-research
-pi install -l ./plugins/prose-craft
 ```
 
-Pi packages can load executable extensions in addition to shared skills. The root
-Git install loads the compatible default set built around `agile-workflow`;
-`workbench` is an alternative `.work/` owner and must be installed individually
-instead. The deprecated `workflow` plugin and external marketplace companions
-such as `peeragent` are not included. Install alternatives and companions from
-their own package roots. Install from trusted sources;
-`agile-workflow` includes a Pi-native `/aw` command for queue inspection and
-workflow handoffs.
+## Start using Workbench
 
-## The supported plugins
+After installing, ask your agent:
 
-| Plugin | What it does | Guide |
+> Set up Workbench in this repository.
+
+Workbench `setup` asks how you want agents to collaborate, review, verify, and
+close completed work, then writes a small `.work/` ledger into the repository.
+From there, direct the agent in ordinary language: "Implement this feature,"
+"Drive the onboarding epic to done," or "Research the prior art for this
+decision."
+
+The [Workbench README](plugins/workbench/README.md) covers its project model,
+autonomy settings, review weights, and research workflow.
+
+## Choose one `.work/` owner
+
+Workbench and agile-workflow both own a `.work/` directory, and they are
+mutually exclusive within one project. Pick one:
+
+| Pick | Best fit | Status |
 |---|---|---|
-| **agile-workflow** | Substrate-driven work tracking. Items as files in `.work/` with YAML frontmatter, late-binding releases, gates that produce items, goal-backed autopilot queue runner. | [docs/agile-workflow-guide.md](docs/agile-workflow-guide.md) |
-| **workbench** | Requirements-first delivery and externally grounded research. Natural language drives semantic autonomy, collaborative ideation, lens-driven design, configurable review weight, one or several epics, parking, verification, and deterministic knowledge indexing. | [plugins/workbench/README.md](plugins/workbench/README.md) |
-| **ux-ui-design** | HTML/CSS/JS mockup-first UI design. Throwaway single-file mockups in `.mockups/` for alignment before any production code. Loosely integrated with agile-workflow. | [docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) |
-| **code-audit** | Standalone markdown-first code audits — deep multi-lane scans, bug/security/test scans, perf scouting, bold refactor proposals, and repo scorecards without `.work`. | [plugins/code-audit/README.md](plugins/code-audit/README.md) |
-| **nates-toolkit** | Standalone utility skills, no workflow lock-in — explain in plain language, reflect on tool & skill usage, author skills, and audit skill artifacts. | [plugins/nates-toolkit/README.md](plugins/nates-toolkit/README.md) |
-| **agentic-research** | Grounded, verifiable AI research discipline. Produces `.research/` attestations and syntheses with citation/verification gates, and pairs with agile-workflow when research should ground a work item. | [plugins/agentic-research/README.md](plugins/agentic-research/README.md) |
-| **agent-coordination** | Sparse cross-agent coordination ledger for shared repos — deliberate claims, handoffs, blockers, review summaries, and merge summaries without turning Discussions into chat. Lightly aware of agile-workflow `.work` IDs when present. | [plugins/agent-coordination/README.md](plugins/agent-coordination/README.md) |
-| **background-tasks** | Pi-native background command, monitor, and job-registry tools. | [plugins/background-tasks/README.md](plugins/background-tasks/README.md) |
-| **zai-research** | Pi-native Z.ai web, URL/PDF, JSON/API, and GitHub repository research tools. | [plugins/zai-research/README.md](plugins/zai-research/README.md) |
-| **prose-craft** | Standalone prose craftsmanship for human-facing docs — style-contract drafting, six-lens editorial review, and a multi-model rewrite-and-weave cycle to publication quality. | [plugins/prose-craft/README.md](plugins/prose-craft/README.md) |
+| **Workbench** | Requirements-first delivery through ordinary conversation, with a compact ledger and integrated research. Consolidates older workflows — including an existing agile-workflow substrate — through `setup`. | Active development. Recommended for new projects. |
+| **agile-workflow** | Projects that already rely on its explicit stage-and-gate pipeline and autopilot queue runner. | Supported in maintenance mode: bug fixes and compatibility work, no new feature development. |
 
-## External companion plugins
+> **Deprecated:** the older `workflow` plugin (doc-driven, `docs/designs/`) is
+> unmaintained. Existing installs keep working. Migrate to agile-workflow with
+> `/agile-workflow:convert`, or consolidate onto Workbench with
+> `/workbench:setup`. The old guide remains at
+> [docs/workflow-guide.md](docs/workflow-guide.md) for reference.
 
-| Plugin | Pi install | What it does |
+## The plugins
+
+| Plugin | What it does | More |
 |---|---|---|
-| **peeragent** | `pi install git:github.com/nklisch/peeragent@v0.4.1` | Cross-harness peer delegation and peer review. Pi loads the `peer` and `peer-review` skills from peeragent's package and uses its bundled wrapper/binaries to call Codex, Claude Code, Gemini through Antigravity, or Z.AI GLM 5.2 through Pi. |
+| **workbench** | Requirements-first delivery. Plain-language outcomes drive design, weighted review, and externally grounded research tracked in `.work/` and `.research/`. | [plugins/workbench/README.md](plugins/workbench/README.md) |
+| **ux-ui-design** | Mockup-first UI design. Throwaway single-file HTML mockups in `.mockups/` to align on direction before production code. | [docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) |
+| **code-audit** | Markdown-first audits with no workflow dependency: deep code, bug, security, and test scans; perf scouting; repo scorecards. | [plugins/code-audit/README.md](plugins/code-audit/README.md) |
+| **nates-toolkit** | Project-agnostic utilities — plain-language re-explanation, agent self-reflection, skill authoring and auditing. | [plugins/nates-toolkit/README.md](plugins/nates-toolkit/README.md) |
+| **agentic-research** | Grounded, verifiable research discipline with attestations and citation gates. Stands alone or pairs with a work tracker. | [plugins/agentic-research/README.md](plugins/agentic-research/README.md) |
+| **agent-coordination** | Sparse cross-agent coordination ledger for shared repositories, backed by GitHub Discussions. | [plugins/agent-coordination/README.md](plugins/agent-coordination/README.md) |
+| **prose-craft** | Prose craftsmanship for human-facing docs: style-contract drafting, six-lens review, multi-model refine cycle. | [plugins/prose-craft/README.md](plugins/prose-craft/README.md) |
+| **agile-workflow** | Structured stage-and-gate work tracking with a goal-backed autopilot queue. **Supported in maintenance mode** — see above. | [docs/agile-workflow-guide.md](docs/agile-workflow-guide.md) |
 
-The package release procedure is documented in
-[docs/npm-publishing.md](docs/npm-publishing.md). Choose one `.work/` owner per
-project: `agile-workflow` provides a structured stage-and-gate system, while
-`workbench` provides a smaller requirements-first ledger, integrated grounded
-research, and migration from an existing agile-workflow substrate through
-`/workbench:setup`. The standalone
-`ux-ui-design` plugin remains available for projects that want its larger,
-specialized mockup system.
+## Reference skills
 
-> **Deprecated:** the `workflow` plugin (doc-driven, `docs/designs/`-as-artifacts)
-> is **deprecated and no longer supported.** Existing projects on it still
-> work, but no new features or fixes will land. New projects should use
-> `agile-workflow`. To migrate an existing `workflow` project, run
-> `/agile-workflow:convert` — it detects the legacy layout and migrates
-> automatically. The old guide at [docs/workflow-guide.md](docs/workflow-guide.md)
-> remains for reference.
+Beyond the plugins, `.agents/skills/` carries a curated library of reference
+skills that auto-load when their library or topic appears in the work — Bun,
+Zod v4, Biome v2, Drizzle, Hono, the TanStack family, Zustand, citty,
+@clack/prompts, smol-toml, schemars, and others. A few standalone utilities
+(`clean-memory`, `design-pages`) and ecosystem research notes round it out.
 
-## agile-workflow
-
-A full substrate skill set for tracking and shipping work via markdown files in
-`.work/`. See [docs/agile-workflow-guide.md](docs/agile-workflow-guide.md)
-for the full guide and current catalog.
-
-### Pipeline
+## Repository layout
 
 ```
-ideate → convert → epicize           ← project bootstrap (greenfield)
-    ↓
-park / scope / fix                   ← capture & promotion (agent picks)
-    ↓
-epic-design --only-questions --all   ← align on big choices (also runs UI mocks)
-feature-design --only-questions --all   ← drill in per feature
-    ↓
-Goal: Use agile-workflow autopilot to drain --all
-    ↓
-release-deploy <version>             ← bind, gate, ship
+plugins/<name>/          # one directory per plugin, each with shared skills/
+                         # plus Claude, Codex, and Pi channel metadata
+.agents/skills/          # standalone reference-skill library (non-plugin)
+.claude-plugin/          # Claude Code marketplace catalog
+.agents/plugins/         # Codex marketplace catalog
+scripts/bump-version.sh  # per-plugin version gate across all channel metadata
+docs/                    # repo-level vision, spec, architecture, and guides
 ```
 
-The two `--only-questions` passes are the killer move — front-load every
-directional choice and mock so autopilot runs without guessing.
-
-### Bootstrap (user-invocable)
-
-| Skill | What it does |
-|-------|-------------|
-| **ideate** | Foundation-docs workshop. Produces VISION.md, SPEC.md, ARCHITECTURE.md that encode rolling-foundation from day one. |
-| **convert** | Bootstrap the `.work/` substrate. Detects project shape (legacy workflow-plugin / ad-hoc / no-tracking / greenfield), seeds initial items, writes the canonical AGENTS.md section, keeps CLAUDE.md as a symlink/shim for compatibility, runs the conventions interview, copies `work-view`, produces MIGRATION_REPORT.md. Idempotent via `--update`. |
-| **epicize** | Decompose foundation docs into multiple epics in `.work/active/epics/` with declared `depends_on` chains. |
-
-### Capture & promotion (agent picks naturally)
-
-| Skill | What it does |
-|-------|-------------|
-| **park** | Quick capture into `.work/backlog/`. Triggers on "park this", "add to backlog". |
-| **scope** | Promote backlog item or fresh request into `.work/active/` as epic/feature/story. For large scope, rolls foundation docs forward in the same stride. **Batch mode** (no arg, `--all`, or NL filter) clusters the whole backlog by code seam and capability arc, proposes a structure, confirms once with the user, then writes everything. |
-| **fix** | Single-stride bug repair. Reproduces, identifies root cause, writes failing test, applies minimal fix, lands story at stage:review. |
-
-### Design family (agent picks; kind- and tag-routed)
-
-| Skill | Triggered by | What it produces |
-|-------|---|---|
-| **epic-design** | epic at stage:drafting | Decomposes the epic into child features at stage:drafting with declared depends_on chains, written INTO the epic body; advances epic to implementing. Primary tier for `ux-ui-design` mocks. |
-| **feature-design** | feature at stage:drafting, no specialized tag | Greenfield design — written INTO feature body, child stories spawned with depends_on, advances stage to implementing. Fallback tier for mocks. |
-| **refactor-design** | feature with tags:[refactor], OR discovery (no arg / path / NL scope) | Per-feature: code-smell scan, before/after step shape, risk + rollback per step. Discovery: scans target scope, classifies findings as pure-refactor or behavior-changing, emits items. |
-| **perf-design** | feature with tags:[perf], OR discovery (no arg / path / NL scope) | Per-feature: bottleneck identification, optimization hierarchy (algorithmic > I/O > idioms > parallelism), benchmark scaffolds. Discovery: picks top 3-5 likely hot paths, profiles them, emits items per bottleneck. |
-| **prose-author** | feature with tags:[prose] | No-code authoring lane (authors, not a design step) — for prose deliverables with no code surface (docs, conventions, rules, copy). Verifies no real code surface (black-box test), writes brief-as-design, advances stage to implementing with no Explore / pre-mortem / question gate. Collapses to one inline stride for the common case; large multi-section prose can use drafting → implementing → review as real draft/write/revise steps. Pairs with implement's inline path. |
-| **agentic-research:research-orchestrator** *(cross-plugin)* | feature with tags:[research] | Grounded ARD research engagement — an *input* that grounds other work, not a code design. Reads the item's `research_dials:` block — the commissioning subset of the registration (scope_authority, verification_rigor, intent, output_kind), with the rest settled at dispatch; scoping the item IS the dispatch act. Runs the ARD walk with verification gates inline; never binds to a release. Requires the `agentic-research` plugin (without it, `[research]` is an inert tag → `feature-design`). |
-
-### Production + review (agent picks)
-
-| Skill | What it does |
-|-------|-------------|
-| **implement** | Read item body (design is in there), write code, run build+tests, advance stage implementing → review. Single-stride sequential. |
-| **implement-orchestrator** | For implementation bands: walk depends_on graph, decide bundles/waves/write-scope isolation, and dispatch implementation sub-agents when parallelism is beneficial. |
-| **review** | Granularity-gated. A **story** fast-advances on the build+tests `implement` already ran — no lens pass, no peer (a second same-context review there rarely finds anything). A **feature/epic** gets a deep lens review run in a **fresh context**: cross-model via `peeragent:peer-review` when a different model class is reachable, otherwise a fresh top-class sub-agent (an Opus host spawns a *new* Opus for fresh perspective). Triages findings into items. Accepts `<id>`, `--all` / no arg (drain the review queue), or NL filter. |
-
-### Release & autonomous
-
-| Skill | What it does |
-|-------|-------------|
-| **release-deploy** | Bind items to a version, run all configured gates in CONVENTIONS.md order, wait for readiness, ship per release mapping, collapse the bundle into one release summary (bodies pruned or retained per terminal-tier retention). Idempotent. |
-| **autopilot** | Goal-backed queue runner. Picks next ready item respecting depends_on, invokes the right skill, advances stage, repeats until the goal scope is done or blocked — then runs a final cross-model peer-review pass over the whole completion bundle before reporting complete. Invokable from goal text such as "Use agile-workflow autopilot to drain --all"; direct `/agile-workflow:autopilot <scope>` still works. Harness goal/continuation owns persistence, not `/loop`. |
-| **bold-refactor** | Architectural reconception via conceptual lenses. Sweeps a target and produces one or more refactor EPICs with child features tagged [refactor]. User-invocable only — too aggressive for auto-trigger. |
-
-### Gates (agent picks; produce items, NOT pass/fail reports)
-
-Five gates fire by default during release-deploy's quality-gate stage in CONVENTIONS.md
-order (default: security → tests → cruft → docs → patterns). `gate-refactor` is opt-in
-— add it to `gates_for_release` when your project has scan-rule libraries installed.
-Gate finding placement is configurable with `gate_finding_routing` after each
-gate normalizes its own severity/priority/confidence vocabulary.
-
-| Skill | Items produced |
-|-------|---|
-| **gate-security** | Security findings with `gate_origin: security`, `tags: [security]` |
-| **gate-tests** | Coverage gaps + tautological-test reworks with `gate_origin: tests` |
-| **gate-cruft** | Dead code / cruft cleanup items with `gate_origin: cruft` |
-| **gate-docs** | Foundation-doc drift items (enforces rolling-foundation) with `gate_origin: docs` |
-| **gate-patterns** | Reusable patterns extracted to `.agents/skills/patterns/` with optional Claude mirror |
-| **gate-refactor** | Refactor rule-library findings with `gate_origin: refactor`; routing tag per library declaration (`findings-route:`); see the gate's SKILL.md — opt-in; discovers libraries under `gate_refactor_scan_library_roots` (default: `{project}/.agents/skills/scan-*/`, then `{project}/.claude/skills/scan-*/`); graceful no-op when no libraries installed |
-
-### Reference
-
-| Skill | What it does |
-|-------|-------------|
-| **principles** | Code-design (Ports & Adapters, SSOT, Generated Contracts, Fail Fast) + substrate-execution (Item-IS-the-Work, Rolling-Foundation, Late-Binding) principles. Auto-loads. |
-| **research** | Investigate libraries, APIs, SDKs. Produces a research doc and auto-loading reference skill. |
-| **refactor-conventions-creator** | Interview-based. Generates a project-specific refactor-conventions skill. |
-
-## ux-ui-design
-
-Seven skills for mockup-first UI/UX design. Throwaway single-file HTML
-mockups in `.mockups/` for alignment before any production code. See
-[docs/ux-ui-design-guide.md](docs/ux-ui-design-guide.md) for the full guide.
-
-| Skill | What it does |
-|-------|-------------|
-| **palette** | Color + typography options as HTML previews. Locks the choice into `tokens.css`. |
-| **components** | Showcase page of every button/input/card/modal in every state, plus a reusable `components.css`. |
-| **motion** | Named easing-curve vocabulary, durations, springs, designed pauses — playable in browser, plus reusable `motion.css`. |
-| **screens** | N (default 4) distinct HTML mockups for a single screen, plus a 2x2 comparison grid. |
-| **flows** | Multi-page user flow with prev/next or hub-and-spoke chrome, plus index navigator. |
-| **adopt** | Scans an existing codebase, inventories every UI surface, audits for inconsistencies, mirrors current UI into mocks OR reimagines them. |
-| **ux-ui-principles** | Reference: storage layout, decision matrix, tech rule. Adds convention to project AGENTS.md on first run, with CLAUDE.md compatibility when needed. Auto-loads. |
-
-### Plugged into agile-workflow
-
-When both plugins are installed, mocks land at four tiers (highest tier
-first wins, downstream inherits):
-
-- **After `ideate`** → `palette` + `components`
-- **During `epic-design --only-questions`** → `screens` + `flows` for cross-feature journeys
-- **During `feature-design --only-questions`** → more `screens` + `flows` for per-feature surfaces
-- **Ad-hoc during design work** → one-off mocks when a particular surface needs exploration
-
-This is the killer pairing: do mocks alongside the `--only-questions`
-passes so autopilot inherits visual alignment along with directional
-choices.
-
-## Nate's Toolkit
-
-Standalone, project-agnostic utility skills with no workflow lock-in. Install
-via `/plugin install nates-toolkit@nklisch-skills`.
-
-| Skill | What it does |
-|-------|-------------|
-| **plainspeak** | Re-render the last thing said in vivid plain language — one everyday metaphor, one concrete example, a crisp restatement, at a chosen depth. Manual only (`/plainspeak`). |
-| **agent-reflection** | Reflect on how the agent's own tools and skills served it this session — confusion, inefficiency, friction, context cost. Prioritized recommendations for tool and skill authors. |
-| **write-tool-skill** | Create distributable reference skills for a tool, CLI, MCP server, or library. |
-| **skill-auditor** | Static quality audit of a skill against type-specific, triggering, and emotional-tone rubrics. Scored report with fixes and a trigger-test plan. |
-
-## Code Audit
-
-Standalone markdown-first code audits with no workflow substrate. Install via
-`/plugin install code-audit@nklisch-skills`.
-
-| Skill | What it does |
-|-------|-------------|
-| **deep-code-scan** | Multi-lane campaign: decomposes the repo, fans out scanners, reviews findings, and writes `code-audit/scan-<goal>/` docs. |
-| **bug-scan** | Correctness bug hunt across concurrency, async, state, resource, time/number, error, data, and language-footgun domains. |
-| **security-scan** | Security review across auth, injection, secrets, deps, API, infra, crypto, data protection, and logging risks. |
-| **test-scan** | Test-quality audit: coverage gaps from contracts/specs, weak assertions, stale fixtures, over-mocking, and flaky tests. |
-| **perf-scout** | Speculative performance idea deck with validation paths; no claimed speedups. |
-| **bold-refactor** | Architectural reconception proposals through elimination, unification, inversion, algebraic, declarative, and domain lenses. |
-| **repo-eval** | Verified repository scorecard written to `REPO-EVAL.md`; this is the supported home for repository evaluation. |
-
-### Which audit/eval path to use
-
-Use **code-audit** when you want markdown deliverables only: reports, scorecards,
-and remediation plans that do not assume agile-workflow exists.
-
-Use **agile-workflow gates** when you are cutting a release and want findings to
-become substrate work tied to the release bundle instead of standalone reports.
-
-## Agent Coordination
-
-Sparse cross-agent coordination for shared repositories. Install via
-`/plugin install agent-coordination@nklisch-skills`.
-
-| Skill | What it does |
-|-------|-------------|
-| **coordination-ledger** | Defines a deliberate GitHub Discussions-backed ledger for active claims, scope updates, releases, handoffs, blockers, review summaries, and merge summaries. Uses `.work` item IDs as optional context when agile-workflow is present, but keeps `.work`, PRs, and code review authoritative. |
-
-The plugin also ships `scripts/agent-comms`, a small `gh api graphql` wrapper
-for ledger operations such as `doctor`, `ensure-thread`, `active-claims`,
-`claim`, `release`, `handoff`, `blocker`, `review-summary`, and `merge-summary`.
-
-## Library & Tool References
-
-Reference skills that auto-load when their library is detected.
-
-| Skill | Library |
-|-------|---------|
-| **bun** | Bun runtime — Bun.$, Bun.file, bun:test |
-| **zod-v4** | Zod v4 — schemas, safeParse, transforms |
-| **biome-v2** | Biome v2 — linter/formatter config |
-| **drizzle-v0** | Drizzle ORM v0.45+ PostgreSQL |
-| **hono-v4** | Hono v4 — routes, middleware, SSE |
-| **tanstack-query-v5** | TanStack Query v5 (React Query) |
-| **tanstack-router-v1** | TanStack Router v1 — file-based routing |
-| **tanstack-table-v8** | TanStack Table v8 — headless tables |
-| **zustand-v5** | Zustand v5 — state management |
-| **citty** | citty CLI framework (UnJS) |
-| **clack-prompts** | @clack/prompts — terminal UI |
-| **smol-toml** | smol-toml — TOML parser/serializer |
-| **claude-cli-sdk** | @nklisch/claude-cli-sdk |
-| **schemars** | schemars 1.x — Rust JSON Schema generation |
-
-## Other Skills
-
-| Skill | What it does |
-|-------|-------------|
-| **design-pages** | Design GitHub Pages for a project |
-| **clean-memory** | Audit and refine MEMORY.md |
-
-## Canonical layout (in projects using these skills)
-
-```
-.work/
-├── active/{epics,features,stories}/  ← in-flight items (markdown + frontmatter)
-├── backlog/                           ← parked ideas, unscoped
-├── releases/<version>/                ← shipped bundles
-├── archive/                           ← done items not bound to a release
-├── bin/work-view                      ← query script (copied by /agile-workflow:convert)
-└── CONVENTIONS.md                     ← project-specific overrides
-AGENTS.md                              ← canonical agent instructions (slim: orientation + pointers + read-directive)
-CLAUDE.md -> AGENTS.md                 ← Claude Code compatibility
-.agents/
-├── rules/*.md                         ← force-loaded agent rules (agile-workflow.md + patterns.md digest + user rules; hook-injected)
-└── skills/patterns/                   ← detailed reusable code patterns (gate-patterns source of truth)
-.mockups/
-├── design-system/                     ← palette, typography, components, motion + tokens.css/components.css/motion.css
-├── screens/<feature>/                 ← N option HTMLs + index.html
-└── flows/<flow-name>/                 ← numbered sequence + index.html
-docs/                                  ← foundation docs (VISION, SPEC, ARCHITECTURE) — roll forward in place
-```
-
-Items are markdown files with structured frontmatter (`id, kind, stage,
-tags, parent, depends_on, release_binding, gate_origin, research_refs, research_origin, created, updated`).
-Design lives inside the item's body — there are no parallel design docs.
-Mockups land in `.mockups/` and link back via a `## Mockups` section in
-the item body. See the guides for the full conventions.
-
-## Repo Structure (this repo)
-
-```
-plugins/agile-workflow/            # agile-workflow plugin (substrate-driven)
-├── skills/                        #   skill source
-├── docs/                          #   foundation docs (VISION, SPEC, ARCHITECTURE, PRINCIPLES, MIGRATION)
-├── hooks/                         #   SessionStart/UserPromptSubmit/PostCompact + PostToolUse hook scripts
-├── scripts/work-view.sh           #   substrate query CLI (copied by /convert into target repos)
-└── .claude-plugin/plugin.json
-plugins/ux-ui-design/              # ux-ui-design plugin (7 skills, mockup-first)
-├── skills/                        #   skill source
-└── docs/                          #   plugin design docs
-plugins/code-audit/skills/         # standalone markdown-first code audit skills
-plugins/nates-toolkit/skills/      # standalone utility skills (plainspeak, agent-reflection, write-tool-skill, skill-auditor)
-plugins/agentic-research/          # grounded research discipline + .research substrate
-plugins/agent-coordination/skills/ # sparse cross-agent coordination ledger
-plugins/prose-craft/skills/        # standalone prose drafting, lens review, and multi-agent refine cycle
-plugins/workflow/                  # DEPRECATED — doc-driven, no longer supported
-.agents/skills/                    # reference, principle, and utility skills
-.claude-plugin/                    # Claude Code plugin manifest (root)
-docs/                              # human-facing guides — agile-workflow-guide.md, ux-ui-design-guide.md, workflow-guide.md (deprecated)
-```
-
-## Requirements
-
-- Claude Code with Task/Agent tool support, OpenAI Codex CLI, or Pi
-- Git repository
+Every supported plugin ships the same `skills/` directory to all three
+harnesses and keeps its Claude, Codex, and Pi metadata in version lockstep.
+The distribution rules live in [docs/SPEC.md](docs/SPEC.md); the layout and
+wiring live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the purpose and
+dogfooding thesis live in [docs/VISION.md](docs/VISION.md).

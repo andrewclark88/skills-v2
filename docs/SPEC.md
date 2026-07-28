@@ -6,21 +6,25 @@ each plugin's own `docs/` owns those (see "Where internals live").
 
 ## Distribution channels
 
-The catalog ships through exactly three first-class channels, all resolving from
-this git tree:
+The catalog ships through two native marketplace channels plus a Pi bridge,
+all resolving from this git tree:
 
 - **Claude Code marketplace** — `/plugin install` against
   `.claude-plugin/marketplace.json`.
 - **OpenAI Codex marketplace** — `codex plugin marketplace add` reads the same
   `.claude-plugin/marketplace.json`.
-- **Pi packages** — `pi install` from npm, git, or local paths against package
-  roots that declare Pi resources in `package.json` under the `pi` key.
+- **Pi (via bridge)** — the `@nklisch/pi-plugins` manager (maintained in the
+  `nklisch/pi-extensions` repo) reads the same marketplace catalogs and
+  installs plugins from them: `/plugins marketplace add nklisch/skills`, then
+  `/plugins add <name>@nklisch-skills`.
 
-No channel is secondary. Skills are authored to the open Agent Skills standard
-(agentskills.io) so a `SKILL.md` works unchanged across Claude Code, Codex, and
-Pi.
+No channel is secondary. This repo does not publish npm packages; Pi-native
+tool packages (`pi-plugins`, `pi-background-tasks`, `pi-zai-research`) publish
+from `nklisch/pi-extensions`. Skills are authored to the open Agent Skills
+standard (agentskills.io) so a `SKILL.md` works unchanged across Claude Code,
+Codex, and Pi.
 
-## Plugin manifests and package metadata
+## Plugin manifests
 
 Every supported plugin ships channel metadata under `plugins/<name>/`:
 
@@ -28,12 +32,11 @@ Every supported plugin ships channel metadata under `plugins/<name>/`:
 - `.codex-plugin/plugin.json` — Codex. Must declare `"skills": "./skills/"`
   explicitly (Codex does not auto-discover) and an `interface` block for
   marketplace presentation.
-- `package.json` — Pi. Must include `keywords: ["pi-package"]` and a `pi`
-  manifest that exposes the same shared `skills/` directory plus any Pi-native
-  extensions, prompt templates, or themes.
 
-All three carry the **same `version`**. They must never disagree about a
-plugin's identity. This is the load-bearing invariant of the whole repo.
+Both carry the **same `version`**. They must never disagree about a plugin's
+identity. This is the load-bearing invariant of the whole repo. The Pi bridge
+consumes these same manifests and catalogs; there is no Pi-specific metadata
+in this tree.
 
 ## Marketplace registration
 
@@ -48,13 +51,11 @@ Codex:
   (currently `krometrail`, `peeragent`, and `skilltap`), so the marketplace can
   offer plugins that do not live in this tree.
 
-Pi distribution is package-native rather than marketplace-index-native in this
-repo: each shippable plugin directory owns its Pi `package.json`, and published
-Pi packages use npm metadata plus the `pi-package` keyword for gallery
-discovery. Git and local-path installs use the same package roots. External
-marketplace companions such as `peeragent` live in their own repositories and
-must expose their own Pi package roots; the root `nklisch/skills` Pi package does
-not include or re-export them.
+Pi installation is bridge-based rather than package-based: `@nklisch/pi-plugins`
+(from `nklisch/pi-extensions`) registers this repo's marketplace catalogs and
+installs the same plugin entries a Claude or Codex user sees, including the
+external `git-subdir` companions. External companions such as `peeragent` also
+document their own install commands in their own repositories.
 
 ## Shared and harness-specific surfaces
 
@@ -69,17 +70,16 @@ What crosses harnesses and what does not is a hard boundary, not a preference:
 - **Codex-specific:**
   - `.codex-plugin/plugin.json` interface metadata.
   - `agents/openai.yaml` skill polish and invocation policy.
-- **Pi-specific:**
-  - `package.json` `pi` resource declarations.
-  - Pi extensions for native commands, tools, widgets, and TUI surfaces.
-  - Pi prompt templates or themes where the package benefits from them.
+- **Pi:** whatever the pi-plugins bridge can consume from the shared and
+  Claude/Codex surfaces. Pi-native runtime extensions belong in
+  `nklisch/pi-extensions`, not in this tree.
 
 Harness-specific surfaces degrade to absent in other harnesses, never to broken.
 
 ## Versioning
 
-`scripts/bump-version.sh <plugin> <major|minor|patch>` bumps every channel's
-metadata at once and refuses to run if versions are already out of sync.
+`scripts/bump-version.sh <plugin> <major|minor|patch>` bumps both channel
+manifests at once and refuses to run if versions are already out of sync.
 
 - **Order matters:** commit feature changes *before* bumping. The script
   auto-commits and pushes the bump on its own and refuses to run with a dirty
@@ -105,8 +105,8 @@ published; a reference skill that needs distribution is folded into a plugin.
 
 The single-source-of-truth rules that keep the catalog coherent:
 
-- A plugin's Claude manifest, Codex manifest, and Pi package metadata agree on
-  identity and version (enforced by `bump-version.sh`).
+- A plugin's Claude manifest and Codex manifest agree on identity and
+  version (enforced by `bump-version.sh`).
 - Registering a new plugin touches all channel metadata plus both native
   catalogs: `.claude-plugin/marketplace.json` and
   `.agents/plugins/marketplace.json`. Missing any one breaks distribution.
@@ -116,9 +116,16 @@ The single-source-of-truth rules that keep the catalog coherent:
 
 ## Status and deprecation
 
-- **Supported:** `agile-workflow` (flagship structured workflow), `workbench`
-  (flexible requirements-first workflow), `ux-ui-design`, `code-audit`,
-  `nates-toolkit`, `agentic-research`, `agent-coordination`.
+- **Supported:** `workbench` (centerpiece — requirements-first delivery and
+  grounded research), `ux-ui-design`, `code-audit`, `nates-toolkit`,
+  `agentic-research`, `agent-coordination`, `prose-craft`, and `zai-research`
+  (skill + cross-harness MCP combo; its Pi-native extension publishes from
+  `nklisch/pi-extensions`). Pi-native tool packages such as
+  `pi-background-tasks` live in the `nklisch/pi-extensions` repo, not here.
+- **Supported, maintenance mode (KTLO):** `agile-workflow`. It receives bug
+  fixes and compatibility work so existing projects keep running, but no new
+  feature development is planned — new workflow capability lands in
+  `workbench`. New projects should adopt `workbench`.
 - **Deprecated and frozen:** `workflow`. It stays in the tree so existing
   installs keep working; it gets no new features or fixes. New work does not
   extend it, and new docs do not cite it as a sibling.
@@ -128,10 +135,11 @@ The single-source-of-truth rules that keep the catalog coherent:
 This SPEC governs distribution, not behavior. For what a plugin *does* and how it
 is built internally, defer to its own docs:
 
-- Structured substrate model, item lifecycle, gates, releases →
-  `plugins/agile-workflow/docs/{SPEC,ARCHITECTURE,PRINCIPLES}.md`.
-- Flexible work ledger, artifact references, and compact release lifecycle →
+- Requirements-first work ledger, artifact references, research evidence
+  tier, and compact release lifecycle →
   `plugins/workbench/docs/{VISION,SPEC}.md`.
+- Structured substrate model, item lifecycle, gates, releases (maintenance
+  mode) → `plugins/agile-workflow/docs/{SPEC,ARCHITECTURE,PRINCIPLES}.md`.
 - Other plugins → their own directory, README/docs where present, and manifests.
 
 Repo layout and the substrate-access model live in `docs/ARCHITECTURE.md`.

@@ -143,8 +143,6 @@ new_scratch_repo() {
     > "${repo}/plugins/agile-workflow/.claude-plugin/plugin.json"
   printf '{\n  "name": "agile-workflow",\n  "version": "%s"\n}\n' "$aw_version" \
     > "${repo}/plugins/agile-workflow/.codex-plugin/plugin.json"
-  printf '{\n  "name": "@nklisch/pi-agile-workflow",\n  "version": "%s",\n  "keywords": ["pi-package"],\n  "pi": { "skills": ["./skills"] }\n}\n' "$aw_version" \
-    > "${repo}/plugins/agile-workflow/package.json"
 
   # Rust stamp — start with a placeholder, no trailing newline (mirrors prod).
   printf '%s' "$aw_version" \
@@ -168,8 +166,6 @@ EOF
     > "${repo}/plugins/agentic-research/.claude-plugin/plugin.json"
   printf '{\n  "name": "agentic-research",\n  "version": "%s"\n}\n' "$aw_version" \
     > "${repo}/plugins/agentic-research/.codex-plugin/plugin.json"
-  printf '{\n  "name": "@nklisch/pi-agentic-research",\n  "version": "%s",\n  "keywords": ["pi-package"],\n  "pi": { "skills": ["./skills"] }\n}\n' "$aw_version" \
-    > "${repo}/plugins/agentic-research/package.json"
 
   # Rust stamp — no trailing newline.
   printf '%s' "$aw_version" \
@@ -189,8 +185,6 @@ EOF
       > "${repo}/plugins/${extra_plugin}/.claude-plugin/plugin.json"
     printf '{\n  "name": "%s",\n  "version": "%s"\n}\n' "$extra_plugin" "$aw_version" \
       > "${repo}/plugins/${extra_plugin}/.codex-plugin/plugin.json"
-    printf '{\n  "name": "@nklisch/pi-%s",\n  "version": "%s",\n  "keywords": ["pi-package"],\n  "pi": { "skills": ["./skills"] }\n}\n' "$extra_plugin" "$aw_version" \
-      > "${repo}/plugins/${extra_plugin}/package.json"
   fi
 
   # Initialize a clean git repo (real git; commit happens via real git here,
@@ -265,8 +259,6 @@ assert_eq "claude plugin.json bumped" "1.2.4" \
   "$(jq -r '.version' "${REPO1}/plugins/agile-workflow/.claude-plugin/plugin.json")"
 assert_eq "codex plugin.json bumped" "1.2.4" \
   "$(jq -r '.version' "${REPO1}/plugins/agile-workflow/.codex-plugin/plugin.json")"
-assert_eq "package.json bumped" "1.2.4" \
-  "$(jq -r '.version' "${REPO1}/plugins/agile-workflow/package.json")"
 
 # Both work-view files are git-staged.
 assert_true "claude plugin.json is staged" \
@@ -275,8 +267,6 @@ assert_true "codex plugin.json is staged" \
   "is_staged '$REPO1' 'plugins/agile-workflow/.codex-plugin/plugin.json'"
 assert_true ".work-view-version is staged" "is_staged '$REPO1' '$VER_REL'"
 assert_true "work-view.sh is staged" "is_staged '$REPO1' '$WV_REL'"
-assert_true "agile-workflow package.json is staged" \
-  "is_staged '$REPO1' 'plugins/agile-workflow/package.json'"
 
 # agile-workflow bump must NOT touch research-view artifacts.
 assert_eq "aw-bump: .research-view-version unchanged" "1.2.3" \
@@ -304,8 +294,6 @@ run_bump "$REPO2" ux-ui-design patch
 assert_eq "non-aw bump exits 0" "0" "$BUMP_RC"
 assert_eq "non-aw plugin.json bumped" "1.2.4" \
   "$(jq -r '.version' "${REPO2}/plugins/ux-ui-design/.claude-plugin/plugin.json")"
-assert_eq "non-aw package.json bumped" "1.2.4" \
-  "$(jq -r '.version' "${REPO2}/plugins/ux-ui-design/package.json")"
 assert_eq ".work-view-version unchanged after non-aw bump" "$VER_BEFORE" \
   "$(cat "${REPO2}/${VER_REL}")"
 assert_eq "work-view.sh unchanged after non-aw bump" "$WV_BEFORE" \
@@ -316,8 +304,6 @@ assert_true "non-aw claude plugin.json is staged" \
   "is_staged '$REPO2' 'plugins/ux-ui-design/.claude-plugin/plugin.json'"
 assert_true "non-aw codex plugin.json is staged" \
   "is_staged '$REPO2' 'plugins/ux-ui-design/.codex-plugin/plugin.json'"
-assert_true "non-aw package.json is staged" \
-  "is_staged '$REPO2' 'plugins/ux-ui-design/package.json'"
 
 rm -rf "$REPO2"
 
@@ -373,67 +359,43 @@ assert_true "major work-view.sh literal == 2.0.0" \
 rm -rf "$REPO5"
 
 # ---------------------------------------------------------------------------
-# Test group 5: package.json mismatch fails before projection
+# Test group 5: codex manifest mismatch fails before projection
 # ---------------------------------------------------------------------------
 echo ""
-echo "=== Test group 5: package.json mismatch fails before projection ==="
+echo "=== Test group 5: codex manifest mismatch fails before projection ==="
 
 REPO6="$(new_scratch_repo "1.2.3")"
-jq '.version = "9.9.9"' "${REPO6}/plugins/agile-workflow/package.json" \
-  > "${REPO6}/plugins/agile-workflow/package.json.tmp"
-mv "${REPO6}/plugins/agile-workflow/package.json.tmp" \
-  "${REPO6}/plugins/agile-workflow/package.json"
-( cd "$REPO6" && "$REAL_GIT" add -A && "$REAL_GIT" commit -q -m "mismatch package version" >/dev/null 2>&1 )
+jq '.version = "9.9.9"' "${REPO6}/plugins/agile-workflow/.codex-plugin/plugin.json" \
+  > "${REPO6}/plugins/agile-workflow/.codex-plugin/plugin.json.tmp"
+mv "${REPO6}/plugins/agile-workflow/.codex-plugin/plugin.json.tmp" \
+  "${REPO6}/plugins/agile-workflow/.codex-plugin/plugin.json"
+( cd "$REPO6" && "$REAL_GIT" add -A && "$REAL_GIT" commit -q -m "mismatch codex version" >/dev/null 2>&1 )
 
 run_bump "$REPO6" agile-workflow patch
 
-assert_eq "package-mismatch bump exits 1" "1" "$BUMP_RC"
+assert_eq "codex-mismatch bump exits 1" "1" "$BUMP_RC"
 MISMATCH_ERR="$(cat "$BUMP_ERR" 2>/dev/null || true)"
-assert_true "package mismatch reports channel metadata mismatch" \
-  "printf '%s' \"\$MISMATCH_ERR\" | grep -q 'version mismatch between channel metadata'"
-assert_eq "claude manifest remains old after package mismatch" "1.2.3" \
+assert_true "codex mismatch reports manifest mismatch" \
+  "printf '%s' \"\$MISMATCH_ERR\" | grep -q 'version mismatch between manifests'"
+assert_eq "claude manifest remains old after codex mismatch" "1.2.3" \
   "$(jq -r '.version' "${REPO6}/plugins/agile-workflow/.claude-plugin/plugin.json")"
-assert_eq "package manifest remains mismatched after failed bump" "9.9.9" \
-  "$(jq -r '.version' "${REPO6}/plugins/agile-workflow/package.json")"
-assert_eq ".work-view-version unchanged after package mismatch" "1.2.3" \
+assert_eq "codex manifest remains mismatched after failed bump" "9.9.9" \
+  "$(jq -r '.version' "${REPO6}/plugins/agile-workflow/.codex-plugin/plugin.json")"
+assert_eq ".work-view-version unchanged after codex mismatch" "1.2.3" \
   "$(cat "${REPO6}/${VER_REL}")"
-assert_false "claude plugin.json NOT staged after package mismatch" \
+assert_false "claude plugin.json NOT staged after codex mismatch" \
   "is_staged '$REPO6' 'plugins/agile-workflow/.claude-plugin/plugin.json'"
-assert_false "codex plugin.json NOT staged after package mismatch" \
+assert_false "codex plugin.json NOT staged after codex mismatch" \
   "is_staged '$REPO6' 'plugins/agile-workflow/.codex-plugin/plugin.json'"
-assert_false "package.json NOT staged after package mismatch" \
-  "is_staged '$REPO6' 'plugins/agile-workflow/package.json'"
 
 rm -rf "$REPO6"
 
 # ---------------------------------------------------------------------------
-# Test group 6: plugin without package.json still bumps Claude/Codex metadata
-# ---------------------------------------------------------------------------
-echo ""
-echo "=== Test group 6: missing package.json remains supported ==="
-
-REPO7="$(new_scratch_repo "1.2.3" "workflow")"
-rm "${REPO7}/plugins/workflow/package.json"
-( cd "$REPO7" && "$REAL_GIT" add -A && "$REAL_GIT" commit -q -m "remove package metadata" >/dev/null 2>&1 )
-
-run_bump "$REPO7" workflow patch
-
-assert_eq "no-package plugin bump exits 0" "0" "$BUMP_RC"
-assert_eq "no-package claude plugin.json bumped" "1.2.4" \
-  "$(jq -r '.version' "${REPO7}/plugins/workflow/.claude-plugin/plugin.json")"
-assert_eq "no-package codex plugin.json bumped" "1.2.4" \
-  "$(jq -r '.version' "${REPO7}/plugins/workflow/.codex-plugin/plugin.json")"
-assert_false "no-package plugin does not create package.json" \
-  "[ -f '${REPO7}/plugins/workflow/package.json' ]"
-
-rm -rf "$REPO7"
-
-# ---------------------------------------------------------------------------
-# Test group 7: agentic-research patch bump projects new semver into BOTH
+# Test group 6: agentic-research patch bump projects new semver into BOTH
 # research-view implementations
 # ---------------------------------------------------------------------------
 echo ""
-echo "=== Test group 7: agentic-research patch bump projects lockstep ==="
+echo "=== Test group 6: agentic-research patch bump projects lockstep ==="
 
 REPO8="$(new_scratch_repo "1.2.3")"
 run_bump "$REPO8" agentic-research patch
@@ -459,8 +421,6 @@ assert_eq "ar: claude plugin.json bumped" "1.2.4" \
   "$(jq -r '.version' "${REPO8}/plugins/agentic-research/.claude-plugin/plugin.json")"
 assert_eq "ar: codex plugin.json bumped" "1.2.4" \
   "$(jq -r '.version' "${REPO8}/plugins/agentic-research/.codex-plugin/plugin.json")"
-assert_eq "ar: package.json bumped" "1.2.4" \
-  "$(jq -r '.version' "${REPO8}/plugins/agentic-research/package.json")"
 
 # Both research-view files are git-staged.
 assert_true "ar: claude plugin.json is staged" \
@@ -469,8 +429,6 @@ assert_true "ar: codex plugin.json is staged" \
   "is_staged '$REPO8' 'plugins/agentic-research/.codex-plugin/plugin.json'"
 assert_true "ar: .research-view-version is staged" "is_staged '$REPO8' '$RV_VER_REL'"
 assert_true "ar: research-view.sh is staged" "is_staged '$REPO8' '$RV_SH_REL'"
-assert_true "ar: agentic-research package.json is staged" \
-  "is_staged '$REPO8' 'plugins/agentic-research/package.json'"
 
 # agentic-research bump must NOT touch work-view artifacts.
 assert_eq "ar-bump: .work-view-version unchanged" "1.2.3" \
@@ -485,10 +443,10 @@ assert_false "ar-bump: work-view.sh NOT staged" \
 rm -rf "$REPO8"
 
 # ---------------------------------------------------------------------------
-# Test group 8: agentic-research Fail-Fast postcondition fires on indented literal
+# Test group 7: agentic-research Fail-Fast postcondition fires on indented literal
 # ---------------------------------------------------------------------------
 echo ""
-echo "=== Test group 8: ar postcondition exits 1 when literal anchor no longer matches ==="
+echo "=== Test group 7: ar postcondition exits 1 when literal anchor no longer matches ==="
 
 REPO9="$(new_scratch_repo "1.2.3")"
 # Break the anchored literal: indent it so `^RESEARCH_VIEW_VERSION="..."` no longer
@@ -514,10 +472,10 @@ assert_false "ar: indented literal NOT rewritten to new semver" \
 rm -rf "$REPO9"
 
 # ---------------------------------------------------------------------------
-# Test group 9: agentic-research minor/major bumps project correctly
+# Test group 8: agentic-research minor/major bumps project correctly
 # ---------------------------------------------------------------------------
 echo ""
-echo "=== Test group 9: ar minor and major bumps project lockstep ==="
+echo "=== Test group 8: ar minor and major bumps project lockstep ==="
 
 REPO10="$(new_scratch_repo "1.2.3")"
 run_bump "$REPO10" agentic-research minor

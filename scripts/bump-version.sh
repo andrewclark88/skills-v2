@@ -5,21 +5,15 @@ usage() {
   echo "Usage: $0 <plugin> <major|minor|patch>"
   echo ""
   echo "Bump the semantic version of a plugin's channel metadata."
-  echo "Each plugin has parallel Claude/Codex manifests and may have Pi"
-  echo "package metadata; all present metadata is bumped in lockstep."
+  echo "Each plugin has parallel Claude/Codex manifests, bumped in lockstep."
   echo ""
   echo "Plugins:"
   for dir in plugins/*/; do
     name=$(basename "$dir")
     json="${dir}.claude-plugin/plugin.json"
-    pkg="${dir}package.json"
     if [[ -f "$json" ]]; then
       version=$(jq -r '.version' "$json")
       echo "  $name  (v$version)"
-    elif [[ -f "$pkg" ]]; then
-      # Pi-only plugin (no Claude/Codex manifests) — version lives in package.json.
-      version=$(jq -r '.version' "$pkg")
-      echo "  $name  (v$version, Pi-only)"
     fi
   done
   exit 1
@@ -31,17 +25,13 @@ plugin="$1"
 bump="$2"
 claude_json="plugins/$plugin/.claude-plugin/plugin.json"
 codex_json="plugins/$plugin/.codex-plugin/plugin.json"
-package_json="plugins/$plugin/package.json"
 
-# A plugin ships at least one channel manifest. Most ship Claude + Codex + Pi
-# package in lockstep; a few are Pi-only (e.g. background-tasks) where the
-# capability is pi-runtime-only and the Claude/Codex surfaces are intentionally
-# absent. The Claude manifest is the canonical version source when present,
-# otherwise fall back to the Pi package.json.
-if [[ ! -f "$claude_json" && ! -f "$package_json" ]]; then
+# Every plugin ships Claude + Codex manifests; the Claude manifest is the
+# canonical version source. (Pi packaging moved to the pi-extensions repo;
+# plugin package.json files no longer exist in this repo.)
+if [[ ! -f "$claude_json" ]]; then
   echo "Error: no channel metadata found for $plugin"
   echo "  looked for: $claude_json"
-  echo "             $package_json"
   exit 1
 fi
 
@@ -67,13 +57,7 @@ if ! git diff --quiet -- "plugins/$plugin/" \
   exit 1
 fi
 
-# Canonical version source: the Claude manifest when present, else the Pi
-# package.json (Pi-only plugins have no Claude/Codex manifests).
-if [[ -f "$claude_json" ]]; then
-  current=$(jq -r '.version' "$claude_json")
-else
-  current=$(jq -r '.version' "$package_json")
-fi
+current=$(jq -r '.version' "$claude_json")
 
 # If a Codex manifest exists, require its version to match before bumping.
 # A mismatch means a prior bump went sideways and we shouldn't silently
@@ -87,20 +71,6 @@ if [[ -f "$codex_json" ]]; then
       echo "  $codex_json:  $codex_current"
       echo ""
       echo "Reconcile the two before bumping."
-    } >&2
-    exit 1
-  fi
-fi
-
-if [[ -f "$package_json" ]]; then
-  package_current=$(jq -r '.version' "$package_json")
-  if [[ "$current" != "$package_current" ]]; then
-    {
-      echo "Error: version mismatch between channel metadata for $plugin."
-      echo "  $claude_json:  $current"
-      echo "  $package_json: $package_current"
-      echo ""
-      echo "Reconcile the metadata before bumping."
     } >&2
     exit 1
   fi
@@ -122,9 +92,8 @@ bump_json() {
   git add "$file"
 }
 
-[[ -f "$claude_json" ]] && bump_json "$claude_json"
+bump_json "$claude_json"
 [[ -f "$codex_json" ]] && bump_json "$codex_json"
-[[ -f "$package_json" ]] && bump_json "$package_json"
 
 # Keep each plugin's self-reported binary version in lockstep with plugin.json.
 # The semver lives canonically in plugin.json; project it into both

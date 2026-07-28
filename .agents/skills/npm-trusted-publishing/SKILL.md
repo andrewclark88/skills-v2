@@ -39,19 +39,20 @@ steps:
 
 ## npm-side trust configuration
 
-Configure one relationship per package. For this repository:
+Configure one relationship per package. For the nklisch/pi-extensions
+repository:
 
 ```bash
-npm trust github @nklisch/pi-agile-workflow \
-  --repo nklisch/skills \
-  --file publish-pi-packages.yml \
+npm trust github @nklisch/pi-model-modes \
+  --repo nklisch/pi-extensions \
+  --file publish.yml \
   --allow-publish --yes
 ```
 
 The workflow filename is entered without `.github/workflows/`. The package must
 already exist, the account needs package write access and 2FA, and the `npm
-trust` CLI requires npm `11.15.0+`. The repository's
-`scripts/configure-npm-trusted-publishers.sh` applies the same configuration to
+trust` CLI requires npm `11.15.0+`. The pi-extensions repo's
+`scripts/setup-trusted-publishing.sh` applies the same configuration to
 every package with a short rate-limit pause.
 
 ## First publish and package settings

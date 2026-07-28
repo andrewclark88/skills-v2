@@ -25,6 +25,5 @@ remediation plans.
 ```bash
 /plugin install code-audit@nklisch-skills
 codex plugin install code-audit
-pi install npm:@nklisch/pi-code-audit
-pi install -l ./plugins/code-audit
+# Pi (via the pi-plugins manager): inside Pi, /plugins add code-audit@nklisch-skills --scope user
 ```

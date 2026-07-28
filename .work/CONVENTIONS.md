@@ -23,9 +23,8 @@ every push, so a local pass means a green pipeline:
   crate root.
 - **GitHub workflow changes** (`.github/workflows/**`): actionlint (as in
   `lint-github-actions.yml`).
-- **Pi package / manifest changes** (`plugins/*/package.json`, marketplace
-  catalogs): the checks in `check-pi-packages.yml` and
-  `check-extension-deps.yml`.
+- **Marketplace catalog changes** (`.claude-plugin/marketplace.json`,
+  `.agents/plugins/marketplace.json`): `jq` validity check on both catalogs.
 
 ## Delivery rules
 

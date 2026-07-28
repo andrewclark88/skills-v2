@@ -7,10 +7,19 @@ turning coordination into a second issue tracker.
 ## Install
 
 ```bash
-pi install npm:@nklisch/pi-agent-coordination
+# Claude Code
+/plugin marketplace add nklisch/skills
+/plugin install agent-coordination@nklisch-skills
 
-# Local checkout/development install
-pi install -l ./plugins/agent-coordination
+# OpenAI Codex
+codex plugin marketplace add https://github.com/nklisch/skills
+codex plugin install agent-coordination
+
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add agent-coordination@nklisch-skills --scope user
 ```
 
 This package contains portable skills only; it has no runtime extension.

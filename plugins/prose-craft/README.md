@@ -10,8 +10,8 @@ Purpose: after reading, the reader knows what prose-craft does, whether they
 Must-keeps: the three skill names (prose-draft, prose-review, prose-refine)
   and what each does; the six lens names (audience, structure, clarity,
   accuracy, voice, accessibility); the prose-refine round cap of 3;
-  "no substrate dependency"; the Pi install command
-  `pi install -l ./plugins/prose-craft`.
+  "no substrate dependency"; install via the marketplace catalogs for
+  Claude Code, Codex, and Pi (through the pi-plugins bridge).
 Out of scope: the full style contract and lens checklists (linked instead);
   version, author, and license (kept in plugin metadata).
 -->
@@ -54,17 +54,21 @@ publication quality. The brief that `prose-draft` pins is what keeps the
 
 ## Install
 
-The plugin ships for three hosts: Claude Code, Codex, and Pi.
+```bash
+# Claude Code
+/plugin marketplace add nklisch/skills
+/plugin install prose-craft@nklisch-skills
 
-```sh
-# Pi — from a clone of this repo, run at the repo root:
-pi install -l ./plugins/prose-craft
+# OpenAI Codex
+codex plugin marketplace add https://github.com/nklisch/skills
+codex plugin install prose-craft
+
+# Pi (via the pi-plugins manager)
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add prose-craft@nklisch-skills --scope user
 ```
-
-For Claude Code or Codex, install through the marketplace catalogs at the
-repo root: `.claude-plugin/marketplace.json` (Claude Code) and
-`.agents/plugins/marketplace.json` (Codex). Each lists `prose-craft` with a
-local source pointing at `./plugins/prose-craft`.
 
 ## Read more
 
