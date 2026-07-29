@@ -1,6 +1,6 @@
 ---
 name: research
-description: Conduct and maintain source-grounded research for unstable, unfamiliar, contested, or decision-relevant questions. Use for prior-art analysis, technology or policy investigation, Workbench research commissions, reusable briefs, initializing .research, or rebuilding the unified knowledge index. Adapt depth internally, attest fetched sources before synthesis, seek disconfirming evidence, preserve contradictions, lint citations, and never place PII or PHI in research artifacts.
+description: Conduct and maintain source-grounded research for unstable, unfamiliar, contested, or decision-relevant questions. Use for prior-art analysis, technology or policy investigation, Workbench research commissions, reusable briefs, initializing .research, or rebuilding the unified knowledge index. Treat the user's prompt as scope authority and repository material as grounding; do not turn external research into an implementation audit unless requested. Attest fetched sources, seek disconfirming evidence, preserve contradictions, lint citations, and never place PII or PHI in research artifacts.
 ---
 
 # Research
@@ -23,9 +23,23 @@ substrate exists, align these conventions with `.work/CONVENTIONS.md` and
 
 ## Set the decision boundary
 
+Treat the user's prompt as the primary authority for research direction, scope,
+and outcome. Repository material provides terminology, constraints, decision
+context, and existing evidence. Read it only to the degree useful for that
+grounding and to avoid duplicate research.
+
+Foundation documents, `AGENTS.md`, code, and related repositories may suggest
+relevant external questions, but they do not enlarge the requested boundary.
+Do not inventory implementation, inspect sibling implementation repositories,
+or broaden the engagement into a system audit unless the user requested that
+analysis. Offer a potentially valuable adjacent direction instead of silently
+including it.
+
 Clarify the question, what downstream decision the answer may change, current
 knowledge, exclusions, and stopping condition. Inspect `.knowledge/index.json`
 and existing `.research/` artifacts before acquiring duplicate evidence.
+If the requested research outcome is unclear, ask the user one concise
+load-bearing question before acquiring sources.
 
 Adapt depth from decision relevance, uncertainty, consequence, source
 disagreement, and corpus size. Use specialist fan-out, adversarial reading, or
