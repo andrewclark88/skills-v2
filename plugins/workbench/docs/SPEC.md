@@ -203,6 +203,12 @@ the agent rebuilds `.knowledge/index.json` and verifies committed freshness with
 
 ## Research
 
+The user's request is the authority for research direction, scope, and outcome.
+Repository material grounds terminology, constraints, decision context, and
+prior evidence; it does not silently expand external research into an
+implementation or related-repository audit. The agent asks before source
+acquisition when it cannot state the requested outcome clearly.
+
 An attestation uses:
 
 ```yaml

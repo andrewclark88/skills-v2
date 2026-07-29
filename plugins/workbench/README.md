@@ -311,6 +311,13 @@ sources, records the supported details source by source, and writes a brief that
 separates evidence from inference. It reports contradictions and confidence
 limits rather than manufacturing consensus.
 
+Your request sets the research direction, scope, and outcome. The agent may read
+the repository for terminology, constraints, decision context, and prior
+research, but that context does not authorize an implementation audit or a
+review of related repositories. It offers useful adjacent directions instead of
+silently adding them. If the requested outcome is unclear, it asks before
+fetching sources.
+
 ### How to think about the research agent
 
 The agent is an evidence steward before it is an analyst.
