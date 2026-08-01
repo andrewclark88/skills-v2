@@ -47,17 +47,10 @@ adoption, so you can think a project through first and decide afterward whether
 to adopt anything.
 
 ```text
-Uncertain outcome ──→ ideate ──→ chosen handoff
-                                   │
-Clear outcome ─────────────────────┤
-                                   ↓
-                  consequential design?
-                     yes ↓       ↓ no
-                       design   inline reasoning
-                            \   /
-                             work
-                               ↓
-                    verify → review → close
+Uncertain or coupled decisions ─→ ideate ─→ chosen handoff
+Clear, coherent outcome ─────────────────────────→ work
+Consequential implementation shape ─→ design ─→ work
+work ─→ verify ─→ review ─→ close
 
 Useful but out of scope ──→ park
 Completed outcomes ───────→ release
@@ -68,6 +61,12 @@ Design reasoning always happens. The dedicated `design` skill is used when the
 implementation shape is consequential; obvious, local, reversible choices stay
 inside normal delivery. Research is used when a decision depends on evidence
 outside the repository, not simply because the agent needs to read the code.
+
+Ideation is based on decision uncertainty, not project size. A large, coherent
+initiative can move directly through `work`; a smaller request may need
+`ideate` when several connected product, domain, or business decisions still
+shape what should be built. For broad uncertainty, the agent surveys the open
+decisions before examining the most consequential one in depth.
 
 ## What a session looks like
 
@@ -120,6 +119,17 @@ Agents use epics, features, and stories as a lightweight hierarchy of durable
 outcomes. They break work into separate items only when those items need their
 own status, dependencies, ownership, or cross-session history; temporary agent
 tasks stay out of the ledger.
+
+Writing down an epic, feature, or story does not certify that it is fully
+designed. Before starting each item, the agent reads its current scope and the
+affected repository surfaces. Consequential implementation shape goes through
+`design` and its configured review before implementation or delegation;
+obvious, local, reversible choices remain inline.
+
+For several meaningful units, `work` owns orchestration, dependency order,
+delegation, integration, and acceptance across the requested boundary. For one
+small coherent unit, the same skill normally executes directly rather than
+creating coordination overhead.
 
 Hierarchy describes how outcomes belong together. Ordering is recorded
 separately: `blocked_by` identifies prerequisites that must finish before an
@@ -214,9 +224,18 @@ Workbench rewards durable simplicity, not the smallest diff.
 A good design has as few concepts as the problem allows, fits the repository,
 and leaves a maintainable intended state.
 
+Formal design is not determined by an item's size label. Small and modest work
+usually stays inline when repository evidence and brief reasoning can resolve
+the choices confidently. The dedicated skill earns its cost when discovery,
+alternatives, interface boundaries, or consequential trade-offs need to be
+settled before implementation. When available, Workbench prefers a dedicated
+fresh-context design agent and a reviewer from another model family, while the
+orchestrator retains responsibility for the final choice.
+
 The design skill selects the lens that matches the work:
 
 - new work;
+- prototype or feasibility;
 - refactor or cleanup;
 - performance;
 - defect or reliability;
@@ -225,6 +244,10 @@ The design skill selects the lens that matches the work:
 
 Security, privacy, accessibility, operations, compatibility, and testing are
 considered when relevant instead of being applied as automatic checklists.
+
+A prototype is a learning outcome, not an abbreviated production release. Its
+design names the question, representative behavior, evidence, and intended
+disposition: discard, revise, or adopt through a maintainable design.
 
 Workarounds are sometimes correct because scope, time, compatibility, or
 authority is genuinely constrained. When that happens, the constraint,
@@ -374,7 +397,7 @@ without explicit approval.
 | Skill | Use it when |
 |---|---|
 | [`setup`](skills/setup/SKILL.md) | Adopting Workbench or consolidating an existing workflow into one clean state. |
-| [`ideate`](skills/ideate/SKILL.md) | The outcome or direction is not yet clear enough to scope. |
+| [`ideate`](skills/ideate/SKILL.md) | The outcome is unclear or several coupled human-owned decisions prevent reliable scoping. |
 | [`design`](skills/design/SKILL.md) | Implementation shape is consequential or you explicitly want a technical design. |
 | [`work`](skills/work/SKILL.md) | Scoping or delivering a clear outcome, feature, epic, or group of epics. |
 | [`park`](skills/park/SKILL.md) | Preserving a useful finding without expanding current work. |

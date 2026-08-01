@@ -24,7 +24,7 @@ Before citing any detail, create
 source_handle: <handle>
 fetched: YYYY-MM-DD
 source_title: <title>
-source_url: <fetched-http-or-https-url>
+source_url: <direct-reference-when-available>
 ---
 ```
 
@@ -33,6 +33,32 @@ summary, then put all numbered, citable details under `## Attested details` with
 source-internal anchors. Put the cited detail in the attestation before writing
 `[handle]{N}` in a brief. Keep project framing, recommendations, and
 cross-source synthesis out of attestations.
+
+Record a useful direct reference to what was fetched when one is available.
+Prefer a stable public URL. Never include credentials, tokens, session material,
+or a credentialed URL. When no public URL exists, omit `source_url` and explain
+the external access surface in the attestation. These are judgment rules. The
+validation scripts do not decide whether a reference format is acceptable.
+
+## Brief structure
+
+Use this frontmatter for `.research/briefs/<id>.md`:
+
+```yaml
+---
+id: <id-matching-filename>
+kind: research-brief
+summary: <concise-summary>
+updated: YYYY-MM-DD
+source_handles: [<attested-handle>]
+relationships: []
+---
+```
+
+List every cited handle in `source_handles`. A relationship target is the
+repository-relative path of an indexed file. Write a relationship as
+`<type>:<target>` or as a map with `type` and `target`. Allowed types are
+`supports`, `contradicts`, `informs`, and `supersedes`.
 
 ## Separate source and composition
 

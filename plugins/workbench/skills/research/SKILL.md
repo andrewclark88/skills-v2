@@ -13,13 +13,9 @@ engaging sources. Its grounding floor is mandatory at every depth.
 Read [references/promotion.md](references/promotion.md) before offering to turn
 research method or domain guidance into a reusable project skill.
 
-If `.research/CONVENTIONS.md` is absent, initialize
-`.research/attestations/.gitkeep` and `.research/briefs/.gitkeep`, then write
-concise conventions covering the grounding floor, citation syntax, authority
-boundary, and the repository's confirmed privacy requirements. Keep both
-`.gitkeep` files so empty tiers survive a fresh clone. When a Workbench
-substrate exists, align these conventions with `.work/CONVENTIONS.md` and
-`AGENTS.md`. Do not overwrite an existing research substrate.
+Keep a small conversational lookup in the current conversation. Do not
+initialize `.research/` or write a brief unless the evidence must survive the
+conversation or inform a consequential decision.
 
 ## Set the decision boundary
 
@@ -49,6 +45,15 @@ separate quick, deep, or program workflows to the user.
 Prefer current primary sources for load-bearing claims. When consequences or
 uncertainty are high, corroborate those claims with an independent source or
 state why corroboration was unavailable in the research brief.
+
+When the engagement warrants a committed brief and
+`.research/CONVENTIONS.md` is absent, initialize
+`.research/attestations/.gitkeep` and `.research/briefs/.gitkeep`. Write concise
+conventions for grounding, citation syntax, authority, and confirmed privacy
+requirements. Keep both `.gitkeep` files so empty tiers survive a fresh clone.
+When a Workbench substrate exists, align these conventions with
+`.work/CONVENTIONS.md` and `AGENTS.md`. Do not overwrite an existing research
+substrate.
 
 ## Acquire and attest
 
@@ -89,9 +94,9 @@ Use frontmatter `relationships` with `supports`, `contradicts`, `informs`, or
 Run:
 
 ```bash
-python3 <workbench-plugin-root>/scripts/lint-research.py <project-root>
-python3 <workbench-plugin-root>/scripts/build-knowledge-index.py <project-root>
-python3 <workbench-plugin-root>/scripts/build-knowledge-index.py <project-root> --check
+python3 <loaded-research-plugin-root>/scripts/lint-research.py <project-root>
+python3 <loaded-research-plugin-root>/scripts/build-knowledge-index.py <project-root>
+python3 <loaded-research-plugin-root>/scripts/build-knowledge-index.py <project-root> --check
 ```
 
 Resolve the script root from the loaded plugin package using the same

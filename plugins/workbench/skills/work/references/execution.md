@@ -18,9 +18,21 @@ Keep tightly coupled work in one context. Delegate or parallelize only when
 independent focus, specialized capability, isolation, or throughput exceeds
 handoff and integration cost.
 
+Before assigning a unit, inspect its item and affected repository surfaces for
+design readiness. A decomposed or accepted item is not necessarily designed.
+Keep local, reversible choices inline when repository evidence and brief
+reasoning can resolve them confidently. When meaningful discovery, alternatives,
+boundary definition, or adjudication remains, use `design` and complete its
+review before a sub-agent begins. Prefer a dedicated fresh-context design agent
+when available, while keeping final synthesis with the orchestrator.
+
 Assign non-overlapping write surfaces and explicit output evidence. Use
 worktrees when isolation materially improves collision avoidance or rollback,
 not merely because several units exist.
+
+Give each delegate the conventions, required checks, effective review weight,
+and writing guidance that apply to its unit. Do not make a delegate rediscover
+the rules that the orchestrator already loaded.
 
 The orchestrator must inspect returned changes, reconcile interfaces and
 assumptions, run integrated checks, and continue across completed units until

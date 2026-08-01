@@ -16,11 +16,15 @@ user. Ask one focused question when an answer materially changes the result,
 then pause for the answer. Include a recommendation and evidence when useful.
 Never treat the absence of a structured question tool as consent to guess.
 
-If the intended outcome or scope cannot yet support a coherent work item,
-invoke `ideate` rather than accumulating a long requirements interview inside
+Invoke `ideate` when the intended outcome or scope cannot yet support a coherent
+work item, or when an apparently clear request depends on several coupled
+product, domain, or business decisions whose answers materially reshape one
+another or the scope. Do not accumulate a long requirements interview inside
 `work`. Preserve ideate's no-write boundary and return only through a
-user-selected handoff. Do not route away merely because one or two
-consequential implementation or product choices remain.
+user-selected handoff. Do not route
+away merely because a small number of mostly local consequential choices remain,
+and do not route large but already coherent work through ideation solely because
+of its size.
 
 Record settled requirements and exclusions in the relevant work item. Replace
 superseded decisions instead of appending a conversation transcript. Preserve

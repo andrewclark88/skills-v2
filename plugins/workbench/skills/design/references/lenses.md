@@ -16,6 +16,26 @@ and simplest coherent implementation shape.
 - Eliminate unnecessary concepts, layers, options, compatibility paths, and
   tests before adding machinery.
 
+## Prototype or feasibility
+
+- Start with the decision, assumption, or feasibility question the prototype
+  must resolve. A prototype without a learning question is unfinished design.
+- Choose the smallest representative behavior that can produce credible
+  evidence. Preserve realism at the uncertain boundary; simplify everything
+  else.
+- State what the prototype deliberately does not prove, especially production
+  reliability, scale, security, accessibility, migration, and maintainability.
+- Define the observation, user reaction, measurement, or integration result
+  that will answer the question before implementation begins.
+- Keep exploratory code isolated when practical. Reuse existing project
+  machinery, and do not build a testing or simulation platform merely to
+  validate the prototype.
+- End with an explicit disposition: discard it, revise and test another
+  assumption, or design the maintainable implementation. Adoption is a new
+  decision, not an automatic reward for a successful demonstration.
+- Plan to remove discarded prototype code. Treat revision or adoption as a
+  deliberate next outcome with the design, hardening, and verification it needs.
+
 ## Refactor or cleanup
 
 - Apply the black-box test: a refactor preserves observable behavior. Route

@@ -7,7 +7,6 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from _frontmatter import parse
 
@@ -51,21 +50,6 @@ def validate(project: Path) -> tuple[list[str], list[str]]:
         for key in ("source_handle", "fetched", "source_title"):
             if not data.get(key):
                 errors.append(f"{rel}: missing {key}")
-        if not data.get("source_url"):
-            errors.append(f"{rel}: source_url is required")
-        if "source_path" in data:
-            errors.append(
-                f"{rel}: source_path is not allowed; attestations ground external sources"
-            )
-        source_url = data.get("source_url")
-        if isinstance(source_url, str):
-            parsed_url = urlsplit(source_url)
-            if parsed_url.username or parsed_url.password:
-                errors.append(f"{rel}: credentialed source_url is forbidden")
-            if any(character.isspace() for character in source_url):
-                errors.append(f"{rel}: source_url must not contain whitespace")
-            if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
-                errors.append(f"{rel}: source_url must be an absolute http(s) URL")
         handle = data.get("source_handle")
         if handle != path.stem:
             errors.append(f"{rel}: source_handle must match filename")

@@ -1,21 +1,19 @@
 ---
 name: release
-description: >
-  Prepare a Workbench release summary from completed outcome stubs. Use when the user asks to
-  summarize completed work, prepare release notes, or bind outcomes to a version. Verifies eligible
-  outcomes, writes one versioned summary under .work/releases, removes the selected completion
-  stubs, and runs repository-defined checks. Does not tag, publish, or deploy.
+description: Prepare a versioned Workbench release summary from completed outcome stubs. Use when the user asks for release notes, names a release version, or asks to bind completed outcomes to a version. Verify eligible outcomes, write one summary under .work/releases, remove the selected completion stubs, and run repository-defined checks. This skill does not provide a conversational status summary, tag, publish, or deploy.
 ---
 
 # Release Workbench Outcomes
 
-Confirm Workbench ownership and `completed_items: summarize`. Read the selected
-completion stubs in `.work/completed/`, existing release history, and project
-delivery conventions.
+Confirm Workbench ownership and `completed_items: summarize`. If conventions are
+absent, another system owns `.work/`, or `completed_items: discard`, stop and
+explain the applicable setup or convention change. Do not write a release.
+Otherwise, read the selected completion stubs in `.work/completed/`, existing
+release history, and project delivery conventions.
 
-Resolve the requested version and eligible outcome set. Do not include active,
-blocked, unverified, or unrelated work. Verify that every selected stub reflects
-an actual delivered outcome.
+If the user did not name a version, ask for it before writing. Resolve the
+eligible outcome set. Do not include active, blocked, unverified, or unrelated
+work. Verify that every selected stub reflects an actual delivered outcome.
 
 Write `.work/releases/<version>.md` with the date, concise outcome summary,
 selected item ids, meaningful compatibility or operational notes, and

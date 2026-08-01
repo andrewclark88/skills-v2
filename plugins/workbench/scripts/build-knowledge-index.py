@@ -10,7 +10,6 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 from _frontmatter import first_heading, parse
 
@@ -142,15 +141,6 @@ def collect(project: Path) -> tuple[list[dict[str, Any]], list[str], list[dict[s
         }
         entries.append(entry)
         if "attestations" in relative.parts:
-            source_url = data.get("source_url")
-            if isinstance(source_url, str):
-                parsed_url = urlsplit(source_url)
-                if parsed_url.username or parsed_url.password:
-                    errors.append(f"{relative}: credentialed source_url is forbidden")
-            if "source_path" in data:
-                errors.append(
-                    f"{relative}: source_path is not allowed; attestations ground external sources"
-                )
             bibliography.append(
                 {
                     "source_handle": identifier,

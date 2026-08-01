@@ -93,6 +93,11 @@ Hierarchy expresses durable outcome structure. `blocked_by` names active
 prerequisites; `related_to` carries non-blocking context. An external blocker
 uses an exact `## Blocker` section naming the condition and how it clears.
 Focused audits, cleanup, and refactors use tags rather than new item kinds.
+Prototype items use the `prototype` tag. They name the question, representative
+surface, evidence, and expected disposition: discard, revise, or adopt. Closure
+records what was learned, carries material learning into the affected
+foundation or active item, and removes code marked for discard. Revision or
+adoption is an explicit next outcome.
 
 ## Completion
 
@@ -108,13 +113,15 @@ one `.work/releases/<version>.md`; it does not tag, publish, or deploy.
 
 ## Design behavior
 
-Design reasoning is always required. `design` is callable directly or from
-`work` whenever implementation shape is consequential; obvious, local,
-reversible choices remain inline. This is conditional routing, not a required
-lifecycle stage. It keeps outcome-specific design in the active item and uses
-one primary lens:
+Design reasoning is always required. Repository evidence and brief reasoning
+may resolve local, reversible choices inline. `design` is callable directly or
+from `work` when implementation shape needs meaningful discovery, alternatives,
+boundary definition, or adjudication. This is conditional routing, not a size
+threshold or required lifecycle stage. It keeps outcome-specific design in the
+active item and uses one primary lens:
 
 - new work;
+- prototype or feasibility;
 - refactor or cleanup;
 - performance;
 - defect or reliability;
@@ -209,6 +216,10 @@ prior evidence; it does not silently expand external research into an
 implementation or related-repository audit. The agent asks before source
 acquisition when it cannot state the requested outcome clearly.
 
+Small conversational lookups remain in chat. The agent initializes `.research/`
+and writes a brief only when evidence must survive the conversation or inform a
+consequential decision.
+
 An attestation uses:
 
 ```yaml
@@ -216,14 +227,33 @@ An attestation uses:
 source_handle: <lowercase-kebab-handle>
 fetched: YYYY-MM-DD
 source_title: <title>
-source_url: <absolute-http-or-https-url>
+source_url: <direct-reference-when-available>
 ---
 ```
 
 Attestations contain source-faithful summaries and numbered citable details
 under `## Attested details`. They do not contain project recommendations.
 Repository files are project context and are not represented as external
-attestations.
+attestations. A direct reference should identify what was fetched when one is
+available. It must not contain credentials, tokens, or session material. When
+no public URL exists, the attestation explains the external access surface.
+
+A research brief uses:
+
+```yaml
+---
+id: <id-matching-filename>
+kind: research-brief
+summary: <concise-summary>
+updated: YYYY-MM-DD
+source_handles: [<attested-handle>]
+relationships: []
+---
+```
+
+Every cited handle appears in `source_handles`. Relationship targets use the
+repository-relative path of an indexed file. Relationships may use a
+`<type>:<target>` string or a map with `type` and `target`.
 
 Briefs cite details as `[handle]{N}`, distinguish source claims from inference,
 preserve contradictions, and always include `## Disconfirming evidence`.
@@ -269,6 +299,7 @@ folders. A second run produces no material change.
 markers, item schemas, globally unique ids, active relationships, blocker
 evidence, research and mock references, and superseded substrate paths.
 
-`lint-research.py` checks attestation metadata, external URL safety, sensitive
-markers, mandatory attested-detail and disconfirming sections, and citation
-resolution. `build-knowledge-index.py --check` rejects stale committed output.
+`lint-research.py` checks attestation metadata, sensitive markers, mandatory
+attested-detail and disconfirming sections, and citation resolution. Reference
+format and safety remain judgment rules in the research discipline.
+`build-knowledge-index.py --check` rejects stale committed output.

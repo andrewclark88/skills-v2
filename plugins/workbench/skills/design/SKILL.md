@@ -2,19 +2,22 @@
 name: design
 description: >
   Design or stress-test implementation-shaping work before execution. Use when the user asks to
-  design, architect, plan, or technically shape new work, a refactor, cleanup, performance change,
-  defect correction, UI journey, data change, or integration. Grounds the design in repository
-  truth, applies the relevant design lens, records a proportionate design in the Workbench item,
-  and reviews it at the configured review weight without making design a mandatory project stage.
+  design, architect, plan, define a prototype or feasibility experiment, or technically shape new
+  work, a refactor, cleanup, performance change, defect correction, UI journey, data change, or
+  integration. Grounds the design in repository truth, applies the relevant design lens, records a
+  proportionate design in the Workbench item, and reviews it at the configured review weight
+  without making design a mandatory project stage.
 ---
 
 # Design
 
-Design reasoning is always required. Use this dedicated skill whenever
-implementation shape is consequential; keep only obvious, local, reversible
-choices inline in `work`. This is conditional routing, not a mandatory project
-stage. A direct design request stops after the reviewed design; `work` may route
-here and then continue through implementation.
+Design reasoning is always required. Keep it inline when repository evidence and
+brief reasoning can resolve local, reversible choices confidently. Use this
+dedicated skill when implementation shape needs meaningful discovery,
+alternatives, boundary definition, or adjudication before execution. This is
+conditional routing, not a size threshold or mandatory project stage. A direct
+design request stops after the reviewed design; `work` may route here and then
+continue through implementation.
 
 Unless an instruction names a repository path or artifact, communicate with the
 user in the current conversation, including questions, offers, proposals,
@@ -33,20 +36,25 @@ Read [../work/references/autonomy.md](../work/references/autonomy.md) and resolv
 the effective autonomy posture. Autonomy governs how decisions are discussed,
 not whether design quality, review, safety, or authority boundaries apply.
 
-Keep a clear narrow request narrow. If the outcome, ownership boundary, or
-success shape cannot yet form coherent work, route through `ideate`. If a clear
-request has no active item, create the smallest coherent feature or story needed
-to hold durable design state; do not create hierarchy merely to represent
-design activity.
+Keep a clear narrow request narrow. Route through `ideate` if the outcome,
+ownership boundary, or success shape cannot yet form coherent work, or if
+several coupled product, domain, or business decisions materially reshape one
+another or the scope. Do not route away merely because a small number of mostly
+local choices remain. If a clear request has no active item, create the smallest
+coherent feature or story needed to hold durable design state, following
+[../work/references/lifecycle.md](../work/references/lifecycle.md). Do not create
+hierarchy merely to represent design activity.
 
-Use substantive external investigation through Workbench's `research` skill.
-Do not disguise uncertain external claims as design decisions.
+Use substantive external investigation through an available `research` skill.
+If none is available, disclose the degraded mode and do not turn unattested
+external claims into committed design evidence.
 
 ## Select lenses
 
 Read [references/lenses.md](references/lenses.md). Select one primary lens:
 
 - new work;
+- prototype or feasibility;
 - refactor or cleanup;
 - performance;
 - defect or reliability;
@@ -84,6 +92,12 @@ item because they constrain future work.
 
 Name meaningful alternatives when the choice is consequential; do not
 manufacture options for obvious local work.
+
+For formal design, prefer a dedicated fresh-context design agent when one is
+available. Give it raw requirements, relevant repository truth, constraints, and
+the target item rather than a proposed answer. The orchestrating agent owns the
+final synthesis and adjudication. Do not add delegation overhead when the design
+can be resolved well in the current context.
 
 ## Record the design
 

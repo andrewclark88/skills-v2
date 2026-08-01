@@ -183,49 +183,25 @@ relationships: []
         self.assertEqual(result.returncode, 1)
         self.assertIn("missing ## Disconfirming evidence", result.stdout)
 
-    def test_credentialed_source_url_is_rejected(self) -> None:
+    def test_source_reference_format_is_not_deterministically_rejected(self) -> None:
         root = self.make_project()
         path = root / ".research/attestations/source-a.md"
         path.write_text(
             path.read_text(encoding="utf-8").replace(
-                "https://example.com/source", "https://user:secret@example.com/source"
+                "source_url: https://example.com/source",
+                "source_url: Vendor docs through an authenticated connector\n"
+                "source_path: external-catalog/item-42",
             ),
             encoding="utf-8",
         )
-        lint = self.run_tool(LINT, root)
-        index = self.run_tool(INDEX, root, "--check")
-        self.assertEqual(lint.returncode, 1)
-        self.assertEqual(index.returncode, 1)
-        self.assertIn("credentialed source_url is forbidden", lint.stdout)
-        self.assertIn("credentialed source_url is forbidden", index.stdout)
-
-    def test_malformed_source_url_is_rejected(self) -> None:
-        root = self.make_project()
-        path = root / ".research/attestations/source-a.md"
-        path.write_text(
-            path.read_text(encoding="utf-8").replace(
-                "https://example.com/source", "example.com/source with-comment"
-            ),
-            encoding="utf-8",
-        )
-        result = self.run_tool(LINT, root)
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("source_url must not contain whitespace", result.stdout)
-        self.assertIn("absolute http(s) URL", result.stdout)
-
-    def test_source_path_is_rejected(self) -> None:
-        root = self.make_project()
-        path = root / ".research/attestations/source-a.md"
-        text = path.read_text(encoding="utf-8").replace(
-            "source_url: https://example.com/source", "source_path: docs/source.md"
-        )
-        path.write_text(text, encoding="utf-8")
         lint = self.run_tool(LINT, root)
         index = self.run_tool(INDEX, root)
-        self.assertEqual(lint.returncode, 1)
-        self.assertEqual(index.returncode, 1)
-        self.assertIn("source_path is not allowed", lint.stdout)
-        self.assertIn("source_path is not allowed", index.stdout)
+        self.assertEqual(lint.returncode, 0, lint.stdout + lint.stderr)
+        self.assertEqual(index.returncode, 0, index.stdout + index.stderr)
+        bibliography = (root / ".research/bibliography.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Vendor docs through an authenticated connector", bibliography)
 
 
 if __name__ == "__main__":

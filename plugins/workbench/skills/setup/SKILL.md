@@ -116,9 +116,10 @@ retained content block at its destination; matching file or item counts alone
 is insufficient.
 
 Confirm every canonical `.work/` and `.research/` state directory contains
-`.gitkeep` so an empty state survives a fresh clone. When the knowledge index
-is enabled, confirm `.knowledge/index.json` is tracked rather than excluded by
-ignore rules, then rebuild it and run the builder with `--check`.
+`.gitkeep` so an empty state survives a fresh clone. When
+`.knowledge/index.json` exists or is being created, confirm it is tracked rather
+than excluded by ignore rules, then rebuild it and run the builder with
+`--check`.
 
 ## Remove superseded artifacts
 

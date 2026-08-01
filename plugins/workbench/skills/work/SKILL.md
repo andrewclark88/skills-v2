@@ -1,12 +1,30 @@
 ---
 name: work
-description: Use in a Workbench-owned project to scope, clarify, implement, fix, refactor, simplify, clean up, review, audit, continue, finish one epic, drive several epics to done, or complete ready work inside a named delivery boundary. Gather consequential requirements from the human, route substantial implementation-shaping design through design, coordinate execution, park valuable out-of-scope findings, verify behavior at the configured review weight, reconcile project truth, and continue until the full requested scope is complete or genuinely blocked.
+description: Scope, clarify, build or evaluate a prototype, implement, fix, refactor, simplify, clean up, review, audit, continue, finish one epic, drive several epics to done, or complete ready work inside a named delivery boundary. Use in repositories that have adopted Workbench or may need to adopt it. Offer setup rather than acting when Workbench is absent or another workflow owns the repository. Gather consequential human requirements, route substantial design through design, coordinate execution, park out-of-scope findings, verify at the configured review weight, reconcile project truth, and continue until complete or genuinely blocked.
 ---
 
 # Work
 
 Carry the user's natural-language boundary to its requested finish line. Never
 require them to choose a phase, worker topology, or workflow skill.
+
+## Routing sketch
+
+```mermaid
+flowchart TD
+    A["Natural-language outcome"] --> B["Inspect scope and repository truth"]
+    B --> C{"Scope coherent?"}
+    C -- "No, or coupled human decisions" --> D["Ideate"]
+    D --> E["User-selected handoff"]
+    C -- "Yes" --> F["Assess each item's design readiness"]
+    E --> F
+    F --> G{"Can evidence and brief reasoning settle the shape?"}
+    G -- "Yes" --> H["Execute directly or orchestrate units"]
+    G -- "No" --> I["Formal design; prefer a dedicated design agent"]
+    I --> J["Review at configured weight; prefer cross-model"]
+    J --> H
+    H --> K["Integrate, verify, review, reconcile, and close"]
+```
 
 Unless an instruction names a repository path or artifact, communicate with the
 user in the current conversation, including questions, offers, proposals,
@@ -19,8 +37,10 @@ before structural decisions. If the substrate is absent or owned by another
 system, stop and offer `setup`; do not invoke destructive conversion without
 the user's explicit choice.
 
-If inspection shows that the intended outcome, ownership boundary, or basic
-success shape is too ambiguous to form coherent work, route through `ideate`.
+Route through `ideate` when the intended outcome, ownership boundary, or basic
+success shape is too ambiguous to form coherent work. Also route there when an
+apparently clear request still depends on several coupled product, domain, or
+business decisions whose answers materially reshape one another or the scope.
 Do not create or reshape work items while ideating; resume `work` only after the
 user explicitly selects a Workbench handoff.
 
@@ -47,8 +67,10 @@ Load references only as needed:
   summaries →
   [references/writing-style.md](references/writing-style.md).
 
-When substantive external investigation is necessary, use Workbench's
-`research` skill rather than creating an ungrounded project note.
+When substantive external investigation is necessary, use an available
+`research` skill. If none is available, explain the degraded mode and limit
+current-source lookup to conversational support. Do not create an ungrounded
+project note.
 
 ## Resolve the requested boundary
 
@@ -60,6 +82,10 @@ irreversible, or external actions.
 Keep narrow requests narrow. Treat “finish,” “drive to done,” and “handle end
 to end” as instructions to reach the requested finish line.
 
+A request to review, audit, explain, or diagnose remains read-only. Report the
+result in the current conversation and change nothing unless the user also asks
+for a change.
+
 For an epic, include required children and integration. For several epics,
 resolve the complete named target set. For a delivery outcome, discover
 necessary work inside that boundary without silently draining unrelated queues.
@@ -67,9 +93,11 @@ If the boundary is unclear, ask which items are in scope. A multi-epic request
 does not require a synthetic program item.
 
 Keep clarification inside `work` when the outcome is clear and only a small
-number of consequential requirements remain. Use `ideate` when selecting the
-outcome or boundary requires collaborative exploration, competing directions,
-or several foundational decisions.
+number of mostly local consequential requirements remain. Large or multi-epic
+work stays in `work` when it is already coherent. Use `ideate` when selecting
+the outcome or boundary requires collaborative exploration, or when competing
+directions or several coupled human-owned decisions materially reshape one
+another or the scope.
 
 ## Gather requirements from the human
 
@@ -100,15 +128,34 @@ it has a coherent boundary and observable completion evidence. Use tags such as
 `cleanup` or `refactor`; do not add another item kind. Split independent
 subsystems only when their status or verification can meaningfully diverge.
 
+A prototype is normal Workbench work when its coherent outcome is learning.
+Record the decision or assumption it tests, the smallest representative surface,
+the evidence needed, and the expected disposition: discard, revise, or adopt.
+Tag it `prototype`; do not add another item kind or present exploratory output as
+production-ready behavior. Before closing, record what the prototype established
+and its disposition. Carry material learning into the foundation or active item
+whose future direction it changes. Remove prototype code marked for discard;
+revising or adopting it requires an explicit next outcome.
+
 ## Execute to the requested finish line
 
-Order work from real prerequisites. Research only to the depth needed. Route
-substantial implementation-shaping design through Workbench's `design` skill;
-design reasoning is always required, but only obvious, local, reversible
-choices stay inline. A direct user request to design stops after design, while
-an end-to-end delivery request resumes implementation after the design and its
-required review. Parallelize only genuinely independent units with clear
-ownership and integration points.
+Order work from real prerequisites. For a multi-unit boundary, act as the
+outcome owner and orchestrator; for small coherent work, execute directly when
+delegation would add no value.
+
+Before implementing or delegating each feature, story, or other coherent unit,
+read its current scope and assess design readiness against the repository. An
+item's existence, acceptance criteria, or place in an epic does not mean its
+implementation shape has been designed. Keep design inline when repository
+evidence and brief reasoning can confidently resolve local, reversible choices.
+Route through Workbench's `design` skill when meaningful discovery,
+alternatives, boundary definition, or adjudication must be settled first, and
+complete its required review before delegation or implementation. Do not use a
+size label alone as the gate. A direct user request to design stops after design,
+while an end-to-end delivery request resumes implementation afterward.
+
+Research only to the depth needed. Parallelize only genuinely independent units
+with clear ownership and integration points.
 
 Inspect actual changes and returned evidence. The orchestrating agent owns
 integration, acceptance, and the full requested scope. Do not stop because one
@@ -117,8 +164,8 @@ former stage boundary was reached.
 
 Pause when discovered work materially exceeds the requested boundary, requires
 a new epic-sized outcome, or reaches an irreversible, production, or real-data
-action. Park useful findings outside the current scope with evidence instead of
-expanding silently.
+action. Use `park` to capture useful findings outside the current scope with
+evidence instead of expanding silently.
 
 Continue until every item in the requested boundary is complete or a concrete
 external blocker prevents meaningful progress.

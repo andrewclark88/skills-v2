@@ -145,17 +145,6 @@
       "relationships": []
     },
     {
-      "path": "docs/npm-publishing.md",
-      "namespace": "docs",
-      "kind": "npm-publishing",
-      "id": "npm-publishing",
-      "title": "Publishing Pi packages to npm",
-      "summary": null,
-      "updated": null,
-      "status": null,
-      "relationships": []
-    },
-    {
       "path": "docs/research/npm-trusted-publishing.md",
       "namespace": "docs",
       "kind": "npm-trusted-publishing",
@@ -237,7 +226,7 @@
       "namespace": "docs",
       "kind": "spec",
       "id": "spec",
-      "title": "Specification",
+      "title": "Plugin distribution specification",
       "summary": null,
       "updated": null,
       "status": null,
@@ -354,22 +343,22 @@
       "relationships": []
     },
     {
-      "path": "docs/workflow-guide.md",
+      "path": "docs/workbench-guide.md",
       "namespace": "docs",
-      "kind": "workflow-guide",
-      "id": "workflow-guide",
-      "title": "Workflow Suite Guide",
+      "kind": "workbench-guide",
+      "id": "workbench-guide",
+      "title": "Workbench Guide",
       "summary": null,
       "updated": null,
       "status": null,
       "relationships": []
     },
     {
-      "path": "docs/workflow-suite-evaluation.md",
+      "path": "docs/workflow-guide.md",
       "namespace": "docs",
-      "kind": "workflow-suite-evaluation",
-      "id": "workflow-suite-evaluation",
-      "title": "Skill Suite Evaluation: Core Workflow Skills",
+      "kind": "workflow-guide",
+      "id": "workflow-guide",
+      "title": "Workflow Suite Guide",
       "summary": null,
       "updated": null,
       "status": null,
@@ -1318,17 +1307,6 @@
       "title": "--research-origin / --research-refs not disambiguated end-to-end (shared fixture slug)",
       "summary": null,
       "updated": "2026-06-04",
-      "status": "active",
-      "relationships": []
-    },
-    {
-      "path": ".work/active/story-fix-background-wake-custom-message.md",
-      "namespace": "work",
-      "kind": "story",
-      "id": "story-fix-background-wake-custom-message",
-      "title": "Fix background-task wake delivery attribution",
-      "summary": null,
-      "updated": "2026-06-22",
       "status": "active",
       "relationships": []
     },

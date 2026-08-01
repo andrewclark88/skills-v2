@@ -12,13 +12,16 @@ workflow stages or an orchestration topology.
 
 - **Human requirements are load-bearing.** Learn repository facts first, then
   ask the user about consequential choices only they can settle.
-- **Ideation precedes premature scope.** A clear outcome remains in `work`; an
-  outcome too ambiguous to form coherent work routes through `ideate`, which
-  writes nothing until the user chooses a handoff.
+- **Ideation precedes premature scope.** A coherent outcome remains in `work`.
+  An unclear outcome or several coupled human-owned decisions route through
+  `ideate`, which writes nothing until the user chooses a handoff.
 - **Design is available, not imposed.** A dedicated `design` skill selects a
-  new-work, refactor, performance, defect, UI/UX, or data/integration lens and
-  shapes implementation when that work materially benefits from design.
-  Obvious local work remains inline.
+  new-work, prototype, refactor, performance, defect, UI/UX, or data/integration
+  lens. It shapes implementation when discovery, alternatives, boundaries, or
+  adjudication cannot be resolved confidently inline.
+- **Recorded work is not automatically designed.** Before each feature or story,
+  `work` checks design readiness and completes consequential design review before
+  implementation or delegation.
 - **Autonomy follows intent.** Current request language and one repository
   default determine whether work is collaborative, adaptive, or autonomous.
   Autonomy changes participation and continuation, never permissions, scope,

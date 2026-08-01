@@ -39,6 +39,13 @@ If a user asks for the workflow plugin or wants to migrate, point them at:
 
 - Reference and principle skills (not part of a plugin) live in `.agents/skills/<skill-name>/`.
 
+The combined `plugins/workbench/` tree is the canonical source for shared
+Workbench behavior. The Orderly marketplace distributes that behavior as
+separate `workbench` and `workbench-research` plugins. After changing shared
+behavior, run `python3 scripts/check-workbench-sync.py <skills-marketplace-root>`
+against an updated marketplace checkout. The checker permits only the named
+split-package wording differences.
+
 ## Two-channel distribution support (Claude Code + Codex, Pi via bridge)
 
 Each supported plugin ships channel metadata, kept in lockstep:
