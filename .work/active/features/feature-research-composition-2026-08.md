@@ -1,7 +1,7 @@
 ---
 id: feature-research-composition-2026-08
 kind: feature
-stage: implementing
+stage: review
 tags: [research-pipeline, agentic-research, refactor]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: [feature-upstream-baseline-2026-08]
@@ -126,6 +126,18 @@ only through the operator-confirmed `convert` flow.
 - Updated the plugin README to state the companion prerequisite and authority
   boundary.
 
-Remaining before review: replace the release citation adapter's vendored-kernel
-dependency, dual-index current and legacy corpus paths, remove now-unreferenced
-ARD copies, and validate the composition on Claude and Codex.
+### 2026-08-01 — single-engine cutover
+
+- Replaced the release citation adapter's vendored-kernel dependency with a
+  tested companion-plugin resolver and Agentic Research's canonical lint.
+- Removed the copied ARD pin, discipline, validator, schemas, templates,
+  conformance fixtures, citation wrapper, and adversarial-reader wrapper.
+- Updated planning and design consumers to prefer current
+  `.research/analysis/` paths while retaining explicit legacy-path reads.
+- Retired research architecture documents that described the duplicate engine
+  and replaced the family overview with intent-profile composition guidance.
+- Verified resolver behavior for a source checkout, an installed/versioned
+  cache, and an invalid explicit root.
+
+The feature is ready for the cross-host validation feature. Existing project
+corpora were not modified.

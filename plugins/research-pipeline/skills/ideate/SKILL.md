@@ -168,12 +168,12 @@ Capture into `docs/research-plan.md` with routing recommendations:
 1. **<Domain>** — `/research`
    - Question: <specific>
    - Rationale: <why this needs research>
-   - Output: brief at `.research/briefs/<topic>/parent.md`
+   - Output: brief under `.research/analysis/briefs/`
 
 2. **<Domain>** — `/deep-research`
    - Topic: <broad>
    - Facets: <5-7 orthogonal aspects>
-   - Output: campaign at `.research/briefs/<topic>/`
+   - Output: campaign under `.research/analysis/campaigns/`
 
 ## Optional follow-ups (post-architecture, per-phase)
 

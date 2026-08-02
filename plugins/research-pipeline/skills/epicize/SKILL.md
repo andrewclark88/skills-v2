@@ -118,9 +118,10 @@ If research exists:
 
 - Read every brief whose `blocks_phase` frontmatter is null (uncommitted) or matches
   potential epic scope
-- Read `.research/programs/*/super-parent.md` (program syntheses) — these often signal
-  natural epic boundaries
-- Read `.research/briefs/*/parent.md` (deep-research syntheses)
+- Read current `.research/analysis/campaigns/*/parent.md`,
+  `.research/analysis/positions/*.md`, and `.research/analysis/briefs/*.md`
+- During migration, also read legacy `.research/programs/*/super-parent.md` and
+  `.research/briefs/*/parent.md`
 - Note any briefs already committed to phases (`blocks_phase: <id>`); these inform
   but don't drive epic decomposition
 
@@ -206,7 +207,7 @@ Proposed epic decomposition (4 epics):
    depends_on: [epic-substrate-foundation]
    tags: [auth]
    covers: authentication and session management
-   research grounding: .research/briefs/auth-providers/parent.md
+   research grounding: .research/analysis/briefs/auth-providers.md
 
 3. epic-pii-handling
    depends_on: [epic-substrate-foundation]
@@ -250,7 +251,8 @@ why it exists, what it does NOT cover>
 
 ## Research briefs
 
-<links to .research/briefs/, .research/programs/, or docs/briefs/ that ground this
+<links to current .research/analysis/, retained legacy .research/briefs/ or
+.research/programs/, or docs/briefs/ that ground this
 epic. Include 1-line summary per brief. If [needs-brief] tag is set, note here what
 research is missing and what topic the future /brief invocation should cover.>
 

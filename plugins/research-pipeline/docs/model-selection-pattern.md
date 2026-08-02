@@ -224,8 +224,8 @@ Reference table for skills in this repo. Skills should update their SKILL.md to 
 | `/test-quality` | Orchestration | Sonnet medium |
 | `/security-review` | Orchestration | Opus high |
 | `/cruft-cleaner` | Orchestration + parallel workers | Sonnet orchestrator, Sonnet workers (many small calls) |
-| `/deep-research` | All four archetypes | Opus Lead + Sonnet specialists (parallel) + Opus Synthesis + Opus Evaluator (isolated). Calibrated: scoped ~$6, default ~$12-15. See [deep-research-architecture.md](deep-research-architecture.md). |
-| `/research-program` | Orchestration + nested orchestrator-workers + Synthesis + Judgment | Opus Planner + Opus campaign Leads (each runs single-agent research*) + Opus Cross-Campaign Synthesizer + Opus Program Evaluator (isolated). Calibrated: ~$35-75. See [research-program-architecture.md](research-program-architecture.md). |
+| `/deep-research` | Process profile | Delegates topology and model selection to `agentic-research:research-orchestrator`; see [research intents](research-skills-overview.md). |
+| `/research-program` | Work-side coordination | Coordinates separately registered Agentic Research engagements; see [research intents](research-skills-overview.md). |
 | `/knowledge-edge` (planned) | Orchestration + volume extraction | Sonnet orchestrator, Haiku for entity extraction |
 
 ---

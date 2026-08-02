@@ -1,16 +1,15 @@
 ---
 name: gate-citations
 description: >
-  Citation-integrity gate for the .research/ corpus. Runs the vendored ARD
-  citation-lint (a mechanical script, NOT a deep sub-agent) over the research
+  Citation-integrity gate for the .research/ corpus. Runs agentic-research's
+  authoritative citation lint (a mechanical script, NOT a deep sub-agent) over the research
   briefs and synthesis tiers, then converts broken-chain findings — unresolved /
   colliding / mismatched handles, unreachable sources, missing provenance, thin
   attestations — into substrate items in .work/ with gate_origin:citations and
   tags:[research, citations]. Severity-staged like the other gates
   (high → implementing, medium → drafting, low → backlog). Syntactic only — it
   proves citations point at real, attested sources; the semantic check (claim
-  support) is the adversarial-reader's job (passage-level) plus the isolated
-  evaluators (fabrication-smell) — see build-process.md's three-check model. Runs as the research
+  support) is handled by agentic-research's adversarial and evaluation stages. Runs as the research
   gate in /research-pipeline:quality-checkpoint; can also auto-trigger during
   /agile-workflow:release-deploy.
 allowed-tools: Read, Write, Glob, Grep, Bash
@@ -19,8 +18,8 @@ allowed-tools: Read, Write, Glob, Grep, Bash
 # Gate-Citations
 
 You run a **citation-integrity gate** over the project's `.research/` corpus. Unlike the
-other gates, the analysis is **not** a deep sub-agent — it is the vendored ARD citation-lint
-script (`${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py`), which mechanically resolves every
+other gates, the analysis is **not** a deep sub-agent — it is Agentic Research's authoritative
+ARD citation lint, which mechanically resolves every
 `[handle]{N}` citation against the attestation tier. Your job is to **run the lint, parse its
 JSON, and convert broken-chain findings into items** that the release flow drains before
 shipping.
@@ -28,10 +27,8 @@ shipping.
 **This gate is syntactic.** It proves the citation chain is intact — every `[handle]{N}`
 resolves to a real attestation under `.research/attestation/` with valid provenance, no handle
 collides, no source is unreachable. It does **not** judge whether a claim is actually supported
-by its source — the plausibility/fabrication-smell pass is the `/research` Phase 5 evaluator and the
-`/deep-research` / `/research-program` Evaluator's job (and even those, being isolated to the brief,
-don't do passage-level support — that's the adversarial-reader's job, see build-process.md § Quality Checkpoint). The checks compose; this gate is the
-mechanical half.
+by its source. Agentic Research performs passage-level adversarial review and isolated evaluation
+during the engagement. The checks compose; this gate is the release-time mechanical adapter.
 
 ## Trigger
 
@@ -77,11 +74,12 @@ re-emitting these.
 
 ### Phase 3: Run the lint
 
-Run the citation-lint over the corpus in JSON mode (no network probe; surface everything, let
-severity drive staging):
+Resolve the companion plugin, then run its citation lint over the corpus in JSON mode (no network
+probe; surface everything, let severity drive staging):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/lint-citations.py .research/ \
+AGENTIC_RESEARCH_ROOT="$(${CLAUDE_PLUGIN_ROOT}/scripts/resolve-agentic-research.sh)"
+python3 "$AGENTIC_RESEARCH_ROOT/ard-core/kernel/lint-citations.py" .research/ \
   --no-url-check --format json > /tmp/citation-lint-<version>.json
 ```
 
@@ -183,15 +181,17 @@ In conversation:
 - **Items created**: count by severity, with new ids
 - **Goal reminder**: every `[handle]{N}` must resolve to a real attestation. high/medium items
   block release until they reach `stage: done`; low items live in the backlog. This gate is
-  syntactic — pair it with the adversarial-reader (passage-level support) and the isolated evaluators (fabrication-smell), see build-process.md.
+  syntactic — pair it with Agentic Research's inline adversarial and evaluation stages.
 
 ## Guardrails
 
 - **The analysis is the lint script, not your judgment.** Run it, parse the JSON, convert
   findings. Don't hand-adjudicate whether a chain is "really" broken — the lint's status is the
   authority within this lane.
+- **One ARD implementation.** Resolve the validator from `agentic-research`; never fall back to a
+  copied pipeline kernel. If resolution fails, report the missing companion as a blocking gate error.
 - **Syntactic only.** Never claim this gate verifies a claim is supported by its source. Say so
-  in the output; the semantic check is the evaluators' job.
+  in the output; the semantic checks run inside Agentic Research engagements.
 - **Don't fix the chains here — produce items only.** Repairs (writing the missing attestation,
   reconciling a colliding handle) happen via `/agile-workflow:implement` on each item, or via
   re-running the producing research skill.

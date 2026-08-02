@@ -101,10 +101,10 @@ epic it blocks).
 
 | Probe | Concrete check |
 |---|---|
-| **Brief exists for every `[needs-brief]` epic in the release bundle** | For each item in `work-view --release <version> --tag needs-brief --paths`, extract id (`grep -m1 '^id:' $item`), then verify a brief exists at one of: `docs/briefs/<id>.md`, `docs/briefs/<phase-N>-*.md` matching the epic's phase, OR `.research/briefs/<topic>/parent.md` referencing the epic by id |
+| **Brief exists for every `[needs-brief]` epic in the release bundle** | Verify a brief exists in `docs/briefs/`, current `.research/analysis/` brief/campaign/position outputs, or a retained legacy `.research/briefs/` artifact, and references the epic by id or `research_refs:` slug |
 | **Brief references its blocking epic** | For each brief, grep for `blocks_phase:` or `blocks_epic:` in frontmatter; verify the referenced epic exists in `.work/active/epics/` or `.work/releases/*/` |
 | **Reverse — orphan brief** — a brief on disk that references a non-existent epic | For each brief, validate the `blocks_*` target resolves to a real item |
-| **Brief frontmatter present** | Each brief at `docs/briefs/*.md` and `.research/briefs/*/parent.md` has knowledge-index frontmatter (`name`, `description`, `type`, `kind`, `summary`, `updated`) per `build-process.md` |
+| **Brief frontmatter present** | Project docs use the knowledge-index schema. Agentic Research analysis artifacts use their own provenance contract; do not impose docs-specific fields on them. Retained legacy pipeline briefs keep their existing schema. |
 
 **Output:** missing-brief findings get severity High and stage `implementing`
 (blocks the release). Orphan-brief findings get Medium and stage `drafting`

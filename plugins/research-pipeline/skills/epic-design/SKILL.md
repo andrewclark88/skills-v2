@@ -157,8 +157,10 @@ Read:
 5. Sibling epics in `.work/active/epics/` — to see what they cover and avoid straddling boundaries
 6. **Research corpus (OURS):**
    - Briefs flagged at Phase 0 (matching `blocks_phase`)
-   - `.research/programs/*/super-parent.md` syntheses relevant to this epic's domain
-   - `.research/briefs/<topic>/parent.md` syntheses relevant to this epic's domain
+   - Current `.research/analysis/campaigns/*/parent.md`,
+     `.research/analysis/positions/*.md`, and `.research/analysis/briefs/*.md`
+   - Retained legacy `.research/programs/*/super-parent.md` and
+     `.research/briefs/<topic>/parent.md` during migration
    - `docs/research/<topic>.md` for any libraries the epic mentions that you haven't verified
 7. **Patterns skill (OURS):** read `.claude/skills/patterns/*.md` (or `.agents/skills/patterns/`) for any patterns relevant to the epic's domain. Patterns are the accumulated conventions of this project — using them keeps designs consistent.
 
@@ -295,7 +297,8 @@ The /feature-design pass treats these as fixed inputs — do not re-ask.>
 
 ## Research briefs
 
-<links to .research/briefs/, .research/programs/, or docs/briefs/ that ground this
+<links to current .research/analysis/, retained legacy .research/briefs/ or
+.research/programs/, or docs/briefs/ that ground this
 feature. If [needs-brief] tag is set, note what's missing.>
 
 ## Foundation references

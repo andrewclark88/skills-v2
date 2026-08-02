@@ -151,7 +151,9 @@ Read:
 5. Sibling features under the same parent — for shared types and integration points
 6. **Research corpus (OURS):**
    - Briefs flagged at Phase 0
-   - `.research/briefs/<topic>/parent.md` for any library/API the feature uses
+   - Current `.research/analysis/briefs/<topic>.md` or a relevant campaign/position
+     for any library/API the feature uses; accept retained legacy
+     `.research/briefs/<topic>/parent.md` during migration
    - `docs/research/<topic>.md` for libraries not yet verified
    - **Prefer research findings over assumptions about library APIs**
 7. **Patterns skill (OURS):** read `.claude/skills/patterns/*.md` (or `.agents/skills/patterns/`) for any patterns relevant to the feature's domain. Using them keeps designs consistent with project conventions.
