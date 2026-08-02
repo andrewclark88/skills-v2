@@ -1,324 +1,48 @@
 ---
 name: brief
 description: >
-  Write a domain brief that gives a future build session the curated context it needs.
-  Takes a topic + the roadmap phase it unblocks, researches deeply, then produces a
-  structured brief document optimized for agent consumption. Briefs are the bridge between
-  raw domain knowledge and implementation — they answer "what does the builder need to know?"
-  Use when a roadmap phase lists a blocking brief, or when a build session needs domain context.
+  Produce implementation-curated domain knowledge that unblocks a work item. Retains the familiar
+  pipeline brief entrypoint while delegating grounded research and verification to
+  agentic-research:research-orchestrator.
 user-invocable: true
-allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent
+allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
 model: opus
 ---
 
 # Brief
 
-You write **domain briefs** — curated reference documents that give a future build session
-exactly the context it needs to implement a roadmap phase correctly. A brief is not raw
-research, not architecture, not a tutorial. It's the distilled domain knowledge that prevents
-a builder from making wrong assumptions.
-
-**You follow the build process at `${CLAUDE_PLUGIN_ROOT}/docs/build-process.md`.** Read it before starting.
-
-**Read `${CLAUDE_PLUGIN_ROOT}/docs/first-principles.md` for consideration.** Apply its thinking moves — especially Open and Verify — to decompose domains deeply and confirm you truly understand what you're curating.
-
-**Read `${CLAUDE_PLUGIN_ROOT}/docs/system-design.md` when the brief covers system design topics.** The 15 design moves inform what a builder needs to know — curate toward the decisions they'll face (structure, interfaces, data, scale, reliability), not just the domain facts.
-
-## Arguments
-
-- `<topic>` — what the brief covers (e.g., "turn-structure", "mana-system", "technique-inventory")
-- Optional: `--phase <N>` — which roadmap phase this brief unblocks
-
-## Model Assignment
-
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
-
-- **Brief author (this skill's main loop)** — Synthesis. Opus high effort. Runs in parent context.
-- **Research sub-agents (Phase 2, when used)** — Parallel worker. Sonnet medium. Parallel when investigating multiple aspects.
-
-Curation requires judgment about what to include, what to cite, and what depth serves the builder — the orchestrator warrants Opus. Parallel research on aspects is scoped where Sonnet is sufficient. For broader topics, escalate to `/deep-research`; when a phase has 3+ blocking briefs that form a coherent multi-domain program, escalate further to `/research-program` (its super-parent can serve as the phase-level blocking brief, with campaign-level briefs backing it).
-
-## What Makes a Good Brief
-
-A brief is good when a fresh conversation can read it and build correctly without additional
-research. Test it mentally: "If I read only this brief and the codebase, could I implement
-the phase without going back to Google?"
-
-**Good briefs have:**
-- **Precision over breadth.** Cover what matters for implementation, not everything about the topic.
-- **Rules with numbers.** Not "mana empties between phases" but "mana pool empties at the end of each step (CR 500.4)."
-- **Worked examples.** Not "the stack resolves LIFO" but "Player A casts Counterspell targeting Player B's Oracle. Oracle trigger is already on the stack. Counterspell goes on top. Resolves: Counterspell counters Oracle spell. Oracle trigger still resolves (CR 603.7)."
-- **Implementation guidance.** Not just "what the rules say" but "what this means for the engine" — data structures, edge cases, decision points.
-- **Concrete card/scenario lists.** Not "some cards have replacement effects" but "Necropotence: draw replacement + discard-to-exile. Mox Diamond: enter-or-die replacement. Gemstone Caverns: pre-game replacement."
-
-**Bad briefs are:**
-- Textbook summaries (too broad, not implementation-focused)
-- Architecture docs disguised as briefs (that belongs in architecture.md)
-- Opinions without evidence (briefs are facts, not design decisions)
-- Missing the edge cases that will break the implementation
-
-## Workflow
-
-### Phase 1: Understand the Consumer
-
-Before researching anything, understand who will read this brief and why.
-
-1. **Read the roadmap** — find the phase this brief unblocks. Read the phase spec:
-   what's being built, what tests must pass, what architecture is touched.
-2. **Read existing briefs** — check `docs/briefs/` for related briefs already written.
-   Don't duplicate. Cross-reference.
-3. **Read the architecture doc** — understand how the system works so you can write
-   implementation-relevant guidance.
-
-**Ask yourself:** "What questions will the builder have that the codebase and roadmap don't answer?"
-Those questions define the brief's scope.
-
-### Phase 2: Research
-
-Investigate the domain deeply. Use every tool available:
-
-- **WebSearch/WebFetch** — official documentation, specifications, rule books, API docs
-- **Agent subagents (`model: "sonnet"`)** — spawn parallel researchers for different aspects of the topic. They **gather** (return URLs + verbatim excerpts); **you (the parent) write the attestations from the actual sources** in Phase 2b — never attest from a subagent's paraphrase (that launders an unverified summary into a source-direct attestation).
-- **Existing code** — if the project has related code, read it to understand what patterns are established
-- **Existing data** — if the project has data (card pools, technique inventories, etc.), analyze it to ground the brief in reality
-
-**For broad blocking briefs, consider `/deep-research` instead.** If the phase's blocking brief spans 5+ orthogonal aspects (a whole subsystem's worth of domain knowledge, not just one topic), escalate to `/deep-research`. It produces a cross-referenced brief set with a parent summary — better coverage for broad topics than a single agent. Most blocking briefs are focused enough for `/brief` alone; only escalate when the breadth genuinely warrants it. See [build-process.md § When to Use /research vs /deep-research](${CLAUDE_PLUGIN_ROOT}/docs/build-process.md).
-
-**Research with the consumer in mind.** Don't research everything about the topic — research
-what the builder needs. If the phase is "implement the mana system," you don't need the history
-of Magic mana rules. You need the current rules, the edge cases, and the cards the engine will
-encounter most often.
-
-#### 2b. Attest load-bearing sources (ARD citation chain)
-
-As you consult sources, attest the ones that back a **load-bearing** claim — a rule number, an API shape, a specification value, a card-interaction ruling, a quantitative claim. Not every page you skim; only sources a builder would need to verify. (This is ARD's thin-attestation discipline: attest what the brief leans on.)
-
-For each such source, write an attestation from the template at `${CLAUDE_PLUGIN_ROOT}/templates/attestation.md` to:
-
-```
-.research/attestation/<handle>.md
-```
-
-- **`<handle>`** — a stable kebab id for the source (`cr-2024`, `scryfall-api`, `edh-banlist`). It MUST equal the `[handle]` you cite with in the brief.
-- Frontmatter (normative minimum): `source_handle` (== the handle), `fetched: <YYYY-MM-DD>`, one of `source_url` / `source_path`, `provenance: source-direct`.
-- Body: a **Summary** (paraphrase, ~100-300 words — your words, no project framing) and **Key passages** (verbatim quotes for the load-bearing claims only, each with a source-internal anchor: CR §, p./¶, endpoint, timecode).
-
-Maintain a numbered bibliography per corpus at `.research/reference/<corpus>/INDEX.md` (template: `${CLAUDE_PLUGIN_ROOT}/templates/INDEX.md`). Pick a `<corpus>` slug grouping related sources (e.g. `mtg-rules`). **Append entries; never renumber.** `N` is the human-readable bibliography index — `/citation-lint` resolves the chain by **handle** (it does not read `INDEX.md` or check `N`), so append-only keeps the bibliography honest for readers, not because the lint depends on it. A new source gets the next free `N`.
-
-If the topic is small enough that nothing is genuinely load-bearing (no numbers, no rules, no API shapes to verify), it's fine to produce no attestations — the brief is then `verification_status: legacy-unattested` (see Phase 4).
-
-### Phase 3: Outline
-
-Before writing, outline the brief and get approval.
-
-**AskUserQuestion checkpoint:** Present:
-- Brief title and scope
-- Which phase it unblocks
-- Proposed sections (table of contents)
-- What's in scope and what's out
-- Key questions the brief will answer
-
-Iterate until approved.
-
-### Phase 4: Write
-
-Write the brief. Structure it for the consumer:
-
-#### Frontmatter Contract
-
-Every brief produced by `/brief` MUST start with YAML frontmatter that includes — at minimum:
-
-```yaml
----
-description: {one-line "when do I read this?" hook}
-type: brief
-slug: {topic-slug}
-research_method: /brief
-verification_status: attested   # attested = went through the Phase 2b attestation + Phase 4b citation-lint chain; omit ⇒ legacy-unattested
-provenance: agent-synthesis   # the brief is a synthesis artifact (only the attestation files are source-direct); provenance must be PRESENT for [handle]{N} citations to resolve (the lint checks the calling brief, not just the attestation)
-updated: {today's date, YYYY-MM-DD}
-blocks_phase: {phase number, optional}
-summary: |
-  {2-4 sentences — what this brief covers and why it matters}
-key_findings:
-  - {key finding}
-  - {key finding}
----
-```
-
-`research_method: /brief` is non-optional — it is how `/doc-review` distinguishes briefs produced by this skill from `/research`, `/deep-research`, or `/research-program` outputs (see project schema doc for the full value vocabulary). Projects that follow grimoire's universal frontmatter schema may extend with `slug`, `module`, `content_type`, `tags`, etc. — defer to the consumer project's schema for the full list.
-
-#### Standard Brief Template
-
-```markdown
-# Brief: {Topic}
-
-## Purpose
-
-{What this brief covers and which phase it unblocks. 1-2 sentences.}
-
----
-
-## {Core Section 1}
-
-{The main content. Rules, specifications, data, worked examples.
-Cite sources. Use tables for structured data. Use code blocks for
-data structures, algorithms, or protocol formats.}
-
-## {Core Section 2}
-
-{Continue with logical sections. Each section should answer a
-specific question the builder will have.}
-
-## Implementation Notes
-
-{What this means for the engine/system. Data structures, edge cases,
-decision points, performance considerations. This is where the brief
-goes from "what the domain says" to "what the builder should do."}
-
-## Sources
-
-{Every source consulted. URLs, document names, rule numbers.}
-```
-
-**Adapt the template.** The sections above are a starting point. A brief about card interactions
-will look different from a brief about tournament rules or API endpoints. Structure for the content.
-
-#### Writing Rules
-
-- **Cite everything.** Rule numbers, API docs, source URLs. A builder should be able to verify any claim.
-- **Cite load-bearing claims with the `[handle]{N}` wire-form** inline in the body — `handle` is the attestation handle from Phase 2b, `N` is its entry number in the corpus `INDEX.md`. Example: "A commander deck is exactly 100 cards `[cr-2024]{2}`." The human-readable `## Sources` list stays; the `[handle]` is the machine-checkable anchor `/citation-lint` resolves (it verifies the handle → attestation; `N` indexes the human bibliography and is not checked). Cite the same claims you attested — never cite a handle you didn't write an attestation for.
-- **Use tables for structured data.** Card lists, rule summaries, API endpoints, technique inventories.
-- **Use worked examples for complex interactions.** Walk through the stack resolution step by step. Show the mana calculation. Trace the API call sequence.
-- **Flag the 80/20.** What are the most common cases? (Top 100 meta cards, most frequent tournament rules, most-used API endpoints.) Cover those thoroughly. Acknowledge the long tail but don't exhaustively document it.
-- **Cross-reference other briefs.** Don't duplicate. If another brief covers a related topic, reference it: "See `stack-and-priority.md` for how triggered abilities queue."
-
-#### 4b. Lint the citation chain
-
-Before presenting the brief, run the **mechanical** citation check via the `citation-lint` skill on the brief you just wrote:
-
-```
-/citation-lint <path/to/the/brief/you/just/wrote.md>
-```
-
-It verifies every `[handle]{N}` resolves to a real attestation under `.research/attestation/` with valid provenance, and flags thin attestations + suspicious unsourced-claim patterns. On a **broken chain** (high severity — e.g. a `[handle]` with no attestation), fix it before finalizing: write the missing attestation, correct the handle, or remove the claim. Re-run until clean, then set `verification_status: attested`.
-
-Note: the lint checks that `provenance` is **present** on the **calling brief** too, not just the attestation — that's why the brief frontmatter carries `provenance: agent-synthesis` (the brief is a synthesis artifact; only the attestation files are `source-direct`). A numbered `## Sources` list can trip the advisory `version-number` pattern flag — that's a `[warn]`, not a broken chain; ignore it.
-
-The lint is **syntactic** — it proves the citations point at real, attested sources. It does NOT judge whether a claim is actually supported by its source — that's the adversarial read below. If the brief is genuinely `legacy-unattested` (nothing load-bearing to attest), there are no `[handle]{N}` citations and the lint is a no-op — record that status honestly rather than manufacturing citations.
-
-#### 4c. Adversarial source-support read
-
-After the lint, run the **adversarial-reader** — the pass that actually checks whether each cited passage *supports* its claim (the lint can't; it never reads passages). Dispatch a fresh sub-agent with **full context**:
-
-```
-Agent({
-  description: "Adversarial source-support read: {topic}",
-  subagent_type: "general-purpose",
-  model: "opus",
-  prompt: <[verbatim research-discipline bundle]
-           + [verbatim ${CLAUDE_PLUGIN_ROOT}/skills/adversarial-reader/SKILL.md body]
-           + the brief path, the attestation files for every cited handle, and the lint output>
-})
-```
-
-It returns per-claim support verdicts (`supported` / `partial` / `unsupported` / `passage-absent`) + job a–h findings + `APPROVED` / `NEEDS-REVISION`. On `NEEDS-REVISION`, narrow the claim to what the passage supports, re-attest, or drop it; re-run 4b + 4c until clean. Skip only when the brief is `legacy-unattested`. (`/brief` has no isolated-evaluator phase like `/research` Phase 5 — this adversarial read is the brief's groundedness gate.)
-
-### Phase 5: Review
-
-Present the completed brief. Highlight:
-- Total length (aim for 200-500 lines — enough to be thorough, short enough to fit in context)
-- Key insights that might surprise the builder
-- Any gaps or areas where you couldn't find authoritative sources
-- Related briefs that should be read alongside this one
-
-**AskUserQuestion checkpoint:** "Does this cover what the builder needs? Anything missing or too detailed?"
-
-Iterate until approved, then write to disk.
-
-### Step 6: Regenerate the Knowledge Index
-
-After writing the brief, **run `/knowledge-index`** to regenerate the index from frontmatter.
-
-Do NOT hand-edit `docs/knowledge-index.yaml` — it's a derived artifact (see
-`${CLAUDE_PLUGIN_ROOT}/skills/knowledge-index/SKILL.md` for the schema). Frontmatter is the only source of truth;
-your job is to write conformant frontmatter on the brief, then run `/knowledge-index`.
-
-Required frontmatter on the brief (see `${CLAUDE_PLUGIN_ROOT}/skills/knowledge-index/SKILL.md` for the full
-schema):
-
-```yaml
----
-description: <one-line "when do I read this?" hook — frame as the question this doc answers>
-type: brief
-kind: research                                    # usually derived from type; set explicitly to override
-slug: <topic-slug>
-research_method: /brief
-verification_status: attested                     # attested | legacy-unattested (absent ⇒ legacy-unattested)
-provenance: agent-synthesis                       # synthesis artifact (attestation files are source-direct); must be present for [handle]{N} citations to resolve (lint checks the calling brief too)
-updated: <today's date YYYY-MM-DD>
-blocks_phase: <phase number if applicable>
-summary: |
-  <1-2 sentences on what's in the brief>
-key_findings:
-  - <what the research showed; 3-7 bullets>
-status: draft
----
-```
-
-If the project doesn't yet have a knowledge index, `/knowledge-index` will create it.
-
----
-
-## Brief Types
-
-Different phases need different kinds of briefs:
-
-### Rules/Mechanics Briefs
-For systems with formal rules (game rules, protocols, financial regulations).
-- Cite rule numbers
-- Cover edge cases exhaustively
-- Worked examples for complex interactions
-- Examples: `turn-structure.md`, `stack-and-priority.md`, `edh-tournament-rules.md`
-
-### API/Integration Briefs
-For external systems the project integrates with.
-- Endpoint documentation with request/response examples
-- Authentication and rate limiting
-- Error handling patterns
-- Examples: `external-api.md`, `data-ingestion.md`
-
-### Domain Knowledge Briefs
-For analytical or technical domains the project operates in.
-- Technique inventories with selection criteria
-- Decision frameworks with routing variables
-- Worked examples with real data
-- Examples: `technique-inventory-eda.md`, `decision-dag-design.md`
-
-### Card/Entity Interaction Briefs
-For projects with complex entity interactions (games, simulations).
-- Most frequent entities from real data (not hypothetical)
-- Interaction rules with stack/priority/timing
-- Implementation priority ordering (by frequency × complexity)
-- Examples: `meta-card-interactions.md`, `win-conditions.md`
-
-### Pipeline/Process Briefs
-For data pipelines and operational processes.
-- Step-by-step flow with data shapes at each stage
-- Error handling and retry strategies
-- Expected scale and performance considerations
-- Examples: `meta-seed-pipeline.md`
-
----
-
-## Anti-Patterns
-
-- **Don't write a textbook.** Briefs are implementation-focused, not educational.
-- **Don't duplicate architecture docs.** Briefs cover domain knowledge, not system design.
-- **Don't skip research.** A brief based on training data alone will have gaps. Search the web.
-- **Don't ignore the data.** If the project has real data (card pools, tournament results, technique inventories), ground the brief in it. "The top 100 meta cards" is better than "common cards."
-- **Don't write without knowing the consumer.** Read the roadmap phase first. A brief for Phase 5 is different from a brief for Phase 10.
-- **Don't be vague.** "Mana abilities don't use the stack" → "Mana abilities (CR 605) do NOT use the stack. They resolve immediately. A player can activate mana abilities while casting a spell (CR 601.2g). Exception: Lion's Eye Diamond has a timing restriction — 'activate only as an instant' means it cannot be activated during spell casting."
-- **Never cite a `[handle]{N}` you didn't attest.** The handle must resolve to a real attestation under `.research/attestation/` — a citation with no attestation is exactly the fabrication the chain exists to catch.
-- **Keep the corpus `INDEX.md` append-only.** `N` is a human bibliography index; the lint resolves by handle, not `N`, so renumbering won't break the chain mechanically but will misnumber the reader-facing list.
-- **Never mark a brief `verification_status: attested` if `/citation-lint` reports broken chains.** Fix them, or record `legacy-unattested` honestly.
+A brief answers “what does the builder need to know to implement this work
+correctly?” It is precise, evidence-backed, implementation-relevant domain
+knowledge—not architecture, a tutorial, or a general landscape.
+
+Read `${CLAUDE_PLUGIN_ROOT}/docs/research-composition.md`, the commissioning work
+item, architecture, related code, existing briefs, and the knowledge index.
+Identify:
+
+- the downstream implementation decision;
+- the assumptions or edge cases that could invalidate the build;
+- what the codebase already answers; and
+- the smallest useful scope for the missing knowledge.
+
+When durable coordination is warranted, use a `[research]` commissioning item
+with `research_dials:` and explicit decision-relevance prose. Propose a focused,
+implementation-curated brief as the output kind, then invoke
+`agentic-research:research-orchestrator`. The orchestrator owns kickoff, source
+work, attestations, current output paths, citation lint, and semantic review.
+
+The resulting brief should favor exact rules, API shapes, worked edge cases,
+project implications, and test-relevant examples. It should distinguish domain
+facts from design choices and call out unresolved gaps.
+
+After the engagement:
+
+1. add the artifact slug to the commissioning item's `research_refs:`;
+2. record how it unblocks the item;
+3. update knowledge discovery; and
+4. let the orchestrator close or route the commissioning item according to
+   `.work/CONVENTIONS.md`.
+
+If decomposition discovers several consequential facets, accept the
+orchestrator's campaign shape. If it discovers several decision-linked arcs,
+route coordination through `research-program`; do not run a duplicate research
+workflow inside this skill.

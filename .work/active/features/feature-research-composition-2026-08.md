@@ -109,3 +109,23 @@ not a fallback to retired local ARD code.
 
 Each step is independently reversible. Existing project corpora are migrated
 only through the operator-confirmed `convert` flow.
+
+## Implementation record
+
+### 2026-08-01 — process wrappers established
+
+- Added the composition contract at
+  `plugins/research-pipeline/docs/research-composition.md`.
+- Recast `scout`, `research`, `brief`, `deep-research`, and
+  `research-program` as familiar process-intent wrappers over
+  `agentic-research:research-orchestrator`.
+- Removed duplicated acquisition, attestation, fan-out, synthesis, evaluator,
+  and path instructions from those five entrypoints.
+- Reframed programs as agile-workflow research epics containing separately
+  registered research features, matching the current handoff contract.
+- Updated the plugin README to state the companion prerequisite and authority
+  boundary.
+
+Remaining before review: replace the release citation adapter's vendored-kernel
+dependency, dual-index current and legacy corpus paths, remove now-unreferenced
+ARD copies, and validate the composition on Claude and Codex.
