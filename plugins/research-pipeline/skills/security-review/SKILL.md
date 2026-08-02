@@ -5,9 +5,6 @@ description: >
   (auth, injection, secrets, dependencies, API, infra, crypto, data protection, error handling),
   researches best practices, then produces scored markdown report with severity-classified findings.
   Use when user says "security review", "security audit", "vulnerability check", or "find security issues".
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Bash, Agent, WebSearch, WebFetch, Write, AskUserQuestion
-model: opus
 ---
 
 # Security Review
@@ -25,12 +22,12 @@ The report is designed to be handed to a design or fix skill for remediation.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Security auditor (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Domain audit sub-agents (Phase 3)** — Parallel worker. Sonnet medium. One per chosen security domain (typically 3-6 parallel).
+- **Security auditor (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
+- **Domain audit sub-agents (Phase 3)** — Parallel worker at the balanced host-native tier with medium reasoning. One per chosen security domain (typically 3-6 parallel).
 
-Severity judgment and cross-domain correlation warrant Opus. Per-domain audits are scoped to a single threat model where Sonnet is sufficient.
+Severity judgment and cross-domain correlation warrant the host quality-first tier. Per-domain audits are scoped to a single threat model where the balanced host-native tier is sufficient.
 
 ## Phase 0: Load Architectural Context
 
@@ -88,7 +85,7 @@ Tell the user how many domains you recommend selecting (typically 3-5 for a focu
 
 ## Phase 3: Deep Audit
 
-For each selected domain, launch a **parallel Agent subagent** (`model: "sonnet"`). Each subagent independently:
+For each selected domain, launch a **parallel host-native sub-agent** at medium reasoning. Each sub-agent independently:
 
 1. **Loads the domain checklist** from [references/domain-checklists.md](references/domain-checklists.md)
 2. **Researches current best practices** via WebSearch for the specific stack+domain combination

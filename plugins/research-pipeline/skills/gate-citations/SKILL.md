@@ -31,7 +31,7 @@ during the engagement. The checks compose; this gate is the release-time mechani
 
 ## Model Assignment
 
-- **Orchestrator (this skill's main loop)** — Opus, light. There is no analysis sub-agent;
+- **Orchestrator (this skill's main loop)** — Host quality-first tier at low reasoning. There is no analysis sub-agent;
   the lint script is the analytical authority. The orchestrator runs it, parses findings, and
   writes items. Keep it lightweight.
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Engineering Principles"
+  short_description: "Apply the project's engineering principles"
+  default_prompt: "Use $engineering-principles to apply the project's architecture and code principles."
+policy:
+  allow_implicit_invocation: true

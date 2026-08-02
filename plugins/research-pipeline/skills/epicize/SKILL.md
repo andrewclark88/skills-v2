@@ -8,9 +8,6 @@ description: >
   /epic-design and /feature-design downstream. Emits epic items with depends_on chains
   for autopilot draining. Tags research-thin epics [needs-research] (a research campaign
   is needed first) or [needs-brief] (a curated brief is needed before design).
-user-invocable: true
-allowed-tools: Read, Write, Glob, Grep, Bash, AskUserQuestion, Task
-model: opus
 ---
 
 # Epicize
@@ -45,11 +42,11 @@ research, it falls back to Nathan's foundation-doc-only flow.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Epicize architect (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
+- **Epicize architect (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
 
-Epic decomposition decisions cascade into every downstream design and implement phase — the orchestrator warrants Opus. This skill does not spawn sub-agents; reasoning happens in the parent context.
+Epic decomposition decisions cascade into every downstream design and implement phase — the orchestrator warrants the host quality-first tier. This skill does not spawn sub-agents; reasoning happens in the parent context.
 
 ## Think like an agent
 

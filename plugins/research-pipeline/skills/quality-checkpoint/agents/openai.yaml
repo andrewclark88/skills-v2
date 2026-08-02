@@ -1,0 +1,6 @@
+interface:
+  display_name: "Quality Checkpoint"
+  short_description: "Run the release quality gate sequence"
+  default_prompt: "Use $quality-checkpoint to run the configured release gates."
+policy:
+  allow_implicit_invocation: true

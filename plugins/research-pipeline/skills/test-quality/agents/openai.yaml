@@ -1,0 +1,6 @@
+interface:
+  display_name: "Test Quality"
+  short_description: "Derive test gaps from behavioral contracts"
+  default_prompt: "Use $test-quality to improve tests from specs and contracts."
+policy:
+  allow_implicit_invocation: true

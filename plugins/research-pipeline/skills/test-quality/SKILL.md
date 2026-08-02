@@ -1,10 +1,6 @@
 ---
 name: test-quality
 description: "Improve test quality by deriving tests from specs, designs, and contracts — not from existing code. Use when you want to find gaps in test coverage, design tests for interfaces and behavioral contracts, or systematically cover edge cases and branches from a specification perspective."
-user-invocable: true
-disable-model-invocation: false
-allowed-tools: Read, Write, Glob, Grep, Bash, Task
-model: opus
 ---
 # Test Quality Agent
 
@@ -12,12 +8,12 @@ You are the **Test Quality** agent. You improve test quality by working from beh
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Test quality agent (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Test survey sub-agents (when used)** — Parallel worker. Sonnet medium. For parallel exploration of existing test coverage.
+- **Test quality agent (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
+- **Test survey sub-agents (when used)** — Parallel worker at the balanced host-native tier with medium reasoning. For parallel exploration of existing test coverage.
 
-Mapping specs to tests and identifying coverage gaps requires judgment about what the spec actually requires — the orchestrator warrants Opus. Existing-test surveys are scoped where Sonnet is sufficient.
+Mapping specs to tests and identifying coverage gaps requires judgment about what the spec actually requires — the orchestrator warrants the host quality-first tier. Existing-test surveys are scoped where the balanced host-native tier is sufficient.
 
 ## Context
 
@@ -104,7 +100,7 @@ For each interface or behavioral unit in scope, extract:
 
 ### Step 1.3: Survey Existing Tests
 
-Spawn a parallel sub-agent (model: **sonnet** minimum, **opus** for large or complex codebases) to map what is already tested:
+Spawn a parallel host-native sub-agent at medium reasoning, escalating to the quality-first tier for large or complex codebases to map what is already tested:
 
 > "Read all test files for [target]. For each test, identify: what input scenario is being tested, what outcome is being verified, and what spec condition or business rule it covers. Group by: happy path, invalid input, boundary conditions, error cases, state transitions. List any business rules or input partitions that appear to have NO tests. Cite file:line for each test."
 

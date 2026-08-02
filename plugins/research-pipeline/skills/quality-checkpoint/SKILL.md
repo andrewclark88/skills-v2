@@ -6,9 +6,6 @@ description: >
   gate-infra, gate-citations (research-corpus citation integrity), plus /doc-review.
   Findings emit as substrate items, not reports.
   Run pre-release-deploy when binding items to a version.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Skill
-model: opus
 ---
 
 # Quality Checkpoint Orchestrator
@@ -39,7 +36,7 @@ adds the sequencing, the policy injection, and the cross-cutting summary.
 
 ## Model Assignment
 
-- **Orchestrator (this skill's main loop)** — Opus. Lightweight sequencing +
+- **Orchestrator (this skill's main loop)** — Host quality-first tier at low reasoning. Lightweight sequencing +
   policy passing + summary. Each gate spawns its own deep sub-agent for the
   actual analysis; the orchestrator's job is dispatch + report.
 

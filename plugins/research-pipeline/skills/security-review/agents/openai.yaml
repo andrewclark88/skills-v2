@@ -1,0 +1,6 @@
+interface:
+  display_name: "Security Review"
+  short_description: "Audit a codebase across security domains"
+  default_prompt: "Use $security-review to run a comprehensive security audit."
+policy:
+  allow_implicit_invocation: true

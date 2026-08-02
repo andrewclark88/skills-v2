@@ -5,9 +5,6 @@ description: >
   (modules, data flow, conventions, dependencies). Only run AFTER /ideate (north star) and /research
   (domain briefs) are complete — architecture decisions should be grounded in research, not assumptions.
   Use when the north star and domain briefs exist and you're ready to design how the system is built.
-user-invocable: true
-allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, WebSearch, WebFetch, Agent
-model: opus
 ---
 
 # Architecture
@@ -30,11 +27,11 @@ are assumptions, and assumptions cause rewrites.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Architect (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
+- **Architect (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
 
-Architecture decisions cascade into every downstream phase — the orchestrator warrants Opus. This skill does not spawn sub-agents in v1; all reasoning happens in the parent context.
+Architecture decisions cascade into every downstream phase — the orchestrator warrants the host quality-first tier. This skill does not spawn sub-agents in v1; all reasoning happens in the parent context.
 
 ## What This Skill Produces
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Epicize"
+  short_description: "Turn architecture and research into epics"
+  default_prompt: "Use $epicize to create dependency-aware epics from project intent."
+policy:
+  allow_implicit_invocation: true

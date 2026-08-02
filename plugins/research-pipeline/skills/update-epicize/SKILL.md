@@ -7,9 +7,6 @@ description: >
   reduction); proposes epic rescoping / splits / merges / archive moves. Use after
   completing a batch of features, when scope has shifted, when new blockers were
   discovered, or when the epic graph no longer matches the project's trajectory.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
-model: opus
 ---
 
 # Update-Epicize
@@ -38,11 +35,11 @@ update individual epic items and their `depends_on` chains.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Updater (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
+- **Updater (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
 
-Cross-epic decisions affect every downstream design and implement pass — Opus warrants. This skill does not spawn sub-agents.
+Cross-epic decisions affect every downstream design and implement pass — the host quality-first tier warrants the cost. This skill does not spawn sub-agents.
 
 ## Workflow
 

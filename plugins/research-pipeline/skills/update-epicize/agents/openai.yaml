@@ -1,0 +1,6 @@
+interface:
+  display_name: "Update Epic Decomposition"
+  short_description: "Reconcile epics with implemented reality"
+  default_prompt: "Use $update-epicize to update the epic graph from implementation evidence."
+policy:
+  allow_implicit_invocation: true

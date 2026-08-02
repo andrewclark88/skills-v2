@@ -1,0 +1,6 @@
+interface:
+  display_name: "Initialize Project"
+  short_description: "Scaffold the research-pipeline project layer"
+  default_prompt: "Use $init-project to scaffold the project knowledge layer."
+policy:
+  allow_implicit_invocation: true

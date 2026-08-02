@@ -8,9 +8,6 @@ description: >
   (substrate bootstrap) then /ideate as the next steps.
   Use when starting a brand-new project, or when an existing project lacks the
   docs/ scaffolding the skills pipeline depends on.
-user-invocable: true
-allowed-tools: Read, Write, Bash, Glob
-model: haiku
 ---
 
 # Init Project
@@ -19,11 +16,11 @@ You scaffold a new project with the build-process knowledge layer. This is the e
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Scaffolder (this skill's main loop)** — Volume / structured extraction. Haiku low. Runs in parent context.
+- **Scaffolder (this skill's main loop)** — Volume / structured extraction at the fastest adequate host-native tier with low reasoning. Runs in parent context.
 
-Copying template files, substituting placeholders, and running a couple of shell commands is well-defined structured work with no judgment calls. Haiku is the right fit. No sub-agents.
+Copying template files, substituting placeholders, and running a couple of shell commands is well-defined structured work with no judgment calls. The fastest adequate host-native tier is the right fit. No sub-agents.
 
 ## Scope
 

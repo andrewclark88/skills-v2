@@ -7,10 +7,6 @@ description: >
   Updates the foundation docs and seeds/updates epic items in .work/ so epic-design
   can consume them next. Use when adding a major capability, new subsystem, or
   architectural shift — not for small one-offs (those are a feature/story item).
-user-invocable: true
-disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, WebSearch
-model: opus
 ---
 
 # Expand
@@ -29,12 +25,12 @@ or **fix**) or starting from scratch (use **ideate** for that).
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Expansion partner (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Explore sub-agent (Phase 1)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). One instance for codebase mapping.
+- **Expansion partner (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
+- **Explore sub-agent (Phase 1)** — Parallel worker at the balanced host-native tier with medium reasoning (quality-first tier for large or complex codebases). One instance for codebase mapping.
 
-Scope decisions touch foundation docs — the orchestrator warrants Opus. Codebase exploration is scoped where Sonnet is sufficient; escalate to Opus for large/complex codebases.
+Scope decisions touch foundation docs — the orchestrator warrants the host quality-first tier. Codebase exploration is scoped where the balanced host-native tier is sufficient; escalate to the quality-first tier for large/complex codebases.
 
 ## Phase 0: Load Existing Knowledge
 
@@ -48,7 +44,7 @@ Before discussing the expansion, deeply understand the current project.
    (or a project's `north-star*.md` + `architecture.md`), and any domain-specific
    architecture docs (data-layer, UX, contract, etc.) the project has produced. Also
    skim the active substrate (`.work/bin/work-view --kind epic`) to see in-flight scope.
-2. Use the Explore agent (`model: "sonnet"` for most cases, `"opus"` for large or complex codebases) to map the current codebase: directory structure,
+2. Use the Explore agent at the balanced host-native tier for most cases, escalating to the quality-first tier for large or complex codebases to map the current codebase: directory structure,
    modules, key abstractions, what's been built so far
 3. Read **patterns** if they exist — understand established conventions
 4. Read **CLAUDE.md** — project guidelines and conventions

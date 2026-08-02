@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ideate"
+  short_description: "Create research-grounded project foundations"
+  default_prompt: "Use $ideate to establish the project's foundation documents and research plan."
+policy:
+  allow_implicit_invocation: true

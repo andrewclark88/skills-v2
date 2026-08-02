@@ -36,11 +36,11 @@ the design rationale and the dev-time vs production-retrieval distinction.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Index regenerator (this skill's main loop)** — Volume / structured extraction. Sonnet medium. Runs in parent context.
+- **Index regenerator (this skill's main loop)** — Volume / structured extraction at the balanced host-native tier with medium reasoning. Runs in parent context.
 
-Frontmatter parsing, lint, and YAML emission are mechanical structured work — Sonnet handles
+Frontmatter parsing, lint, and YAML emission are mechanical structured work — the balanced host-native tier handles
 this cleanly. No sub-agents.
 
 ## When This Runs

@@ -106,11 +106,31 @@ the in-skill prose names; this is what they mean.
   peeragent build (`zai` agent). Older cached builds only list
   `codex|claude|gemini`.
 
+**Kimi (Moonshot; Pi-native driver)**
+- Pi exposes Kimi For Coding as a built-in API-key provider. Resolve the exact
+  model ID from Pi's current catalog rather than pinning a transient alias here.
+- Pi normalizes reasoning to `off | minimal | low | medium | high | xhigh`, but
+  only levels declared by the selected model are valid. Treat `high` as the
+  quality-first driver default and raise to `xhigh` only after verifying the
+  model advertises it and the task warrants the latency.
+- Kimi is currently a **driver class**, not a peeragent target. A Kimi-driven Pi
+  session can delegate review to Claude, Codex, Gemini, or Z.AI; other hosts
+  cannot select Kimi through peeragent until an adapter exists.
+
+**Pi driver settings**
+- Pi is a harness, not a model class. Its global defaults live in
+  `~/.pi/agent/settings.json`; project overrides live in `.pi/settings.json`.
+  Use `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`, or select a
+  one-off driver with `--provider`, `--model`, and `--thinking`.
+- Skills installed through the Pi plugin bridge inherit the active Pi driver.
+  Resolve internal workers from capability and reserve peeragent for a
+  different training lineage.
+
 ## 3. Role → capability → model
 
 | Role | Needs (capability) | Primary models |
 |---|---|---|
-| Primary implementation worker | write fidelity, agentic stamina | Luna high by default and xhigh for demanding work; medium only for very simple bounded tasks. Only when Luna is unavailable, fall back by delivery needs to Sonnet 5, Sol, Opus 4.8, Fable 5, or GLM-5.2 and record the fallback |
+| Primary implementation worker | write fidelity, agentic stamina | Luna high by default where available and xhigh for demanding work; otherwise use the active host's strongest verified writing tier. GLM-5.2 and Kimi are valid Pi drivers to evaluate, not assumed equivalents; record meaningful fallbacks |
 | Scanner/scout (deep read-only fan-out) | domain inspection, evidence, scoped artifacts | Haiku / Luna / Sonnet 5 for volume; Sol / Opus 4.8 / Fable 5 / GLM xhigh for subtle gates |
 | Deep reviewer | reasoning depth, fresh context | GPT-5.6 Sol (then another suitable 5.6 tier; GPT-5.5 only if no 5.6 is available) / Claude Opus 4.8 or Fable 5 / GLM-5.2 xhigh, with a second pass for distributed invariants |
 | Advisory peer (Phase 1) | blind-spot diversity, augmentation | a **different class** than the host |
@@ -143,6 +163,7 @@ calls for multi-model coverage (§6); deep lenses alone do not add passes to
 | OpenAI (GPT-5.6 or Codex) | claude · gemini · zai |
 | Gemini | claude · openai · zai |
 | Z.AI GLM | claude · openai · gemini |
+| Kimi | claude · openai · gemini · zai |
 
 When the natural pair is unavailable, fall through to the next class; never
 peer within the host lineage and call it cross-model. A same-lineage reviewer
@@ -179,6 +200,7 @@ host harness's outside-sandbox mode; never `--full-access` for review.
 | Codex | `--agent codex --effort xhigh` (model auto-selected) |
 | Gemini | `--agent gemini` (effort ignored) |
 | Z.AI GLM 5.2 | `--agent zai --effort xhigh` (model fixed glm-5.2) |
+| Kimi | unavailable as a peeragent target; supported only as a Pi driver |
 
 Always tell the reviewer **not** to recurse back through peeragent's own
 `peer`/`peer-review` skills or the wrapper — the reviewer is the endpoint.

@@ -14,7 +14,7 @@ comes from `skill-creator`; this skill adds the local distribution contract.
 
 ## Scope
 
-- Applies to supported plugin skills under `plugins/{agile-workflow,workbench,ux-ui-design,nates-toolkit,agentic-research,agent-coordination,prose-craft}/skills/`.
+- Applies to supported plugin skills under `plugins/{agile-workflow,research-pipeline,workbench,ux-ui-design,nates-toolkit,agentic-research,agent-coordination,prose-craft}/skills/`.
 - Applies to repo-local reference skills under `.agents/skills/`.
 - Do not modernize `plugins/workflow/` unless the user explicitly asks. It is deprecated and kept only for existing installs.
 

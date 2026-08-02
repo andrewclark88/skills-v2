@@ -8,10 +8,6 @@ description: >
   2-3 architectural options forced, trickiest unit first, pre-mortem, child-story spawning
   criteria, Blocker short-circuit. Greenfield features only — [refactor] routes to
   refactor-design, [perf] to perf-design.
-user-invocable: true
-disable-model-invocation: false
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, Skill
-model: opus
 ---
 
 # Feature-Design
@@ -79,12 +75,12 @@ alignment signal.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Designer (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Count is set by the Phase 3 scope-size probe (zero for small/bounded features, one for medium, parallel for broad/cross-cutting); at most one in --only-questions mode.
+- **Designer (this skill's main loop)** — Quality-first orchestration at high reasoning. Runs in parent context.
+- **Explore sub-agents (Phase 3)** — Balanced native parallel workers at medium reasoning; use the host's quality-first tier for large or complex codebases. Count is set by the Phase 3 scope-size probe (zero for small/bounded features, one for medium, parallel for broad/cross-cutting); at most one in --only-questions mode.
 
-Design decisions cascade through implementation — the orchestrator warrants Opus. Explore sub-agents do scoped codebase mapping where Sonnet is sufficient.
+Design decisions cascade through implementation, so the orchestrator warrants the host's quality-first tier. Explore sub-agents do scoped codebase mapping where a balanced worker is sufficient.
 
 ## Anti-patterns
 
@@ -170,7 +166,7 @@ Then choose the dispatch size to match the feature:
 
 - **Small/bounded feature** (known module or a few obvious files): skip Explore — direct reading is enough.
 - **Medium/unclear feature** (one area, uncertain patterns): spawn **one** read-only Explore agent with a combined brief.
-- **Broad/cross-cutting feature** (distinct structure, interface, and test questions across separate areas): spawn parallel read-only Explore sub-agents (`Task`, `model: "sonnet"`; Opus for large/complex codebases), sending all in one message.
+- **Broad/cross-cutting feature** (distinct structure, interface, and test questions across separate areas): spawn parallel read-only Explore sub-agents (using the host.s generic read-only sub-agent at medium reasoning; quality-first tier for large/complex codebases), sending all in one message.
 
 Explore prompts when dispatched:
 1. **Codebase Structure**: "Map the directory layout, module structure, and entry points relevant to feature `<feature-id>`. List source files and their primary exports."
@@ -195,7 +191,7 @@ These are specific to the feature in front of you — not generic prompts about 
 
 Aim for the smallest set of questions that meaningfully resolve direction — typically 2-5. Zero is fine if upstream pinned every directional choice.
 
-**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the feature has large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Use one focused `peer` pass only when a different model class is available (host Claude → Codex via `peeragent:peer`). Ask the peer for missing questions, risks, ambiguous constraints, and alternatives for this feature's design — **not** for a verdict. Feed it the research grounding loaded in Phase 0/2 (the relevant `.research/` briefs and knowledge-index entries) so it stress-tests the design against what we actually researched, not just the foundation docs. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note that the advisory pass was skipped — this is **non-blocking**, never halt the queue for an advisory failure. Summarize useful output under `## Other agent review` in the feature body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
+**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the feature has large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Use one focused `peer` pass only when a different model class is available. Resolve the explicit target and effort from the host-to-peer matrix in `/agile-workflow:principles` (Claude host → Codex, Codex host → Claude, and GLM/Kimi Pi host → a different lineage). Ask the peer for missing questions, risks, ambiguous constraints, and alternatives for this feature's design — **not** for a verdict. Feed it the research grounding loaded in Phase 0/2 (the relevant `.research/` briefs and knowledge-index entries) so it stress-tests the design against what we actually researched, not just the foundation docs. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note that the advisory pass was skipped — this is **non-blocking**, never halt the queue for an advisory failure. Summarize useful output under `## Other agent review` in the feature body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
 
 If this skill is running **as a delegation from an active autopilot run or harness goal**, resolve each question with judgment (prioritize: consistent with foundation docs > simpler option > defers irreversible decisions) and log under `## Design decisions` in the feature body.
 

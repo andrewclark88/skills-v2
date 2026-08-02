@@ -1,0 +1,6 @@
+interface:
+  display_name: "Documentation Review"
+  short_description: "Audit planning docs for drift and consistency"
+  default_prompt: "Use $doc-review to audit the project's planning documents."
+policy:
+  allow_implicit_invocation: true

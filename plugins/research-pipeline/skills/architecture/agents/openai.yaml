@@ -1,0 +1,6 @@
+interface:
+  display_name: "Architecture"
+  short_description: "Design research-grounded project architecture"
+  default_prompt: "Use $architecture to design the project's technical architecture."
+policy:
+  allow_implicit_invocation: true

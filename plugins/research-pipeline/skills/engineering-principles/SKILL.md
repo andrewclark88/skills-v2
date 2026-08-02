@@ -5,7 +5,6 @@ description: >
   Contracts, Fail Fast). Auto-loads when designing new modules, defining interfaces, writing
   new functions, implementing features, drawing system boundaries, reviewing architectural
   decisions, or any time the design or implement skill is active.
-user-invocable: false
 ---
 # Engineering Principles
 

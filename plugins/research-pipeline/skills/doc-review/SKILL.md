@@ -6,9 +6,6 @@ description: >
   briefs exist on disk, and infrastructure references are accurate. Writes report to disk.
   Run after major design changes, before starting a new phase, or at quality checkpoints.
   Use when user says "review docs", "check consistency", "audit planning docs", or "are our docs up to date".
-user-invocable: true
-allowed-tools: Read, Write, Glob, Grep, Bash, Agent, AskUserQuestion
-model: opus
 ---
 
 # Doc Review
@@ -34,12 +31,12 @@ skill catches all of that.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Reviewer (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Cascading review passes** — Parallel worker. Sonnet medium. Spawned one per pass (system-level + one per module) in Phase 2.
+- **Reviewer (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
+- **Cascading review passes** — Parallel worker at the balanced host-native tier with medium reasoning. Spawned one per pass (system-level + one per module) in Phase 2.
 
-Cross-doc consistency judgment sits in the orchestrator — Opus catches subtle contradictions. Each pass is scoped to one doc set and parallelizable, where Sonnet is sufficient.
+Cross-doc consistency judgment sits in the quality-first orchestrator, which must catch subtle contradictions. Each pass is scoped to one doc set and parallelizable, where the balanced host-native tier is sufficient.
 
 ---
 
@@ -109,7 +106,7 @@ These findings go in the report (Phase 3) and get fixed in Phase 4 (along with t
 
 ## Phase 2: Cascading Review Passes
 
-Launch each pass as a parallel Agent subagent (`model: "sonnet"`).
+Launch each pass as a parallel host-native sub-agent at medium reasoning.
 
 ### Pass 1: System-Level Consistency
 
@@ -294,7 +291,7 @@ Present the initial report. Highlight:
 Iterate, with a hard cap of **5 iterations**:
 
 1. Fix every Critical and High finding from the current report.
-2. **Dispatch a fresh Sonnet Agent to re-run the full review (Phase 2 in full — all system passes + every module pass).** This is a REQUIRED Agent dispatch step, not an optional re-check. Do not re-run "affected" passes only — a fix in one pass can introduce findings in another, and partial re-runs miss those.
+2. **Dispatch a fresh host-native reviewer at high reasoning to re-run the full review (Phase 2 in full — all system passes + every module pass).** This is a REQUIRED Agent dispatch step, not an optional re-check. Do not re-run "affected" passes only — a fix in one pass can introduce findings in another, and partial re-runs miss those.
 3. The dispatched audit Agent compiles a fresh structured report with severity counts.
 4. **Exit decision is read from the dispatched audit's structured report.** If the fresh report has 0 Critical and 0 High → loop is done. Continue to Phase 5 with the final report. The orchestrator does NOT make the exit call from its own assessment; the exit gate is mechanical based on the dispatched verifier's output.
 5. **Cap hit:** if iteration count reaches 5 and the report still has Critical or High findings → stop. Emit a clearly-marked message: `"⚠ Hit max iterations (5). N Critical / M High remain — manual investigation needed."` Continue to Phase 5 with the final report regardless.

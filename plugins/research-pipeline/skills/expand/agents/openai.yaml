@@ -1,0 +1,6 @@
+interface:
+  display_name: "Expand Project Scope"
+  short_description: "Expand foundation docs for a major capability"
+  default_prompt: "Use $expand to expand the project's scope and foundation documents."
+policy:
+  allow_implicit_invocation: false

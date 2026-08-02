@@ -7,10 +7,6 @@ description: >
   decision branching with AskUserQuestion, 2-3 architectural options forced, trickiest
   feature first, pre-mortem, child-feature spawning criteria, Blocker short-circuit.
   Calls /brief when epic carries [needs-brief] tag.
-user-invocable: true
-disable-model-invocation: false
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion, Skill
-model: opus
 ---
 
 # Epic-Design
@@ -62,12 +58,12 @@ to use judgment on those points.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](${CLAUDE_PLUGIN_ROOT}/docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Epic-design architect (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Explore sub-agents (Phase 3)** — Parallel worker. Sonnet medium (Opus for large or complex codebases). Count is set by the Phase 3 scope-size probe (skip for small/bounded epics, one for medium, parallel for broad/cross-cutting), dispatched in a single message.
+- **Epic-design architect (this skill's main loop)** — Quality-first orchestration at high reasoning. Runs in parent context.
+- **Explore sub-agents (Phase 3)** — Balanced native parallel workers at medium reasoning; use the host's quality-first tier for large or complex codebases. Count is set by the Phase 3 scope-size probe (skip for small/bounded epics, one for medium, parallel for broad/cross-cutting), dispatched in a single message.
 
-Epic-level decomposition decisions cascade into every child feature's design. The orchestrator warrants Opus. Explore sub-agents do scoped codebase mapping where Sonnet is sufficient.
+Epic-level decomposition decisions cascade into every child feature's design. The orchestrator warrants the host quality-first tier. Explore sub-agents do scoped codebase mapping where the balanced host-native tier is sufficient.
 
 ## Anti-patterns
 
@@ -172,7 +168,7 @@ Run a **read-first scope-size probe** first: use Glob / `rg --files` and Grep / 
 - **Medium epic** (one area, uncertain patterns): spawn **one** read-only Explore over the epic's area.
 - **Broad/cross-cutting epic** (distinct questions across separate areas): spawn parallel read-only Explore sub-agents, all in one message.
 
-- **Claude Code:** Task/Explore with Sonnet minimum, Opus for large or complex codebases.
+- **All hosts:** use the generic read-only sub-agent at medium reasoning; escalate to the quality-first tier for large or complex codebases.
 
 When Explore is dispatched, the briefs:
 1. **Existing surface in this epic's area** — what modules, components, or integration points already exist that this epic will extend or touch? Report file paths and brief responsibility per finding.
@@ -232,7 +228,7 @@ These are product/architecture/scope questions specific to the epic in front of 
 
 Aim for the smallest set of questions that meaningfully resolve direction — typically 2-5. Zero is fine if the epic body, foundation docs, and research briefs already pin every directional choice.
 
-**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the epic carries large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Epic boundaries are the highest-leverage, hardest-to-reverse decisions, so a different-model sanity check pays off here. Use one focused `peer` pass only when a different model class is available (host Claude → Codex via `peeragent:peer`). Ask for missing questions, risks, ambiguous constraints, and alternative decompositions — **not** a verdict. Feed it the research grounding loaded in Phase 0/2 (relevant `.research/` briefs and knowledge-index entries) so it stress-tests the decomposition against what we actually researched. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note the advisory pass was skipped — **non-blocking**, never halt the queue. Summarize useful output under `## Other agent review` in the epic body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
+**Cross-model advisory review under autopilot (NATHAN's pattern, adapted to our research layer).** If this skill is running as a delegation from an active autopilot run or harness goal, the epic carries large/risky architectural decisions, and the body does not already contain useful `## Design decisions` from a prior `--only-questions` pass, apply the **Cross-Model Advisory Review** policy (Part IV) from `/agile-workflow:principles` *before* resolving the questions yourself. Epic boundaries are the highest-leverage, hardest-to-reverse decisions, so a different-model sanity check pays off here. Use one focused `peer` pass only when a different model class is available. Resolve the explicit target and effort from the host-to-peer matrix in `/agile-workflow:principles` (Claude host → Codex, Codex host → Claude, and GLM/Kimi Pi host → a different lineage). Ask for missing questions, risks, ambiguous constraints, and alternative decompositions — **not** a verdict. Feed it the research grounding loaded in Phase 0/2 (relevant `.research/` briefs and knowledge-index entries) so it stress-tests the decomposition against what we actually researched. Do not run the multi-pass `peer-review` loop during routine autopilot design. If peeragent is unavailable, the peer would be the same model class, or the call fails, continue with host judgment and note the advisory pass was skipped — **non-blocking**, never halt the queue. Summarize useful output under `## Other agent review` in the epic body (template in `/agile-workflow:principles` Part IV) and fold accepted questions/risks into the decisions you log below; do not paste the peer transcript.
 
 If this skill is running **as a delegation from an active autopilot run or harness goal**, resolve each question with judgment (prioritize: consistent with foundation docs > simpler option > defers irreversible decisions) and log under `## Design decisions` in the epic body:
 

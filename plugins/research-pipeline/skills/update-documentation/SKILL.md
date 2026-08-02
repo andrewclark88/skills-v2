@@ -5,15 +5,12 @@ description: >
   config key, new CLI command, new flag, or any non-trivial code change. Invoke proactively
   when finishing implementation — not only when the user asks. Discovers the project's doc
   structure dynamically rather than assuming fixed paths.
-user-invocable: false
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
-model: opus
 ---
 
 # Update Documentation
 
-You are an **Opus orchestrator** for documentation updates. You use your context of what
-changed to identify which docs need updating, then spawn **Sonnet edit agents** with
+You are a **quality-first host-native orchestrator** for documentation updates. You use your context of what
+changed to identify which docs need updating, then spawn **balanced host-native edit agents** with
 precise instructions. You do NOT edit docs yourself — you craft targeted prompts and delegate.
 
 If you're running in the same session that made the code changes, you already have deep
@@ -21,12 +18,12 @@ context. Use it — but still verify your assumptions in the prompts you craft.
 
 ## Model Assignment
 
-Per [model-selection-pattern.md](../docs/model-selection-pattern.md):
+Per [model-selection-pattern.md](../../docs/model-selection-pattern.md):
 
-- **Doc orchestrator (this skill's main loop)** — Orchestration. Opus high effort. Runs in parent context.
-- **Edit sub-agents (Phase 4)** — Parallel worker. Sonnet medium. One per doc-update unit.
+- **Doc orchestrator (this skill's main loop)** — Orchestration at the host quality-first tier with high reasoning. Runs in parent context.
+- **Edit sub-agents (Phase 4)** — Parallel worker at the balanced host-native tier with medium reasoning. One per doc-update unit.
 
-Identifying which docs own which changes and crafting edit prompts requires judgment — the orchestrator warrants Opus. Actual edits are scoped mechanical work where Sonnet is sufficient.
+Identifying which docs own which changes and crafting edit prompts requires judgment — the orchestrator warrants the host quality-first tier. Actual edits are scoped mechanical work where the balanced host-native tier is sufficient.
 
 ## Phase 1: Discover the Doc Structure
 
@@ -77,7 +74,7 @@ e.g., one for spec + architecture, one for guide pages, one for skills.
 
 ## Phase 4: Spawn Edit Agents
 
-For each task, spawn a **Sonnet agent** (`model: "sonnet"`) with a self-contained prompt including:
+For each task, spawn a **balanced host-native agent** at medium reasoning with a self-contained prompt including:
 
 1. **Goal** — one sentence: what docs to update and why
 2. **What changed** — describe the code change that triggered the update. Be specific:
@@ -100,7 +97,7 @@ For each task, spawn a **Sonnet agent** (`model: "sonnet"`) with a self-containe
 - Be concrete — exact file paths, exact terms to grep for
 - Include the change context — the agent doesn't know what you know
 - Flag non-obvious things — if a doc uses unusual structure, mention it
-- Don't over-constrain — Sonnet can figure out how to phrase the update
+- Don't over-constrain — the bounded edit worker can determine how to phrase the update
 
 ## Phase 4b: Verify Frontmatter on Indexed Doc Types
 
