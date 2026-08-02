@@ -1,7 +1,7 @@
 ---
 id: epic-upstream-reconciliation-2026-08
 kind: epic
-stage: implementing
+stage: done
 tags: [agile-workflow, research-pipeline, upstream-sync, process]
 parent: null
 depends_on: []
@@ -105,3 +105,13 @@ These are possible enhancements to the retained workflow. Workbench's `.work/`,
 - No automatic conversion of existing projects from agile-workflow to Workbench.
 - No silent migration or deletion of existing `.research/` corpora.
 - No version bumps or marketplace publication until cross-host validation passes.
+
+## Completion
+
+The fork now tracks Nathan's current upstream baseline while retaining Andrew's
+Agile Workflow + Research Pipeline process. Research Pipeline composes with one
+authoritative Agentic Research engine, current and legacy research layouts stay
+discoverable, cross-host hooks are tested and installed, process guidance is
+single-sourced, and Workbench remains optional prior art. Research Pipeline
+0.2.0 and the complete reconciliation history are pushed on the tracked feature
+branch.

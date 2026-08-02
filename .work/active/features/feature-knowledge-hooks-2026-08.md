@@ -1,7 +1,7 @@
 ---
 id: feature-knowledge-hooks-2026-08
 kind: feature
-stage: review
+stage: done
 tags: [research-pipeline, knowledge-index, hooks]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: [feature-research-composition-2026-08]
@@ -44,3 +44,10 @@ across Claude and Codex.
   and installed-cache resolution.
 
 The feature is ready for cross-host validation.
+
+## Review outcome
+
+Knowledge index and graph suites pass 19/19. Hook activation, missing-index
+silence, PostCompact wiring, and oversized-navigator behavior pass. A fresh
+Codex session received `total_docs: 488` without reading files; the installed
+Claude 0.2.0 hook returned the same navigator from its real cache path.

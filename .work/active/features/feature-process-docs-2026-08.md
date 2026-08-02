@@ -1,7 +1,7 @@
 ---
 id: feature-process-docs-2026-08
 kind: feature
-stage: review
+stage: done
 tags: [documentation, process, plugins]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: [feature-research-composition-2026-08, feature-knowledge-hooks-2026-08]
@@ -49,3 +49,10 @@ single-sourced.
   ARD skills.
 
 The feature is ready for repository-wide and cross-host validation.
+
+## Review outcome
+
+Both marketplace catalogs parse with identical ordered plugin identities, all
+local Claude/Codex manifests match by name and version, canonical Markdown links
+resolve, touched skills meet the portable frontmatter contract, and scans find
+no references to retired pipeline ARD skills or architecture documents.

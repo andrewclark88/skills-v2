@@ -1,7 +1,7 @@
 ---
 id: feature-upstream-baseline-2026-08
 kind: feature
-stage: review
+stage: done
 tags: [upstream-sync, agile-workflow]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: []
@@ -83,3 +83,9 @@ Merge `upstream/main` to preserve ancestry, pinned at
 - Claude/Codex manifest versions match for every locally owned plugin pair.
 - Upstream-owned plugin trees match the pinned upstream baseline except for the
   three documented test portability/correctness fixes.
+
+## Review outcome
+
+Repository-wide validation passed against upstream commit `43f7f4bf`. The fork
+is 57 commits ahead of that baseline and zero behind. The three deviations are
+test-only, documented above, and pass on macOS.

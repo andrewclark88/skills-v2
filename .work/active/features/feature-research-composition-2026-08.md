@@ -1,7 +1,7 @@
 ---
 id: feature-research-composition-2026-08
 kind: feature
-stage: review
+stage: done
 tags: [research-pipeline, agentic-research, refactor]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: [feature-upstream-baseline-2026-08]
@@ -141,3 +141,9 @@ only through the operator-confirmed `convert` flow.
 
 The feature is ready for the cross-host validation feature. Existing project
 corpora were not modified.
+
+## Review outcome
+
+Retired-reference scans are clean; Agentic Research conformance passes 57/57;
+the canonical validator resolves from source, Claude cache, and Codex cache;
+and no migration command touched an existing corpus.
