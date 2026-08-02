@@ -66,3 +66,6 @@ checks before versioning or publication.
 
 - Research Pipeline bumped from 0.1.26 to 0.2.0 after validation.
 - The reconciliation branch is pushed to `origin` and tracks its remote branch.
+- `gh pr create` was attempted after the push but the GitHub CLI identity was
+  rejected as a non-collaborator. The remote branch is ready for an authorized
+  account to open the PR; no direct merge was attempted.
