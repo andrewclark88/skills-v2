@@ -1,7 +1,7 @@
 ---
 id: feature-upstream-baseline-2026-08
 kind: feature
-stage: implementing
+stage: review
 tags: [upstream-sync, agile-workflow]
 parent: epic-upstream-reconciliation-2026-08
 depends_on: []
@@ -54,3 +54,29 @@ Merge `upstream/main` to preserve ancestry, pinned at
 - Upstream-owned plugin trees are byte-identical to the pinned upstream tree.
 - Fork-owned research-pipeline remains present.
 - Marketplace JSON parses and registers research-pipeline plus upstream plugins.
+
+## Implementation notes
+
+- Nathan's repository-level Workbench `.work/`, `.research/`, `.knowledge/`, and
+  `.mockups/` state was intentionally excluded. It is upstream project state,
+  not distributable plugin content, and its `.work/` schema conflicts with this
+  fork's retained agile-workflow substrate.
+- Upstream's `agent-metadata.test.sh` still read the removed Pi `package.json`.
+  The stale assertion was updated to verify that the retired package metadata
+  remains absent, matching the upstream changelog and current distribution
+  design.
+- Upstream's content-integrity test used Bash 4's `mapfile`, which fails under
+  the supported macOS system Bash 3.2. Its line collection now uses an
+  equivalent portable read loop without changing the assertions.
+- The repository's dogfood `.work/bin/work-view` was refreshed from 0.11.3 to
+  the adopted 0.16.14 prebuilt and passed version and board-capability checks.
+
+## Verification
+
+- All nine `plugins/agile-workflow/scripts/tests/*.test.sh` scripts pass on
+  macOS after the two upstream test-harness corrections and dogfood binary
+  refresh.
+- Both marketplace catalogs parse and expose the same ordered plugin identities.
+- Claude/Codex manifest versions match for every locally owned plugin pair.
+- Upstream-owned plugin trees match the pinned upstream baseline except for the
+  two documented test portability/correctness fixes.

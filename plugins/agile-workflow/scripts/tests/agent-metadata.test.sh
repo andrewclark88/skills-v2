@@ -45,8 +45,8 @@ assert_true "Agile-workflow ships no custom agent directory" \
   "[ ! -d '${PLUGIN_ROOT}/agents' ]"
 assert_eq "Claude manifest agents absent" "null" \
   "$(jq -c '.agents // null' "${PLUGIN_ROOT}/.claude-plugin/plugin.json")"
-assert_eq "Pi package subagents absent" "null" \
-  "$(jq -c '.pi.subagents // null' "${PLUGIN_ROOT}/package.json")"
+assert_true "Retired Pi package metadata stays absent" \
+  "[ ! -f '${PLUGIN_ROOT}/package.json' ]"
 assert_eq "Codex manifest agents absent" "null" \
   "$(jq -c '.agents // null' "${PLUGIN_ROOT}/.codex-plugin/plugin.json")"
 assert_true "Dynamic subagent reference exists" \

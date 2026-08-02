@@ -147,7 +147,10 @@ assert_true "Phase 1.8 gate section start located" "[ -n '$GATE_SECTION_START' ]
 assert_true "Phase 2 boundary (gate section end) located" "[ -n '$GATE_SECTION_END' ]"
 
 # Lines naming a destructive op via this skill's operative phrasings.
-mapfile -t DESTRUCTIVE_LINES < <(
+DESTRUCTIVE_LINES=()
+while IFS= read -r destructive_line; do
+  DESTRUCTIVE_LINES+=("$destructive_line")
+done < <(
   grep -nE 'shim/removal|managed-section overwrite|mirror replacement|source-eliminating op|replace the file with the .* shim|replace-with-symlink / replace-with-shim' "$CONVERT_MD" \
     | cut -d: -f1
 )
