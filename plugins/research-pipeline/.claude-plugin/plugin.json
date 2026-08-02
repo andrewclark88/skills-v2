@@ -1,7 +1,7 @@
 {
   "name": "research-pipeline",
   "description": "Project-process and knowledge overlay for agile-workflow, using agentic-research as its authoritative grounded-research engine.",
-  "version": "0.1.26",
+  "version": "0.2.0",
   "author": {
     "name": "andrewclark88"
   },
