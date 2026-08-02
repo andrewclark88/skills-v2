@@ -1,21 +1,17 @@
 ---
 name: perf-scout
 description: >
-  Cross-domain performance *idea* generator — a speculative brainstorm engine,
-  not a profiler. Use when the user asks for performance ideas, optimization
-  angles, "how could this be faster", "what would a game engine / database / GPU
-  do here", a perf brainstorm, "ways to speed this up", or a broad sweep of
-  possible speedups. Fans parallel highest-thinking-model scouts across strategy
-  lenses (algorithmic, memory/locality, parallelism/SIMD, GPU, caching, I/O,
-  distributed, game-engine, database internals, compiler/runtime, approximation),
-  each surfacing *candidate* optimizations borrowed from demanding domains as
-  unvalidated hypotheses — never asserting gains are real. Then a different model
-  class (via peeragent, or a fresh max-effort sub-agent) prunes weak ideas and
-  surfaces missed angles. Writes a ranked report and parks ideas to .work/.
-  Distinct from perf-design (which measures and asserts — hand validated ideas
-  there), bug-scan (correctness), and refactor-design (structure).
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Bash, Agent, WebSearch, WebFetch, Write, Edit, AskUserQuestion
+  Cross-domain performance *idea* generator — a speculative brainstorm engine, not a profiler. Use
+  when the user asks for performance ideas, optimization angles, "how could this be faster", "what
+  would a game engine / database / GPU do here", a perf brainstorm, "ways to speed this up", or a
+  broad sweep of possible speedups. Fans parallel highest-thinking-model scouts across strategy lenses
+  (algorithmic, memory/locality, parallelism/SIMD, GPU, caching, I/O, distributed, game-engine,
+  database internals, compiler/runtime, approximation) through scanner agents, each surfacing *candidate* optimizations
+  borrowed from demanding domains as unvalidated hypotheses — never asserting gains are real. Then a
+  different model class (via peeragent, or a fresh max-effort sub-agent) prunes weak ideas and
+  surfaces missed angles. Writes a ranked report and parks ideas to .work/. Distinct from perf-design
+  (which measures and asserts — hand validated ideas there), bug-scan (correctness), and
+  refactor-design (structure).
 ---
 
 # Perf-Scout
@@ -27,8 +23,9 @@ systems, GPU programming, compilers — and ask, for the code in front of you:
 *could any of these apply here?*
 
 You detect the stack and workload shape, choose relevant **strategy lenses**,
-dispatch **one deep scout sub-agent per lens in parallel** (each at the highest
-thinking model available), aggregate and rank the candidate ideas, then run the
+dispatch **one deep scanner/scout agent per lens in parallel** (each at the highest
+thinking model available, using a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`),
+aggregate and rank the candidate ideas, then run the
 whole deck past a **different model class** to prune the weak ideas and surface
 the angles your first pass missed. The output is a ranked deck of *candidate*
 optimizations and parked backlog ideas.
@@ -58,21 +55,12 @@ on a deadline never reaches for. This skill's job is to reach for all of them.
 ## Highest-thinking-model mandate
 
 Idea quality scales hard with model strength, and this skill deliberately trades
-tokens for insight. Run **every** sub-agent at maximum:
-
-- **Claude Code / Anthropic:** every scout and the fallback reviewer use
-  `Agent(subagent_type=general-purpose, model=opus)`. No `sonnet`/`haiku`
-  downgrades anywhere in this skill — not for "simple" lenses, not for research.
-- **Codex / OpenAI:** every scout uses an analysis sub-agent with
-  `reasoning_effort: xhigh` (not `high`). These are read-only ideation agents.
-- **Pi path:** use native Pi `scout` or `context-builder` subagents for scout
-  fanout and a `reviewer` or `oracle` subagent for same-harness fallback review
-  when hosted in Pi and available. This does not replace the peeragent
-  cross-model pass.
-- **Peer pass:** the cross-model reviewer runs at the deepest effort its agent
-  supports (see Phase 5). If this launches Claude Opus through peeragent, a
-  large deck review can take 10 to 30 minutes; do not assume a quiet process has
-  hung after only a few minutes.
+tokens for insight. Run **every** scanner/scout agent at maximum: use the host's strongest
+read-only scout/reviewer setting, and use extra-high reasoning where the host
+exposes it. Do not downgrade "simple" lenses. This does not replace the
+peeragent cross-model pass: the peer reviewer still runs at the deepest effort
+its agent supports (see Phase 5). Large deck reviews can take 10 to 30 minutes;
+do not assume a quiet process has hung after only a few minutes.
 
 If you ever feel tempted to save tokens by downgrading a model here, don't — that
 trade is the opposite of what this skill is for.
@@ -139,7 +127,7 @@ brief.
 Map the detected stack and workload shape to the 11 lenses. Mark each **most
 relevant**, **relevant**, or **skip**.
 
-**AskUserQuestion checkpoint** (multi-select): show the lenses with relevance
+**structured question tool checkpoint** (multi-select): show the lenses with relevance
 annotations. Recommend the most-relevant set for a focused scout, or all 11 for a
 full cross-domain sweep. Default to all "most relevant" + "relevant" if the user
 doesn't pick. If invoked with `--lenses a,b,c`, skip the prompt and use exactly
@@ -151,11 +139,11 @@ relevant to nearly all code.
 
 ## Phase 3: Fan-out idea generation
 
-For each selected lens, spawn **one parallel scout sub-agent in a single message**
-so they run concurrently. Claude → `Agent(subagent_type=general-purpose,
-model=opus)`. Codex → analysis sub-agent at `reasoning_effort: xhigh`. Pi →
-native `scout` or `context-builder` subagent when available, otherwise
-same-host read-only ideation fallback.
+For each selected lens, spawn **one parallel scanner/scout agent in a single message**
+so they run concurrently. Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`,
+the host's generic/general-purpose subagent prompted with the scanner/scout
+posture from `../principles/references/subagents.md`, and extra-high reasoning
+when available; otherwise use the same-host read-only ideation fallback.
 
 ### Scope (passed into every scout)
 
@@ -169,7 +157,9 @@ Each scout gets this brief. Read it carefully — the framing (hypotheses, not
 findings; borrowed-from attribution; validation path) is what makes the output
 honest:
 
-> You are a **perf-scout** sub-agent for the **<lens>** lens. Your job is to
+> You are a **perf-scout scanner agent** for the **<lens>** lens. Follow the
+> agile-workflow scanner contract: source-read-only, no fixes, no recursive
+> sub-agents. Your job is to
 > generate *candidate* performance ideas — speculative hypotheses, not proven
 > wins. You do not measure or profile. You surface angles worth investigating.
 >
@@ -255,7 +245,7 @@ honest:
 
 - Dispatch all selected scouts in a **single message** (parallel).
 - If a scout errors, record it as a gap in the report — don't blindly re-run.
-- If a scout returns >20 ideas, ask it (via SendMessage) to keep the top 15 by
+- If a scout returns >20 ideas, ask it (via follow-up message) to keep the top 15 by
   Leverage × Applicability. A flood usually means generic pattern-matching rather
   than the sharp domain-borrowed ideas you want.
 
@@ -288,14 +278,18 @@ full mechanics. In brief:
 
 1. **Pick the reviewer.** Prefer a **different model class** via peeragent
    (resolve the wrapper from the peeragent plugin location — never assume it's on
-   PATH). Host is Claude → `--agent codex --effort xhigh`. Host is Codex →
-   `--agent claude --model opus --effort xhigh`. Same-class peers add little; in
-   that case use the fallback. When the peer is Claude Opus, expect 10 to 30
-   minutes for a large deck review; no return after a few minutes is not a hang.
+   PATH) to maximize blind-spot diversity — pick the concrete target from the
+   host→peer pairing in [../principles/references/models.md](../principles/references/models.md)
+   (Claude host → codex/gemini/zai; Codex host → claude opus/gemini/zai; etc.).
+   Same-class peers add little; in that case use the fallback. A top-tier reasoning
+   peer may take 10 to 30 minutes for a large deck review; no return after a few
+   minutes is not a hang. This pass is the **adversarial** phase; for a deep or
+   complex deck, precede it with a **completeness/advisory** pass from a *second*
+   different class if available (see the two-phase ordering in
+   [../principles/references/models.md](../principles/references/models.md) §6).
 2. **Fallback** when peeragent is unavailable, fails, or would be same-class:
-   spawn a **fresh max-effort sub-agent** (Pi → native `reviewer` or `oracle`
-   when available; Claude → `Agent(model=opus)`) that
-   sees only the codebase, the lens catalog, and the idea deck — NOT your scouts'
+   spawn a **fresh max-effort reviewer sub-agent** when available that sees only
+   the codebase, the lens catalog, and the idea deck — NOT your scouts'
    reasoning — so it reviews with independent context. This is the "max compute
    and quality subagent" fallback.
 3. **Ask the reviewer for three things** (write the deck to a temp file, pass via
@@ -375,7 +369,7 @@ id), a "Top 5 to investigate first" callout, the cross-model peer summary
 - Path to the report; parked count + duplicates skipped (or why parking was skipped).
 - A reminder that **every idea is an unvalidated hypothesis** — nothing here is a
   measured win yet.
-- **AskUserQuestion** (next steps):
+- **structured question tool** (next steps):
   - "Hand the top idea(s) to `/agile-workflow:perf-design` to profile and validate"
   - "Promote a tier into tracked work via `/agile-workflow:scope`"
   - "Dive deeper into one lens (re-scout with `--lenses <lens>`)"
@@ -391,7 +385,7 @@ id), a "Top 5 to investigate first" callout, the cross-model peer summary
   reading. An idea with no source domain is probably a generic one — sharpen it.
 - **Every idea has a validation path.** If you can't say how to confirm it, you
   haven't thought it through. Usually: hand to perf-design.
-- **The ideation happens in the sub-agents, not here.** Your job is discovery,
+- **The ideation happens in the scanner/scout agents, not here.** Your job is discovery,
   dispatch, aggregation, the peer pass, and the report. Don't re-derive a scout's
   work in the orchestrator — that throws away the progressive-disclosure win.
 - **Always fan out, always at max model.** One scout per lens, parallel, Opus /

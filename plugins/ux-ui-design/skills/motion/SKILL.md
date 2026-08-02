@@ -1,14 +1,11 @@
 ---
 name: motion
 description: >
-  ALWAYS invoke this skill when the user asks to design motion, animation,
-  transitions, easing curves, spring physics, micro-interactions, or other UI
-  kinetics. Generates motion.html and motion.css with named easing attitudes,
-  duration scale, spring presets, interaction tokens, designed pauses, and
-  reduced-motion variants. Runs after components and before screens or flows so
-  downstream mocks share one kinetic language.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to design motion, animation, transitions, easing curves,
+  spring physics, micro-interactions, or other UI kinetics. Generates motion.html and motion.css with
+  named easing attitudes, duration scale, spring presets, interaction tokens, designed pauses, and
+  reduced-motion variants. Runs after components and before screens or flows so downstream mocks share
+  one kinetic language.
 ---
 
 # Motion
@@ -75,8 +72,9 @@ overwrite without confirmation; every downstream mock reads from this file.
 
 ### Phase 1: Ground and detect mode
 
-Confirm `ux-ui-principles` is loaded; install the `CLAUDE.md` block if the marker is
-missing.
+Confirm `ux-ui-principles` is loaded; install the project agent-instructions
+block if the marker is missing (`AGENTS.md` first, `CLAUDE.md` only as a
+compatibility target).
 
 **Verify upstream files exist.** Motion composes against tokens (for color transitions)
 and components (for the actual targets that animate). If `.mockups/design-system/tokens.css`
@@ -89,11 +87,11 @@ Read:
 - `.mockups/design-system/components.css` — the components motion will animate
 - `.mockups/design-system/motion.css` if present → **refinement mode**
 - The substrate item (epic/feature) if applicable, for project-character hints
-- `CLAUDE.md`, `README.md`, any brand/voice docs
+- `AGENTS.md`, `CLAUDE.md`, `README.md`, any brand/voice docs
 
 ### Phase 2: Set the motion thesis (attitude)
 
-Motion has a *character* before it has a duration. Use `AskUserQuestion` to claim 1-2
+Motion has a *character* before it has a duration. Use `structured question tool` to claim 1-2
 attitudes the product's motion should carry:
 
 ```
@@ -377,7 +375,7 @@ xdg-open .mockups/design-system/motion.html 2>/dev/null & \
   || echo "file://$(pwd)/.mockups/design-system/motion.html"
 ```
 
-Then ask via `AskUserQuestion`:
+Then ask via `structured question tool`:
 
 ```
 Q: How does the motion system feel?

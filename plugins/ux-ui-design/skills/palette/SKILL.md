@@ -1,19 +1,15 @@
 ---
 name: palette
 description: >
-  ALWAYS invoke this skill when the user asks to design a palette, pick brand colors,
-  build a design system, choose typography, or generate design tokens — do not start
-  hardcoding colors or fonts inline. Generates a project's design-system mockup —
-  color palette, typography scale, and a reusable tokens.css — as standalone HTML
-  preview pages in .mockups/design-system/. Produces multiple palette and type
-  options up-front for the user to pick from, then locks in the chosen tokens. Use
-  before screen or flow mockups so every mock shares a coherent visual language.
-  Triggers on "design a palette", "pick brand colors", "design system mockup", "font
-  and color choices", "generate design tokens", "choose a typeface", "set up the
-  visual system". Defers to ux-ui-principles for storage, tech, and linking
-  conventions.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to design a palette, pick brand colors, build a design
+  system, choose typography, or generate design tokens — do not start hardcoding colors or fonts
+  inline. Generates a project's design-system mockup — color palette, typography scale, and a reusable
+  tokens.css — as standalone HTML preview pages in .mockups/design-system/. Produces multiple palette
+  and type options up-front for the user to pick from, then locks in the chosen tokens. Use before
+  screen or flow mockups so every mock shares a coherent visual language. Triggers on "design a
+  palette", "pick brand colors", "design system mockup", "font and color choices", "generate design
+  tokens", "choose a typeface", "set up the visual system". Defers to ux-ui-principles for storage,
+  tech, and linking conventions.
 ---
 
 # Palette
@@ -64,19 +60,20 @@ overwrites without confirmation; every downstream mock reads from this file.
 
 ### Phase 1: Ground and detect mode
 
-Confirm `ux-ui-principles` is loaded; install the `CLAUDE.md` block if the
-marker is missing.
+Confirm `ux-ui-principles` is loaded; install the project agent-instructions
+block if the marker is missing (`AGENTS.md` first, `CLAUDE.md` only as a
+compatibility target).
 
 Read:
 - `.mockups/design-system/tokens.css` if it exists → **refinement mode**
-- `CLAUDE.md`, `README.md`, any docs about brand or visual direction
+- `AGENTS.md`, `CLAUDE.md`, `README.md`, any docs about brand or visual direction
 - Existing CSS / theme files in the app code
 - Logos or brand assets the user can point at
 
 ### Phase 2: Stake out the project's character
 
 Before picking colors, get the project's **personality** into focus. Use
-`AskUserQuestion` (2-4 questions, tailored to what isn't already pinned
+`structured question tool` (2-4 questions, tailored to what isn't already pinned
 by docs or assets).
 
 The full catalog of 37 poles is in `references/aesthetic-poles.md`, organized
@@ -292,7 +289,7 @@ xdg-open .mockups/design-system/typography.html 2>/dev/null &
 # (fall back to `open` / `start` / `file://` per ux-ui-principles)
 ```
 
-Then ask via `AskUserQuestion` in two questions (palette pick, then type
+Then ask via `structured question tool` in two questions (palette pick, then type
 pick):
 
 ```

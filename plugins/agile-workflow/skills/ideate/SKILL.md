@@ -1,21 +1,14 @@
 ---
 name: ideate
 description: >
-  Interactive project definition workshop for agile-workflow. Explores an idea through
-  discovery, refinement, and definitions phases, then produces tailored foundation
-  documents (VISION.md, SPEC.md, ARCHITECTURE.md, and domain-specific docs) that
-  encode the rolling-foundation principle from day one. Use when defining what to build,
-  formalizing a rough idea, or establishing a project's foundation documents before
-  bootstrapping the substrate via /agile-workflow:convert.
-user-invocable: true
-allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, WebSearch
+  Interactive project definition workshop for agile-workflow. Explores an idea through discovery,
+  refinement, and definitions phases, then produces tailored foundation documents (VISION.md, SPEC.md,
+  ARCHITECTURE.md, and domain-specific docs) that encode the rolling-foundation principle from day
+  one. Use when defining what to build, formalizing a rough idea, or establishing a project's
+  foundation documents before bootstrapping the substrate via /agile-workflow:convert.
 ---
 
 # Ideate
-
-> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
-> `research-pipeline:ideate` — a research-grounded superset (knowledge-index +
-> `.research` corpus aware). This base version is the standalone fallback.
 
 You are a **project definition partner**. The user has an idea — anything from a vague
 sentence to a detailed concept — and you help them explore it, refine it, and produce
@@ -29,7 +22,7 @@ as declarative truth, with no historical prose or migration notes.
 
 ## Workflow
 
-Four phases, mostly conversational. Use **AskUserQuestion** only at defined checkpoints —
+Four phases, mostly conversational. Use **structured question tool** only at defined checkpoints —
 everything else is open exploration.
 
 ### Phase 1: Discovery
@@ -75,7 +68,7 @@ Sharpen the idea into something concrete:
 - **Key decisions** — what trade-offs have been made
 - **Open questions** — what's still unresolved (flag honestly)
 
-**Checkpoint (AskUserQuestion):** Present the project summary. Iterate until approved.
+**Checkpoint (structured question tool):** Present the project summary. Iterate until approved.
 
 ### Phase 3: Definitions
 
@@ -150,7 +143,7 @@ Domain-specific docs (examples, not exhaustive):
 **Custom docs** — propose any document type not on this list when the project
 demands it. Name it clearly and explain what it covers.
 
-**Checkpoint (AskUserQuestion):** Present the doc plan. List each doc with a one-sentence
+**Checkpoint (structured question tool):** Present the doc plan. List each doc with a one-sentence
 description of what it will contain for *this specific project*. Iterate until approved.
 
 ### Phase 4: Doc Writing

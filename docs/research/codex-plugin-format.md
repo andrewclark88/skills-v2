@@ -7,11 +7,10 @@ Agent Skills spec version surveyed: agentskills.io as of May 2026
 
 ## Context
 
-This repo (`nklisch/skills`) distributes agent skills and plugins for Claude Code via two channels:
-the Claude Code plugin marketplace (`.claude-plugin/marketplace.json`) and skilltap
-(`tap.json`). OpenAI Codex CLI has its own first-party plugin and skill format, and the open
-**Agent Skills** standard (originated by Anthropic, hosted at agentskills.io) is now adopted by
-both vendors plus 30+ other agent products.
+This repo (`nklisch/skills`) distributes agent skills and plugins for Claude Code via the Claude
+Code plugin marketplace (`.claude-plugin/marketplace.json`). OpenAI Codex CLI has its own
+first-party plugin and skill format, and the open **Agent Skills** standard (originated by
+Anthropic, hosted at agentskills.io) is now adopted by both vendors plus 30+ other agent products.
 
 The question is: what does Codex's plugin/skill format look like, what is shared vs. divergent
 from Claude Code's, and how should this repo adapt to be installable in Codex with minimum
@@ -49,7 +48,7 @@ Maintain a second repo with `.codex-plugin/plugin.json` manifests and Codex-flav
 files.
 
 - **Pros**: Clean separation; per-vendor optimization possible
-- **Cons**: 2× maintenance; drift inevitable; skilltap loses the single source of truth
+- **Cons**: 2× maintenance; drift inevitable; single source of truth is lost
 
 ### Option B — Dual manifests, shared skills
 
@@ -62,15 +61,14 @@ documents this as an "alternative Claude format" — see references).
 - **Cons**: Two manifests per plugin; per-skill `agents/openai.yaml` needed if you want
   Codex-specific marketplace polish
 
-### Option C — Skilltap-only, no native plugin support
+### Option C — No native plugin support
 
 Skip the Codex plugin manifest entirely. Rely on Codex's ability to install skills directly via
-its skill installer from a GitHub directory URL, and let users add this tap to skilltap for
-unified install.
+its skill installer from a GitHub directory URL.
 
 - **Pros**: Zero new files in this repo
 - **Cons**: No native Codex `/plugins` discovery; users must know URLs; loses the marketplace
-  shop-window for non-skilltap users
+  shop-window
 
 ## Recommendation
 
@@ -207,6 +205,22 @@ Field categories:
   component lives
 - **Interface**: marketplace presentation (`displayName`, icons, screenshots, default prompts)
 
+### Codex plugin hooks
+
+Codex loads plugin lifecycle hooks from the manifest's `hooks` pointer, whose default target is
+`hooks/hooks.json`. Installing or enabling a plugin does **not** automatically trust those hooks:
+Codex skips plugin-bundled hooks until the user reviews and trusts the current hook definition.
+Hook paths follow the same relative, inside-plugin-root path rules as other manifest pointers.
+
+Codex hook commands receive `PLUGIN_ROOT` and `PLUGIN_DATA`; for compatibility with Claude plugin
+hooks, Codex also exports `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA`. Plugin hooks use the same
+event schema as regular Codex hooks. See
+<https://developers.openai.com/codex/plugins/build> and the Codex hooks reference.
+
+Claude Code hooks use the same command-hook structure this repo targets, including matchers,
+`UserPromptSubmit`, `PostToolUse`, `SessionStart`, `PostCompact`, and
+`hookSpecificOutput.additionalContext`; see <https://code.claude.com/docs/en/hooks>.
+
 Comparison to `.claude-plugin/plugin.json` from this repo:
 
 | Field         | Claude         | Codex                      | Note                                |
@@ -263,15 +277,20 @@ Source kinds: `local`, `git-subdir` (others may exist; these are the documented 
 
 Installation policies: `AVAILABLE`, `INSTALLED_BY_DEFAULT`, `NOT_AVAILABLE`.
 
-This repo's existing `marketplace.json` already uses `local` (as string shorthand `"./..."`)
-and `git-subdir` source shapes. To be fully Codex-compatible the entries would need:
+This repo's current `.claude-plugin/marketplace.json` deliberately uses
+Claude-compatible string-path local sources (`"source": "./plugins/<name>"`) plus
+object-form `git-subdir` sources for external plugins. Codex reads the same file
+as an alternate marketplace location. Do **not** rewrite local entries to
+`{ "source": "local", "path": "..." }` unless Claude Code's marketplace support
+changes; the repo-level source-shape policy lives in `docs/SPEC.md`.
 
-- `source.source: "local"` wrapper instead of bare-string `"./plugins/agile-workflow"`
-- `policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" }` per entry
-- `category` per entry
+Required current fields per local entry:
 
-Claude Code marketplace tolerates the explicit-source-object shape too, so a single
-marketplace.json can satisfy both.
+- `name`
+- `source: "./plugins/<name>"`
+- `policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" }`
+- `category`
+- `description`
 
 ### CLI commands
 
@@ -311,36 +330,24 @@ mentioning to projects adopting this repo's plugins.
 
 ## Implementation Notes for this repo
 
-If adopting Option B:
+Option B has been adopted. Every supported plugin should now ship:
 
-1. **Add `.codex-plugin/plugin.json`** to each plugin sibling-of `.claude-plugin/`:
-   - `plugins/workflow/.codex-plugin/plugin.json`
-   - `plugins/agile-workflow/.codex-plugin/plugin.json`
-   - `plugins/skill-authoring/.codex-plugin/plugin.json`
+- `plugins/<name>/.claude-plugin/plugin.json`
+- `plugins/<name>/.codex-plugin/plugin.json` with `skills: "./skills/"`
+- `plugins/<name>/package.json` with Pi metadata
+- a `.claude-plugin/marketplace.json` entry using the current dual-compatible
+  string-path local source form
 
-   Each is a near-clone of the Claude `plugin.json` with `skills: "./skills/"` added and an
-   `interface` block for marketplace polish.
+The supported in-tree plugins are `agile-workflow`, `workbench`,
+`ux-ui-design`, `code-audit`, `nates-toolkit`, `agentic-research`, and
+`agent-coordination`.
+The deprecated `workflow` plugin remains in the tree for existing installs, but
+new work does not extend it.
 
-2. **Verify SKILL.md compatibility**. Existing skills use:
-   - `name`, `description` ✓ standard
-   - `allowed-tools` ✓ standard (experimental tag in spec)
-   - `user-invocable: true|false` — Claude-specific. Codex ignores unknown frontmatter, so this
-     is harmless. For Codex to honor the same intent, add `agents/openai.yaml` with
-     `policy.allow_implicit_invocation: false` to the user-invocable-only skills.
-
-3. **Update `.claude-plugin/marketplace.json`** to use the explicit `source: { source: "local",
-   path: ... }` shape and add `policy` + `category` to each entry. Both ecosystems will accept
-   the explicit shape.
-
-4. **(Optional) Per-skill `agents/openai.yaml`** for marketplace-visible skills where icons,
-   brand color, or default prompts add value. Most reference skills (e.g. `hono-v4`) don't need
-   this — they auto-load on keyword match in both ecosystems and aren't surfaced in pickers.
-
-5. **Update bump-version.sh** to refuse on `plugins/<name>/.codex-plugin/` dirty trees too, not
-   just `.claude-plugin/`.
-
-6. **Update CLAUDE.md** to mention the dual-manifest convention so future skill authors don't
-   forget the Codex side.
+Per-skill `agents/openai.yaml` remains optional and should be used for Codex
+marketplace polish or explicit invocation policy. Portable `SKILL.md`
+frontmatter should stay on the shared Agent Skills surface; repo-local skill
+style rules live in `.agents/skills/repo-skill-style/`.
 
 ## Code Examples
 
@@ -378,12 +385,12 @@ allowed-tools: Read, Write, Glob, Grep, WebSearch, WebFetch
 }
 ```
 
-### Codex-compatible marketplace entry (rewrite of an existing entry)
+### Current dual-compatible marketplace entry
 
 ```json
 {
   "name": "agile-workflow",
-  "source": { "source": "local", "path": "./plugins/agile-workflow" },
+  "source": "./plugins/agile-workflow",
   "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
   "category": "Productivity",
   "description": "Markdown-based work-tracking substrate for AI-driven projects."

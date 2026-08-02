@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Handoff"
+  short_description: "Turn confirmed research findings into Workbench items"
+  default_prompt: "Use $research-handoff to propose Workbench items from this completed research."
+policy:
+  allow_implicit_invocation: true

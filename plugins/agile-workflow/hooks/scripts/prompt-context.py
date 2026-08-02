@@ -34,6 +34,14 @@ ITEM_VERB_RE = re.compile(
     r"\b(implement|fix|patch|design|scope|park|refactor|perf|optimi[sz]e|review|verdict|done)\b",
     re.IGNORECASE,
 )
+# A one-word imperative like "implement" is a high-intent workflow command in
+# an agile-workflow-enabled repo. Earlier gating required an explicit noun
+# ("implement item"), which was too conservative: the hook is already gated by
+# `.work/CONVENTIONS.md`, and principles capsules are small + per-session deduped.
+SHORT_WORKFLOW_COMMAND_RE = re.compile(
+    r"^\s*(implement|fix|patch|design|scope|park|refactor|review|done|release|deploy|gate|convert|ideate|epicize|autopilot|perf|optimi[sz]e)\s*[.!?]*\s*$",
+    re.IGNORECASE,
+)
 WORKFLOW_NOUN_RE = re.compile(r"\b(epic|feature|story|item|items|backlog|ready|queue|stage|workflow)\b", re.IGNORECASE)
 ITEM_REF_SHAPE_RE = re.compile(r"\b[a-z0-9]+-[a-z0-9][a-z0-9-]*\b", re.IGNORECASE)
 REVIEW_STAGE_RE = re.compile(r"\b(at|in)\s+review\b|\breview\s+(queue|everything|all)\b", re.IGNORECASE)
@@ -70,7 +78,10 @@ CAPSULES = {
             "Ports & Adapters: domain logic stays independent of DB/filesystem/HTTP/time/randomness.",
             "Single Source of Truth: growing variant sets have one registry; types, validation, routing, and display derive from it.",
             "Generated Contracts: boundary types come from schema/router/DB inference or generation instead of hand copies.",
-            "Fail Fast: unknown input is validated at system boundaries and internal preconditions are asserted early.",
+            "Proportional rigor: validate real boundaries; add invariants, edge handling, and determinism only when context warrants them.",
+            "Code economy: prefer the shortest clear solution and fewer concepts over speculative generality.",
+            "Useful tests: protect important interfaces, complex units, and bug regressions—not every line or surface.",
+            "Leave it simpler: adapt simplification to accumulated feature change inside normal design and implementation; item counts never trigger standalone refactor runs; ask before reducing guarantees.",
         ],
     },
     "dispatch_economy": {
@@ -82,8 +93,11 @@ CAPSULES = {
         "text": [
             "Local probes with rg/read/work-view come before read-only agents.",
             "Agents are for breadth, isolation, fresh judgment, or independent write ownership.",
-            "Parallelism follows ownership and dependency layers rather than item count.",
+            "One implementation agent per feature is the baseline; bundle related features when shared context helps, and split only unusually large features into coherent ownership bundles.",
+            "Stories are design checkpoints, not default implementation-agent units or parallelism signals.",
+            "Parallelism follows feature ownership, write sets, and dependency layers rather than story or item count.",
             "Dispatch rationale belongs in run notes or the item body when it affects bundling or wave width.",
+            "Gate scope: release-bound work is the focus, not a hard boundary; follow concrete evidence and route ambient findings to the unbound backlog.",
         ],
     },
     "advisory_review": {
@@ -95,7 +109,14 @@ CAPSULES = {
         "text": [
             "Cross-model peer review applies only when a different model class is available.",
             "Same-model review uses a fresh-context sub-agent rather than inline self-review.",
-            "Stories fast-advance on verification; features and epics get deeper review.",
+            "Child stories never enter review: green verification advances them directly to done; only standalone stories receive review, and never cross-model review.",
+            "Implementation review happens at feature level, with standalone stories as the narrow exception; epics receive their own deeper aggregate review.",
+            "Review weight defaults to standard; standard means one independent pass, then adjudicate, fix material blockers, verify, and finish without re-review.",
+            "Only thorough and maximum use multi-pass review; continue until a pass has no receiver-confirmed material blockers, while parking or noting smaller findings.",
+            "Review is non-blocking for dependency-ordered implementation: an item at review permits the next implementation layer to start.",
+            "Reviewer findings are proposals; the receiving orchestrator judges actual risk in repository context.",
+            "Only material current-cycle risk blocks completion; park valid lower-priority findings and continue.",
+            "Foundation docs may describe future intent: review existing claims only; omission or absent implementation is not drift.",
             "Advisory review is non-blocking during design, but final autopilot completion needs a successful review path.",
         ],
     },
@@ -307,6 +328,8 @@ def cheap_action_candidate(prompt: str) -> bool:
         return False
     if SLASH_RE.search(prompt) or SKILL_MENTION_RE.search(prompt):
         return True
+    if SHORT_WORKFLOW_COMMAND_RE.search(prompt):
+        return True
     if QUEUE_QUERY_RE.search(prompt):
         return True
     if STRONG_ACTION_RE.search(prompt):
@@ -325,6 +348,8 @@ def is_actionable(prompt: str, matched_ids: set[str]) -> bool:
     if matched_ids:
         return True
     if SLASH_RE.search(prompt) or SKILL_MENTION_RE.search(prompt):
+        return True
+    if SHORT_WORKFLOW_COMMAND_RE.search(prompt):
         return True
     if QUEUE_QUERY_RE.search(prompt) or STRONG_ACTION_RE.search(prompt):
         return True
@@ -541,17 +566,22 @@ def rules_unseen(root: Path, payload: dict[str, Any], content_hash: str) -> bool
     return True
 
 
-def emit_rules(root: Path, payload: dict[str, Any]) -> str:
+def emit_rules(root: Path, payload: dict[str, Any], *, force: bool = False) -> str:
     """Return `.agents/rules/` context to inject, or "".
 
-    Used by the SessionStart/PostCompact path only, loading unconditionally to
-    mirror legacy `.claude/rules/`. Dedups once per epoch via ``rules_unseen``.
+    Claude/Codex SessionStart/PostCompact hooks dedup once per epoch via
+    ``rules_unseen`` because hook output is host-managed context. Pi rebuilds the
+    system prompt every turn and has no hooks.json package surface, so its native
+    extension calls the synthetic ``PiBeforeAgentStart`` path with ``force=True``
+    to append the same rules block every turn without mutating hook state.
     """
     enabled, max_bytes = rules_config(root)
     if not enabled:
         return ""
     text, digest = read_rules_dir(root, max_bytes)
-    if not text or not rules_unseen(root, payload, digest):
+    if not text:
+        return ""
+    if not force and not rules_unseen(root, payload, digest):
         return ""
     return text
 
@@ -561,6 +591,15 @@ def main() -> int:
     event = str(payload.get("hook_event_name") or "")
     root = find_substrate_root(payload.get("cwd"))
     if root is None:
+        return 0
+
+    # Pi package parity adapter: Pi has native extension events rather than a
+    # hooks.json surface. The extension calls this synthetic path from
+    # before_agent_start so it can append the exact same .agents/rules block to
+    # Pi's rebuilt-per-turn system prompt without disturbing Claude/Codex epoch
+    # dedup state.
+    if event == "PiBeforeAgentStart":
+        output_context("SessionStart", emit_rules(root, payload, force=True))
         return 0
 
     # Primary rules firing: SessionStart / PostCompact emit `.agents/rules/`

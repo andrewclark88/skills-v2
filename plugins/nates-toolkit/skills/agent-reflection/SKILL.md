@@ -1,20 +1,17 @@
 ---
 name: agent-reflection
 description: >
-  End-of-session retrospective self-evaluation of how the agent's context, repository
-  discovery, tools, and skills shaped the current conversation. The agent reflects,
-  honestly, on bad or poisoned context (stale docs, misleading comments, AGENTS.md,
-  system/developer instructions, prior summaries), wrong turns, repo-information
-  efficiency, retries, missing capabilities, API- and skill-surface friction, context
-  cost, and structural improvements to instructions, skills, tools, docs, comments,
-  or dense agent entry points; then writes a prioritized report and files actionable
-  backlog items when an agile-workflow `.work/` substrate exists. Use when the user
-  says "agent reflection", "reflect on this session", "end of session", "session
-  retro", "bad context", "poisoned context", "poisoned docs", "what led you wrong",
-  "repo information efficiency", "evaluate tools", "evaluate skills", "tool/skill
-  feedback", or invokes /agent-reflection. Optionally scope to one tool, MCP server,
-  skill, context source, or repo workflow.
-allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, Write
+  End-of-session retrospective self-evaluation of how the agent's context, repository discovery,
+  tools, and skills shaped the current conversation. The agent reflects, honestly, on bad or poisoned
+  context (stale docs, misleading comments, AGENTS.md, system/developer instructions, prior
+  summaries), wrong turns, repo-information efficiency, retries, missing capabilities, API- and
+  skill-surface friction, context cost, and structural improvements to instructions, skills, tools,
+  docs, comments, or dense agent entry points; then writes a prioritized report and files actionable
+  backlog items when an agile-workflow `.work/` substrate exists. Use when the user says "agent
+  reflection", "reflect on this session", "end of session", "session retro", "bad context", "poisoned
+  context", "poisoned docs", "what led you wrong", "repo information efficiency", "evaluate tools",
+  "evaluate skills", "tool/skill feedback", or invokes /agent-reflection. Optionally scope to one
+  tool, MCP server, skill, context source, or repo workflow.
 ---
 
 # Agent Reflection
@@ -34,7 +31,7 @@ fact you could have discovered in one command instead of five.
 
 - **No argument** — reflect on all tool and skill usage in the conversation.
 - **A tool or MCP server name** (e.g. `krometrail`) — focus on that tool/server.
-- **A skill name** (e.g. `repo-eval`) — focus on how that skill triggered and performed.
+- **A skill name** (e.g. `skill-auditor`) — focus on how that skill triggered and performed.
 - **A context source** (e.g. `AGENTS.md`, `system`, `docs`, `comments`) — focus on whether it
   helped, misled, or cost too much context.
 - **A repo workflow** (e.g. `repo-info`, `question-answering`, `implementation`) — focus on
@@ -213,7 +210,7 @@ For each finding: which skill, the cost, and the author-facing fix.
 
 ## Step 5: User interview
 
-Ask the user for their view before writing. Use **AskUserQuestion** or the active harness's structured
+Ask the user for their view before writing. Use **structured question tool** or the active harness's structured
 question tool when available: *"Before I write this up — did you notice bad context, stale docs,
 slow repo discovery, tool/skill friction, or anything that led me the wrong way this session?"*
 Offer 2–3 options drawn from themes you saw, plus free text. Users catch what you can't: response

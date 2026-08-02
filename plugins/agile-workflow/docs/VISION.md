@@ -34,18 +34,20 @@ The plugin enforces three execution principles:
   review findings — all accumulate in the item's body as stages advance.
   Reading the file IS reading the state of work.
 - **Foundation docs roll forward.** `docs/VISION.md`, `docs/SPEC.md`,
-  `docs/ARCHITECTURE.md` describe current truth or intended future state.
-  When implementation changes what those docs assert, the docs update to
-  match the new truth. No "previously this worked differently." No legacy
-  comments. Git is the audit trail.
+  `docs/ARCHITECTURE.md` describe current truth or intended future state. They
+  are selective rather than exhaustive: omission is allowed, and a future-state
+  claim is valid before implementation exists. When an assertion becomes false,
+  stale, or contradictory, it updates to match the new truth. No retained
+  descriptions of superseded behavior or
+  migration commentary. Git is the audit trail.
 - **Late-bind everything.** No upfront roadmap. No pre-populated stages.
   No pre-tagged release bindings. Items advance stages when work actually
   completes. Releases bind items only when the user cuts a version.
 
-The plugin's `principles` skill loads these alongside the code-design
-principles (Ports & Adapters, Single Source of Truth, Generated Contracts,
-Fail Fast) carried over from `workflow`. The two paradigms — substrate
-execution and code design — operate together during agile-workflow work.
+The plugin's `principles` skill loads these alongside code-design principles
+for clear boundaries, proportional rigor, code economy, useful tests, and
+continuous simplification. The two paradigms—substrate execution and code
+design—operate together during agile-workflow work.
 
 ## Who this is for
 
@@ -82,15 +84,43 @@ agile-workflow is complete enough to operate as the supported workflow engine:
 - Three-channel plugin distribution metadata: Claude Code marketplace, OpenAI
   Codex marketplace, and Pi packages share the same `skills/` source while
   each channel carries native metadata and ergonomics.
+- Operational skills finish their semantic promise: verified implementation
+  continues through a risk-appropriate review lane to `done` by default, while
+  an explicit `stop-at-review` request preserves a deliberate handoff boundary.
+  Review remains a real, independently evidenced state rather than an inline
+  self-approval ceremony.
+- Implementation orchestration starts from one worker per feature, may bundle
+  related features when shared context reduces handoffs, and splits unusually
+  large features only by coherent ownership. Child stories are checkpoints, not
+  default worker units. Reviews run independently of the next dependency layer,
+  while per-item evidence, verification, and commits remain distinct.
+- Questions and advisory review are consequence-driven: routine reversible
+  choices use recorded judgment; strategic or difficult-to-reverse choices get
+  an explicit checkpoint; independent review scales through the project's
+  high-level review weight while preserving fresh-context deep review. Child
+  stories skip review, standalone stories use a bounded non-cross-model lane,
+  features receive integrated review, and epics receive the deepest aggregate
+  review because larger scope reveals integration and capability gaps. The
+  default `standard` weight is deliberately decisive: one pass, receiver
+  adjudication, material-blocker fixes, verification, then done without
+  re-review. Only `thorough` and `maximum` repeat passes, and smaller findings
+  are parked or noted rather than holding convergence open. Reviewer findings
+  remain proposals: the receiving orchestrator weighs actual repository risk,
+  blocks only on material current-cycle concerns, and parks valid lower-priority
+  work rather than forcing every suggestion into implementation.
 - Real releases move through scope → design → implement → review →
-  release-deploy on the substrate; gates produce items, and the release ships
-  only after every bound item is terminal.
+  release-deploy on the substrate; gates focus on bound work while following
+  relevant evidence into adjacent or system-wide code, distinguish release
+  findings from ambient backlog discoveries, and produce durable items. The
+  release ships only after every bound item is terminal. Foundation docs roll
+  forward, release binding stays late, and terminal retention keeps git as the
+  audit trail without leaking obsolete authority.
 
 The pattern proves itself when a fresh session in a substrate-bootstrapped repo
-picks up active work without re-feed, when an autopilot run drains an epic to
-done autonomously across compaction events while respecting the declared
-dependency graph, and when foundation docs five features later still describe
-the present without legacy comments.
+picks up active work without re-feed; when direct production work and autopilot
+both finish decisively while respecting dependency, test-integrity, review, and
+parent-roll-up invariants; and when foundation docs five features later still
+make true, noncontradictory current-or-future claims without legacy comments.
 
 ## Relationship to workflow
 

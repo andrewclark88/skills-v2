@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prose Refine"
+  short_description: "Multi-model rewrite-weave cycle to publication"
+  default_prompt: "Use $prose-refine to refine this document for publication."
+policy:
+  allow_implicit_invocation: true

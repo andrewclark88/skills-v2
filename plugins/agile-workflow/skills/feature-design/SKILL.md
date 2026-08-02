@@ -1,24 +1,16 @@
 ---
 name: feature-design
 description: >
-  ALWAYS invoke when the user asks to design or flesh out a feature at
-  stage:drafting; do not write design prose inline. Designs the feature inside
-  its agile-workflow item body, grounded in foundation docs and code, then
-  spawns child stories with depends_on chains and advances drafting ->
-  implementing. Use for greenfield features without [refactor] or [perf] tags;
-  route [refactor] to refactor-design, [perf] to perf-design, and epic
-  decomposition to epic-design. UI/UX mockups are fallback here, inherited from
-  the parent epic when available.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
+  ALWAYS invoke when the user asks to design or flesh out a feature at stage:drafting; do not write
+  design prose inline. Designs the feature inside its agile-workflow item body, grounded in foundation
+  docs and code, then spawns child stories with depends_on chains and advances drafting to
+  implementing. Use for greenfield features without [refactor], [perf], [prose], or [research] tags;
+  route [refactor] to refactor-design, [perf] to perf-design, [prose] to prose-author, [research] to
+  the agentic-research research-orchestrator, and epic decomposition to epic-design. UI/UX mockups are
+  fallback here, inherited from the parent epic when available.
 ---
 
 # Feature-Design
-
-> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
-> `research-pipeline:feature-design` — a research-grounded superset that adds
-> knowledge-index grounding and `[needs-brief]` gating. This base version is the
-> standalone fallback; on the autopilot path the choice is set via
-> `.work/CONVENTIONS.md` `design_skill_routing`.
 
 You design a feature in the agile-workflow substrate. The design lives in the
 feature item's body — there is no separate `docs/designs/<name>.md`. As the design
@@ -27,16 +19,31 @@ design is done, you advance the feature's stage `drafting → implementing`.
 
 This skill is the feature-level entry point in the design family. The family
 routes by item kind and tags:
-- `epic-design` — `kind: epic` at `stage: drafting` (decomposes into features)
+- `epic-design` — `kind: epic` at `stage: drafting` (decomposes into features; an epic
+  carrying `[research]` is a research-program epic — routes here as normal decomposition,
+  whose children are `[research]` features each with their own `research_dials:` registration;
+  the tag at epic level signals program decomposition, never an epic-level registration)
 - `feature-design` (this skill) — `kind: feature`, no specialized tag
 - `refactor-design` — `kind: feature` with `tags: [refactor]`
 - `perf-design` — `kind: feature` with `tags: [perf]`
+- `prose-author` — `kind: feature` with `tags: [prose]` (no-code-surface work —
+  the authoring lane, not a design step: brief-as-design, no Explore / pre-mortem / question gate)
+- `agentic-research:research-orchestrator` (**cross-plugin**) — `kind: feature` with
+  `tags: [research]`. A grounded research engagement is an *input* that grounds other work,
+  not a code design: the orchestrator reads the item's `research_dials:` block (the
+  commissioning subset of the registration) and runs the ARD walk; gates run inline; it
+  never binds to a release. Requires the
+  `agentic-research` plugin (without it, `[research]` is an inert project tag — fall through
+  to `feature-design`).
 
-If the feature you're looking at has `[refactor]` or `[perf]` in `tags`, you
-were misrouted. Don't try to design it — log a one-line note to the item body
-("Misrouted to feature-design; should have gone to refactor-design / perf-design
-based on tags") and return without advancing the stage. The caller (autopilot
-or human) will route correctly on the next pass.
+The cross-plugin target `agentic-research:research-orchestrator` is a fixed pairing contract;
+a deployment substituting a different research entry skill edits these routing rows.
+
+If the feature you're looking at has `[refactor]`, `[perf]`, `[prose]`, or `[research]`
+in `tags`, you were misrouted. Don't try to design it — log a one-line note to the item
+body ("Misrouted to feature-design; should have gone to refactor-design / perf-design /
+prose-author / the agentic-research research-orchestrator based on tags") and return without advancing the
+stage. The caller (autopilot or human) will route correctly on the next pass.
 
 ## Trigger
 
@@ -55,7 +62,7 @@ The skill accepts an optional `--only-questions` flag and an optional target.
 | `<feature-id>` (default) | Full design pass on one feature — workflow Phases 1-9. |
 | `<feature-id> --only-questions` | Question-only pass on one feature — runs the read/ground phases, surfaces ambiguities, asks the user, captures answers in the body, does NOT design or advance stage. |
 | `--only-questions <id1> <id2> ...` | Question-only pass over each listed feature, in order. |
-| `--only-questions --all` | Question-only pass over every `kind: feature` at `stage: drafting` in `.work/active/features/` whose `tags` does not contain `refactor` or `perf`. Iterate in dependency order (features with fewer unresolved upstream deps first). |
+| `--only-questions --all` | Question-only pass over every `kind: feature` at `stage: drafting` in `.work/active/features/` whose `tags` does not contain `refactor`, `perf`, `prose`, or `research`. Iterate in dependency order (features with fewer unresolved upstream deps first). |
 
 `--only-questions` mode exists so a user can align with the agent on
 high-level direction across many drafting features in one session, then
@@ -79,14 +86,14 @@ For each feature in the target set:
 
 1. **Read the feature item** at `.work/active/features/<id>.md`.
    - Skip if `kind` is not `feature`, if `stage` is not `drafting`, or if
-     `tags` contains `refactor` or `perf`. Log the skip and move on.
+     `tags` contains `refactor`, `perf`, `prose`, or `research`. Log the skip and move on.
 2. **Ground yourself** — read the parent epic body if `parent` is set, plus
    the foundation docs (`docs/VISION.md`, `docs/SPEC.md`,
    `docs/ARCHITECTURE.md`) and `AGENTS.md` / `CLAUDE.md`. Treat AGENTS as
    canonical when both exist. Be efficient: skim, don't exhaustively re-read
    across iterations within one session.
 3. **Map the codebase lightly** — start with direct Read/Glob/Grep over the
-   obvious area. Use one Task-tool Explore sub-agent only if local reading
+   obvious area. Use one exploratory sub-agent only if local reading
    leaves a real unknown; skip the full three-agent parallel sweep used in
    the default mode because you're not designing units.
 4. **Run Phase 4.6 (UI surface fallback)** when `ux-ui-design` is installed
@@ -94,7 +101,7 @@ For each feature in the target set:
    upstream coverage is missing). Most ask-questions runs find the parent
    epic already mocked and skip here.
 5. **Surface ambiguities** — run Phase 4.5 as written above, but always in
-   the interactive branch (use `AskUserQuestion`). Do not resolve with
+   the interactive branch (use `structured question tool`). Do not resolve with
    judgment — the whole point of this mode is to capture user answers.
 6. **Capture answers** — append (or merge into existing) `## Design
    decisions` in the feature body:
@@ -132,16 +139,16 @@ In conversation, after the run:
 Read the feature file at `.work/active/features/<id>.md`. Confirm:
 - `kind: feature`
 - `stage: drafting`
-- `tags` does NOT include `refactor` or `perf` (otherwise log a misroute
-  note and return without advancing — see the description block above)
+- `tags` does NOT include `refactor`, `perf`, `prose`, or `research` (otherwise log a
+  misroute note and return without advancing — see the description block above)
 
 The body should already have a brief from `scope`. Use it as the seed for design.
 
 ### Phase 2: Ground yourself
 
-The principles skill auto-loads — both code-design (Ports & Adapters, SSOT,
-Generated Contracts, Fail Fast) and substrate-execution (Item-IS-the-Work,
-Rolling-Foundation, Late-Binding) are active.
+The principles skill auto-loads — code-design includes proportional rigor, code
+economy, useful tests, and leaving touched areas simpler; substrate-execution
+includes Item-IS-the-Work, Rolling-Foundation, and Late-Binding.
 
 Read:
 1. `docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md` (foundation docs that
@@ -156,7 +163,7 @@ Read:
 
 ### Phase 3: Map the codebase
 
-Run a read-first scope-size probe before spawning Explore agents:
+Run a read-first scope-size probe before spawning exploratory sub-agents:
 
 1. Use Glob/`rg --files` to identify likely directories, entry points, and
    existing tests.
@@ -166,21 +173,17 @@ Run a read-first scope-size probe before spawning Explore agents:
 
 Then choose the dispatch size:
 
-- **Small/bounded feature** — known module or a few obvious files: skip Explore
+- **Small/bounded feature** — known module or a few obvious files: skip exploratory fanout
   and use direct reading.
 - **Medium/unclear feature** — one area but uncertain patterns: spawn one
-  read-only Explore agent with a combined brief.
+  read-only exploratory sub-agent with a combined brief.
 - **Broad/cross-cutting feature** — distinct structure, interface, and test
-  questions across separate areas: spawn parallel read-only Explore sub-agents.
+  questions across separate areas: spawn parallel read-only exploratory sub-agents.
 
-For Explore:
-- **Claude Code / Anthropic:** Task/Explore with Sonnet minimum, Opus for large
-  or complex codebases.
-- **Codex / OpenAI:** `explorer` sub-agents with `reasoning_effort: medium`;
-  use `high` for large or complex codebases.
-- **Pi path:** use native Pi `scout` or `context-builder` subagents for
-  read-only mapping when hosted in Pi and available; otherwise keep direct
-  host-local mapping.
+For exploratory fanout:
+- Use the host's generic/general-purpose subagent prompted with the explorer capsule from `../principles/references/subagents.md`, at medium reasoning by default.
+- Use high or strongest reviewer reasoning for large or complex codebases.
+- If no generic subagent adapter is available, keep the bounded mapping in the host session.
 
 Possible prompts:
 1. **Codebase Structure** — directory layout, modules, entry points, exports
@@ -198,68 +201,29 @@ agent rules (tag semantics, test integrity, review policy). Treat AGENTS as
 canonical if they disagree. Recency improves adherence. Confirm your approach
 aligns with project conventions.
 
-### Phase 4.5: Surface ambiguities
+### Phase 4.5: Resolve design decisions
 
-Read the feature brief and the design space you've started to map, and
-derive specific, concrete design questions about *this* feature's actual
-work — requirements gaps, architecture trade-offs, scope boundaries,
-integration assumptions, UX decisions. The questions must come from the
-feature in front of you; examples of the *shape* only:
+Identify concrete decisions raised by this feature's requirements, architecture,
+scope, integrations, and UX. Ignore points already settled by the brief, parent,
+foundation docs, code, or an existing `## Design decisions` section, and defer
+safe implementation details. Zero open decisions is valid.
 
-- "Should the cache invalidate on write or rely on TTL only?"
-- "Does the upload accept multipart, or a presigned URL flow?"
-- "When the parser hits a malformed row, do we skip and continue or fail
-  the whole batch?"
-- "Is paging cursor-based or offset-based?"
+Apply `principles/SKILL.md` Part III exactly: resolve routine, reversible points
+with judgment and a logged rationale; reserve structured questions for product
+direction, external contracts, and expensive hard-to-reverse choices. Apply
+Part IV's risk-driven advisory policy in both direct and autopilot modes; do not
+restate reviewer topology here.
 
-Skip anything the brief, parent epic body, foundation docs, or codebase
-already pin. Skip anything that's safely an implementation-time call.
-
-Aim for the smallest set of questions that meaningfully resolve direction
-— typically 2-5. Zero is fine if everything's already pinned.
-
-**Cross-model advisory review under autopilot.** If this skill is running as a
-delegation from active autopilot, the feature has large/risky architectural
-decisions, and the body does not already contain useful `## Design decisions`
-from a prior `--only-questions` pass, apply the cross-model advisory review
-policy from `principles/SKILL.md` before resolving the questions yourself.
-
-Use one focused `peer` pass only when a different model class is available.
-Ask for missing questions, risks, ambiguous constraints, and alternatives for
-this feature's design — not for a final verdict. Do not run the multi-pass
-`peer-review` loop during routine autopilot design. If peeragent is
-unavailable, the peer would use the same model class, or the invocation fails,
-continue with host judgment and note that the advisory pass was skipped.
-If the peeragent target is Claude Opus, allow 10 to 30 minutes for a large
-review; no return after a few minutes is not evidence that it has hung.
-
-Summarize the useful output under `## Other agent review` in the feature body
-and fold accepted questions/risks into the decisions you log. Do not paste the
-peer transcript into the item.
-
-If this skill is running **as a delegation from an active autopilot run or
-harness goal**, resolve each question with judgment (prioritize: consistent
-with foundation docs > simpler option > defers irreversible decisions) and log
-under `## Design decisions` in the body:
+Record decisions in the feature body:
 
 ```markdown
 ## Design decisions
-- **<question>**: <choice> — <one-line rationale>
+- **<decision>**: <choice> — <one-line rationale>
 ```
 
-If the body already contains a `## Design decisions` section (from a prior
-`--only-questions` pass or from `epic-design` Phase 4.7), treat those
-locked-in answers as inputs — do NOT re-ask them.
-
-In every other invocation — including direct user invocation under harness
-auto mode (`permissions.defaultMode: "auto"`) — ask the user via
-`AskUserQuestion` before locking in. Harness-level "work without pausing"
-reminders do **not** suppress these checkpoints. See `principles/SKILL.md`
-Part III for the full caller-awareness rule.
-
-The exception under autopilot: a 50/50 between two large irreversible choices
-(e.g., SQL vs document store). Append a `## Blocker` section and return
-without advancing — autopilot will skip and surface the blocker.
+When autopilot is the active driver, it never asks; use evidence and the least
+irreversible sound choice. Only contradictory state that Part III identifies as
+a hard halt blocks advancement.
 
 ### Phase 4.6: UI surface fallback (runs when ux-ui-design is installed)
 
@@ -315,7 +279,35 @@ For each unit, specify:
 - **Implementation notes** for non-obvious logic
 - **Acceptance criteria** as testable assertions
 
+For data models, domain objects, interfaces, and external integrations, define
+the real-world thing or process and its business or user meaning before the
+technical shape. Map provider terms through the project's concepts to generic
+real-world terms at the object or system level before field mappings. If a
+provider model materially shapes the design, compare representative providers
+or standards rather than inheriting one provider's ontology by default. Use a
+short real-world scenario when relationships remain abstract.
+
 Make strong decisions about abstractions, naming, and module boundaries.
+
+#### 5d. Elimination and cleanup pass
+
+Before adding another unit or abstraction, ask what this feature can delete,
+inline, consolidate, or make unnecessary in the area it touches. Consider code,
+tests, checks, configuration, compatibility paths, and existing abstractions.
+Fold safe cohesive cleanup into a unit. Create explicit `[refactor]` or
+`[cleanup]` child stories when the cleanup is worthwhile but independently
+reviewable; park broader work. If a candidate reduces behavior or guarantees,
+record it as a design decision for user confirmation rather than assuming
+removal.
+
+Adapt the breadth of this pass to accumulated feature change. Several
+substantial related features in the same area—roughly three is a useful prompt
+to look one level wider—may justify inspecting neighboring abstractions or a
+whole subsystem. This is a rule of thumb, not a trigger or quota: evidence of
+complexity can justify the look sooner or later, and child stories do not count
+as separate feature work. Keep the look inside normal feature design; do not
+launch a dedicated refactor-discovery run unless the user explicitly asks for
+one. Explicit user instructions override every default here.
 
 ### Phase 5.5: Pre-mortem
 
@@ -331,12 +323,20 @@ feature body.
 
 ### Phase 6: Test approach
 
-For each unit, design:
-- **Unit tests** — behaviors to verify, edge cases, error paths
-- **Integration points** — where does this unit meet other units; what tests prove the seams
-- **Test data** — fixtures, factories, seed data needed
+Design the smallest useful test surface:
+- **Interface tests** — important behavior at stable public boundaries and
+  cross-unit seams
+- **Regression tests** — bugs or demonstrated risks this work must not repeat
+- **Unit tests** — only for genuinely complex isolated logic where examples add
+  confidence
+- **Test removal** — duplicate, tautological, obsolete, or implementation-bound
+  tests this change can safely retire
+- **Test data** — only fixtures or factories the chosen tests actually need
 
-If a unit is hard to test, the design is probably wrong. Note it and revise.
+Do not create a test for every unit, branch, edge, or acceptance statement by
+default. State what risk or contract each proposed test protects. Hard-to-test
+important behavior may indicate a bad boundary; simple code needing no isolated
+test is not itself a design flaw.
 
 ### Phase 7: Order and child stories
 
@@ -346,41 +346,46 @@ unit.
 
 #### When to spawn stories
 
-Stories pay for themselves when **at least one** of these is true:
+Stories are **design checkpoints**, not default implementation-agent units.
+The parent feature remains the normal ownership, implementation, verification,
+and review bundle. Spawn stories when at least one checkpoint materially helps:
 
-- **Parallelizable.** Three or more chunks can be implemented by independent
-  agents simultaneously — `/agile-workflow:implement-orchestrator` wants
-  stories so it has fan-out targets.
 - **Non-trivial dependencies.** Story A blocks B blocks C; declaring
-  `depends_on:` at the story level makes the chain visible without reading
-  the full design body.
-- **Multi-session work.** A feature that won't fit in one stride needs
-  resume points. A story file gives a fresh agent a smaller surface to
-  absorb than the entire feature design.
-- **Heterogeneous acceptance.** Different chunks have different test
-  surfaces (UI works / IPC errors / DB schema). Gates score per-story
-  rather than per-feature, which is cleaner when the surfaces are genuinely
-  different.
+  `depends_on:` makes the intended implementation order visible.
+- **Multi-session continuity.** A long feature benefits from durable checkpoints
+  that show which design elements and acceptance slices are complete.
+- **Heterogeneous acceptance.** Different design elements have distinct,
+  meaningful verification evidence (for example UI behavior, IPC failures, and
+  schema behavior).
+- **Decision traceability.** A design element is important enough to preserve as
+  a named checkpoint even though one feature worker will usually implement it.
+
+Do not spawn stories merely to manufacture parallel worker targets. The normal
+orchestrator baseline is one implementation agent per feature, carrying its
+stories as checkpoints. Only an unusually large feature should split across
+multiple coherent write-ownership bundles; story boundaries may inform that
+split but do not define one worker each.
 
 #### When stories are pure overhead
 
 Skip stories when **all** of these hold:
 
-- Retroactive capture of already-done work (stories are forward-looking
-  containers; if the work is already done, just land it under the feature)
-- Single-stride implementation (one session can finish the whole feature)
-- Tight cohesion (every test exercises every code path; the chunks aren't
-  meaningfully independent)
-- The natural decomposition is just "frontend / backend" — that's the
-  package boundary, not stories
+- Retroactive capture of already-done work (if the work is already done, just
+  land it under the feature)
+- Single-stride implementation with no useful intermediate checkpoint
+- Tight cohesion (the acceptance evidence and implementation cannot be
+  meaningfully separated)
+- The natural decomposition is just "frontend / backend" or another package
+  boundary with no distinct design checkpoint
 
 #### Spawning a story
 
 For each child story to spawn:
 - Create `.work/active/stories/<feature-id>-<story-slug>.md`
 - Frontmatter: `kind: story`, `stage: implementing`, `parent: <feature-id>`,
-  `depends_on: [...]` (declare which sibling stories must finish first)
-- Body: scope of this story, the unit(s) it implements, acceptance criteria
+  `depends_on: [...]` (declare which sibling checkpoints must finish first)
+- Body: the design element/checkpoint, its acceptance evidence, and any ordering
+  constraints. Do not describe it as an agent assignment.
 
 Cycle check: run `.work/bin/work-view --blocking <story-id>` before adding any
 `depends_on` entry.
@@ -415,9 +420,13 @@ Update the feature file. Append (after the existing brief) sections like:
 1. <unit / story>
 2. <unit / story>
 
+## Simplification
+- <code/tests/checks/abstractions removed, consolidated, or intentionally retained>
+- <cleanup/refactor stories, if any>
+
 ## Testing
-### Unit Tests: `tests/path/<name>.test.ext`
-<test approach for each unit>
+- <interface, regression, or complex-unit tests and the value each protects>
+- <low-value tests to remove, if any>
 
 ## Risks
 <from pre-mortem, if any>
@@ -442,9 +451,10 @@ In conversation:
 - **Child stories**: list with `depends_on` chains
 - **Implementation order**: 1, 2, 3, ...
 - **Risks flagged**: list (or "none")
-- **Next**: `/agile-workflow:implement <story-id>` for sequential, or
-  `/agile-workflow:implement-orchestrator <feature-id>` for parallel agents over
-  the dependency graph
+- **Next**: `/agile-workflow:implement-orchestrator <feature-id>` for the normal
+  one-agent feature bundle, or `/agile-workflow:implement <feature-id>` when the
+  current host should keep the cohesive delivery inline. Split an unusually
+  large feature only when write ownership and dependencies justify it.
 
 ## Guardrails
 

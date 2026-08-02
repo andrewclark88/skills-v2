@@ -6,16 +6,19 @@
 > features or bug fixes will land here. This guide is kept for reference
 > only.
 >
-> **New projects** should use [`agile-workflow`](agile-workflow-guide.md) —
-> substrate-driven work tracking with late-binding releases, gates that
-> produce items, and an autopilot queue runner. Pair it with
-> [`ux-ui-design`](ux-ui-design-guide.md) for mockup-first UI alignment.
+> **New projects** should adopt
+> [`workbench`](../plugins/workbench/README.md) — requirements-first delivery
+> driven by ordinary conversation, with grounded research built in. Pair it
+> with [`ux-ui-design`](ux-ui-design-guide.md) for mockup-first UI alignment.
 >
-> **Existing `workflow` projects** can migrate by running
-> `/agile-workflow:convert` — it detects the legacy `docs/designs/` +
-> `docs/ROADMAP.md` + `docs/PROGRESS.md` layout and migrates phases into
-> epics, designs into features, and completed designs into a retro-release.
-> See the [migration matrix](../plugins/agile-workflow/docs/MIGRATION.md).
+> **Existing `workflow` projects** can migrate to agile-workflow (maintenance
+> mode) by running `/agile-workflow:convert` — it detects the legacy
+> `docs/designs/` + `docs/ROADMAP.md` + `docs/PROGRESS.md` layout and
+> migrates phases into epics, designs into features, and completed designs
+> into a retro-release. See the
+> [migration matrix](../plugins/agile-workflow/docs/MIGRATION.md). To move to
+> Workbench instead, run `/workbench:setup`, which consolidates older
+> workflows into one clean state.
 
 How to use the workflow skills together to build software projects.
 
@@ -270,27 +273,25 @@ architectural and coding standards across the pipeline.
 ### Skill Authoring
 
 These skills help you create and maintain agent skills — both for this suite
-and for project-specific reference skills.
+and for project-specific reference skills. They now ship in the standalone
+`nates-toolkit` plugin (`/plugin install nates-toolkit@nklisch-skills`).
 
 - **write-tool-skill** — Create distributable reference skills for the current
   project's tool, CLI, MCP server, or library. Researches the codebase (code
   is source of truth, not docs), proposes scope and structure, writes the skill
   files for others to install. Use when you want to teach other people's agents
   how to use your project.
-- **skill-idea-refiner** — Refine a rough skill idea into a well-designed skill.
-  Guides through ideation, scoping, naming, structure decisions, and progressive
-  disclosure. Produces a design brief, then scaffolds the files.
-- **skill-evaluator** — Evaluate existing skills against type-specific quality
-  rubrics. Classifies the skill type, scores across dimensions, recommends
-  improvements, and generates test scenarios.
-- **tool-evaluator** — Self-evaluate agent tool usage in the current
-  conversation. Analyzes confusion points, inefficiencies, and API surface
-  friction. Produces a report with recommendations for tool authors.
+- **skill-auditor** — Statically audit an existing skill against type-specific,
+  triggering, and emotional-tone rubrics. Classifies the skill type, scores across
+  dimensions, recommends fixes, and produces a trigger-test plan and test scenarios.
+- **agent-reflection** — Reflect on how the agent's own tools and skills served it
+  in the current conversation. Analyzes confusion, inefficiency, friction, and
+  context cost. Produces a report with recommendations for tool and skill authors.
 
 **Typical usage**: research produces a quick internal reference skill for a
 library your project depends on. write-tool-skill creates a distributable
 skill that teaches others how to use your project's own tool/API/library.
-Use skill-evaluator to audit any skill's quality.
+Use skill-auditor to audit any skill's quality.
 
 ## Typical Project Lifecycle
 

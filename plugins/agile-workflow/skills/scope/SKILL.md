@@ -1,16 +1,14 @@
 ---
 name: scope
 description: >
-  ALWAYS invoke this skill when the user asks to scope, promote, formalize, cluster,
-  or track new work — do not start drafting items inline. Promotes ideas from
-  .work/backlog/ or fresh user requests into the active tier as epics, features, or
-  stories with declared dependencies. Use when scoping new work, formalizing a new
-  direction, clustering backlog, or promoting an idea into tracking. Triggers on
-  "scope this", "scope it", "let's scope", "scope <id>", "scope the backlog",
-  "promote this", "let's track this", "this should be a feature/epic/story", or any
-  request to formalize a new direction. For vision/spec/architecture changes, also
-  rolls foundation docs forward in the same stride.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to scope, promote, formalize, cluster, or track new work
+  — do not start drafting items inline. Promotes ideas from .work/backlog/ or fresh user requests into
+  the active tier as epics, features, or stories with declared dependencies. Use when scoping new
+  work, formalizing a new direction, clustering backlog, or promoting an idea into tracking. Triggers
+  on "scope this", "scope it", "let's scope", "scope this item", "scope the backlog", "promote this",
+  "let's track this", "this should be a feature/epic/story", or any request to formalize a new
+  direction. For vision/spec/architecture changes, also rolls foundation docs forward in the same
+  stride.
 ---
 
 # Scope
@@ -48,7 +46,7 @@ an idea without acting on it, use `/agile-workflow:park`.
 fresh idea, treat as single-idea mode; if it reads like a filter directive over
 the backlog (mentions tags, areas, themes, or "everything that..."), treat as
 batch-filter mode. When genuinely ambiguous, prefer batch-filter mode and
-confirm via `AskUserQuestion` before writing — a bigger read costs nothing, but
+confirm via `structured question tool` before writing — a bigger read costs nothing, but
 a fresh idea misread as a filter wastes user time.
 
 ## Workflow — batch / clustering mode
@@ -79,19 +77,18 @@ Read `docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`, `.work/CONVENTION
 and `AGENTS.md` / `CLAUDE.md`. One pass, skim — you're orienting, not absorbing every detail.
 You'll re-read selectively for large clusters in Phase B5.
 
-### Phase B3: Map code areas (read-first, maybe one Explore agent)
+### Phase B3: Map code areas (read-first, maybe one exploratory sub-agent)
 
 Start locally. Use Glob/`rg --files` to identify likely modules, packages, and
 tests, and Grep/`rg` for terms from the targeted backlog ideas. If the ideas
 clearly touch a small set of known areas, build the area-map yourself and skip
-Explore.
+exploratory fanout.
 
-Spawn **one** read-only Explore sub-agent only when the batch spans unclear code
-areas or you cannot confidently name the natural seams from direct reading. For
-Claude Code, use the Explore/Agent shape. For Codex, use an `explorer`
-sub-agent with `reasoning_effort: medium`. For Pi, use a native `scout` or
-`context-builder` subagent when available; otherwise keep the area-map in the
-host session.
+Spawn **one** read-only exploratory sub-agent only when the batch spans unclear
+code areas or you cannot confidently name the natural seams from direct reading.
+Use the host's generic/general-purpose subagent prompted with the explorer
+capsule from `../principles/references/subagents.md`, at medium effort. If no
+generic subagent adapter is available, keep the area-map in the host session.
 Give it:
 - The list of targeted backlog ideas (id + brief, one per line)
 - A one-paragraph summary of the foundation docs from Phase B2
@@ -157,7 +154,7 @@ question for the Phase B7 gate, offering per leftover:
 
 ### Phase B7: Confirm with the user (single round-trip)
 
-Make **one** `AskUserQuestion` call covering all of the below (the tool accepts
+Make **one** `structured question tool` call covering all of the below (the tool accepts
 1-4 questions per call):
 
 1. **Cluster structure** — present each cluster (ids included, proposed kind,
@@ -173,18 +170,21 @@ second confirmation round.
 
 ### Phase B8: Promote each confirmed cluster
 
-For each cluster, run the single-idea-mode Phases 3-6 inline:
+For each cluster, run the single-idea-mode Phase 1.9 and Phases 3-6 inline:
 
-1. **Declare dependencies** — within-cluster (child stories under a feature)
+1. **Frame simplification opportunities** — record what the cluster can delete,
+   consolidate, replace, or make unnecessary; separate cohesive cleanup from
+   unrelated backlog work.
+2. **Declare dependencies** — within-cluster (child stories under a feature)
    and cross-cluster (one feature depends on another's output). Use
    `work-view --blocking` for cycle detection.
-2. **Foundation-doc roll-forward** (large clusters only) — full Phase 4 of
+3. **Foundation-doc roll-forward** (large clusters only) — full Phase 4 of
    single-idea mode, scoped to that cluster's impact.
-3. **Write item files** — the parent (epic or feature) plus any child files.
+4. **Write item files** — the parent (epic or feature) plus any child files.
    Use `git mv` to move backlog files into the new structure where they map
    1:1; reference the backlog idea in the parent's brief and `git rm` the
    backlog file where it was absorbed without a direct child.
-4. **Commit per cluster** — `scope: <cluster-id> (<kind>, <size>)` with a
+5. **Commit per cluster** — `scope: <cluster-id> (<kind>, <size>)` with a
    foundation-doc roll-forward note where applicable.
 
 Promote leftovers per the Phase B7 decision (one commit per promoted leftover,
@@ -200,9 +200,14 @@ In conversation:
   left in backlog)
 - **Foundation docs rolled forward**: list of files touched (or "none")
 - **Next**: design family picks up drafting features/epics
-  (`/agile-workflow:feature-design`, `epic-design`, `refactor-design`, or
-  `perf-design` based on kind and tags); implementing stories are ready for
-  an autopilot goal or `/agile-workflow:implement-orchestrator`.
+  (`/agile-workflow:feature-design`, `epic-design`, `refactor-design`,
+  `perf-design`, `prose-author` for `[prose]` features, or
+  `agentic-research:research-orchestrator` for `[research]` features when that
+  plugin is installed — without it the tag is inert and the item routes through
+  `feature-design` — based on kind and tags); implementing stories are ready for
+  an autopilot goal or `/agile-workflow:implement-orchestrator` (`[research]`
+  items run end-to-end through the research-orchestrator, not the implement
+  family; prose features implement inline).
 
 ## Workflow — single-idea mode
 
@@ -265,9 +270,9 @@ interfaces).
 Aim for 2-5 questions. Zero is fine if the user's brief and foundation docs
 already pin every strategic choice. For small (story) and medium (feature)
 scope, the bar is higher — only ask if a strategic ambiguity genuinely
-affects framing; otherwise skip directly to Phase 2.
+affects framing; otherwise continue through Phases 1.8 and 1.9 without questions.
 
-Use `AskUserQuestion` to ask. Capture answers in the item body under a
+Use `structured question tool` to ask. Capture answers in the item body under a
 `## Strategic decisions` section so the downstream design family inherits
 the locked-in direction:
 
@@ -304,7 +309,14 @@ journey before the item is written.
 
 Skip this phase if `ux-ui-design` is not installed.
 
-Then proceed to Phase 2.
+Then proceed to Phase 1.9.
+
+### Phase 1.9: Frame simplification opportunities
+
+Record what the idea could delete, consolidate, replace, or make unnecessary—code,
+tests, checks, abstractions, compatibility paths, configuration, or whole subsystems.
+Fold cohesive cleanup into the brief, note independent `[refactor]`/`[cleanup]`
+children, and park unrelated work. Removing guarantees requires a strategic decision.
 
 ### Phase 2: Size the scope
 
@@ -326,8 +338,9 @@ premature epic.
 
 ### Phase 3: Declare dependencies
 
-Ask the user (or surface from context): what items, if any, must be at `stage: done`
-before this can start?
+Ask the user (or surface from context): what items, if any, must have verified
+implementation complete before this can start? A dependency at `review` already
+satisfies implementation ordering; review completion is not a sequencing gate.
 
 - For a backlog item the user mentions as a prerequisite: add to `depends_on`
 - For a related in-flight feature in the same area: consider adding to `depends_on`
@@ -412,6 +425,9 @@ updated: YYYY-MM-DD
 ## Brief
 <one to three paragraphs describing what this is and why it exists>
 
+## Simplification opportunity
+<what this work may delete, consolidate, replace, or deliberately retain; "none identified" is valid>
+
 <!-- Subsequent sections (Design, Implementation Notes, etc.) accumulate as
 work progresses. -->
 ```
@@ -451,8 +467,11 @@ In conversation:
 - **Depends on**: `[<id>, ...]` (or "no dependencies")
 - **Foundation docs rolled forward**: list of files touched (or "none")
 - **Next**: for features at `drafting`, the design family will pick this up
-  (`/agile-workflow:feature-design`, `refactor-design`, or `perf-design` based
-  on tags); for epics at `drafting`, `/agile-workflow:epic-design` decomposes
+  (`/agile-workflow:feature-design`, `refactor-design`, `perf-design`,
+  `prose-author` for `[prose]` features, or
+  `agentic-research:research-orchestrator` for `[research]` features (when that
+  plugin is installed; otherwise the tag is inert), based on
+  tags); for epics at `drafting`, `/agile-workflow:epic-design` decomposes
   into child features.
 
 ## Guardrails
@@ -465,10 +484,10 @@ In conversation:
   feature to `implementing` at scope time — `design` does that when it advances.
 - Do NOT pre-bind to a release. `release_binding` stays `null` until
   `/agile-workflow:release-deploy` runs.
-- If sizing is genuinely unclear after Phase 2, ask the user via AskUserQuestion
+- If sizing is genuinely unclear after Phase 2, ask the user via structured question tool
   rather than guessing.
 - **Batch mode: one confirmation gate, not many.** Phase B7 is a single
-  `AskUserQuestion` call (up to 4 questions). Apply NL adjustments from the
+  `structured question tool` call (up to 4 questions). Apply NL adjustments from the
   user's reply and proceed — do not loop on a second confirmation round.
 - **Batch mode: read-first in Phase B3.** Use direct mapping when the backlog
   ideas touch obvious areas. If an agent is needed, use one medium-breadth

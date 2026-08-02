@@ -4,14 +4,13 @@ set -euo pipefail
 usage() {
   echo "Usage: $0 <plugin> <major|minor|patch>"
   echo ""
-  echo "Bump the semantic version of a plugin's plugin.json manifests."
-  echo "Each plugin has parallel Claude and Codex manifests; both are bumped"
-  echo "in lockstep so the marketplaces report the same version."
+  echo "Bump the semantic version of a plugin's channel metadata."
+  echo "Each plugin has parallel Claude/Codex manifests, bumped in lockstep."
   echo ""
   echo "Plugins:"
   for dir in plugins/*/; do
     name=$(basename "$dir")
-    json="$dir.claude-plugin/plugin.json"
+    json="${dir}.claude-plugin/plugin.json"
     if [[ -f "$json" ]]; then
       version=$(jq -r '.version' "$json")
       echo "  $name  (v$version)"
@@ -27,8 +26,12 @@ bump="$2"
 claude_json="plugins/$plugin/.claude-plugin/plugin.json"
 codex_json="plugins/$plugin/.codex-plugin/plugin.json"
 
+# Every plugin ships Claude + Codex manifests; the Claude manifest is the
+# canonical version source. (Pi packaging moved to the pi-extensions repo;
+# plugin package.json files no longer exist in this repo.)
 if [[ ! -f "$claude_json" ]]; then
-  echo "Error: $claude_json not found"
+  echo "Error: no channel metadata found for $plugin"
+  echo "  looked for: $claude_json"
   exit 1
 fi
 
@@ -92,7 +95,100 @@ bump_json() {
 bump_json "$claude_json"
 [[ -f "$codex_json" ]] && bump_json "$codex_json"
 
+# Keep each plugin's self-reported binary version in lockstep with plugin.json.
+# The semver lives canonically in plugin.json; project it into both
+# implementations (Rust stamp + bash fallback) here so a single string compare
+# answers "is this installed copy current?".
+
+if [[ "$plugin" == "agile-workflow" ]]; then
+  ver_file="plugins/agile-workflow/work-view/crates/cli/.work-view-version"
+  bash_script="plugins/agile-workflow/scripts/work-view.sh"
+
+  # Rust stamp: written with NO trailing newline so the binary's raw
+  # include_str! yields the bare semver (byte-parity with the bash fallback).
+  printf '%s' "$new" > "$ver_file"
+  git add "$ver_file"
+
+  # Bash fallback: update the WORK_VIEW_VERSION="x.y.z" literal in place.
+  # sed -i.bak ... && rm .bak is portable across GNU and BSD/macOS sed.
+  sed -i.bak -E 's/^WORK_VIEW_VERSION="[^"]*"/WORK_VIEW_VERSION="'"$new"'"/' "$bash_script"
+  rm -f "${bash_script}.bak"
+  # Fail Fast: sed exits 0 even when nothing matched, so verify the projection
+  # actually landed. A future refactor of the literal (added indentation,
+  # `readonly`, a rename) would otherwise silently ship a stale bash --version
+  # while the manifests and .work-view-version advance.
+  if ! grep -q "^WORK_VIEW_VERSION=\"${new}\"" "$bash_script"; then
+    echo "bump-version: failed to project version into ${bash_script}" >&2
+    echo "  expected line: WORK_VIEW_VERSION=\"${new}\"" >&2
+    echo "  the anchored sed pattern no longer matches — fix the projection block." >&2
+    exit 1
+  fi
+  git add "$bash_script"
+fi
+
+if [[ "$plugin" == "agentic-research" ]]; then
+  ver_file="plugins/agentic-research/research-view/crates/cli/.research-view-version"
+  bash_script="plugins/agentic-research/scripts/research-view.sh"
+
+  # Rust stamp: written with NO trailing newline so the binary's raw
+  # include_str! yields the bare semver (byte-parity with the bash fallback).
+  printf '%s' "$new" > "$ver_file"
+  git add "$ver_file"
+
+  # Bash fallback: update the RESEARCH_VIEW_VERSION="x.y.z" literal in place.
+  # sed -i.bak ... && rm .bak is portable across GNU and BSD/macOS sed.
+  sed -i.bak -E 's/^RESEARCH_VIEW_VERSION="[^"]*"/RESEARCH_VIEW_VERSION="'"$new"'"/' "$bash_script"
+  rm -f "${bash_script}.bak"
+  # Fail Fast: sed exits 0 even when nothing matched, so verify the projection
+  # actually landed. A future refactor of the literal (added indentation,
+  # `readonly`, a rename) would otherwise silently ship a stale bash --version
+  # while the manifests and .research-view-version advance.
+  if ! grep -q "^RESEARCH_VIEW_VERSION=\"${new}\"" "$bash_script"; then
+    echo "bump-version: failed to project version into ${bash_script}" >&2
+    echo "  expected line: RESEARCH_VIEW_VERSION=\"${new}\"" >&2
+    echo "  the anchored sed pattern no longer matches — fix the projection block." >&2
+    exit 1
+  fi
+  git add "$bash_script"
+fi
+
 echo "$plugin: v$current -> v$new"
 
 git commit -m "Bump $plugin plugin to v$new"
+
+# Remind the operator that the 4 cross-compiled dist binaries are NOT rebuilt by
+# this script. CORRECTED ORDERING: the version stamp is written into source BY
+# THIS SCRIPT and CI builds the dist binaries FROM that source, so the rebuild
+# must run on the POST-bump commit. A pre-bump CI run would compile the OLD
+# stamp and ship version-mismatched binaries.
+if [[ "$plugin" == "agile-workflow" ]]; then
+  {
+    echo ""
+    echo "NOTE: work-view dist binaries are NOT rebuilt by this script."
+    echo "      They are compiled FROM the version stamp this script just wrote,"
+    echo "      so rebuild them on the POST-bump commit (not before it):"
+    echo "      after this bump is pushed, trigger the 'Build work-view binaries'"
+    echo "      workflow (workflow_dispatch, commit_binaries=true) against the"
+    echo "      bumped commit so dist/<triple>/work-view self-reports v$new."
+    echo "      Until that CI run lands, the supported-platform dist binaries"
+    echo "      intentionally fail the installer version check; do not publish"
+    echo "      or cut a release until the binary refresh commit lands."
+  } >&2
+fi
+
+if [[ "$plugin" == "agentic-research" ]]; then
+  {
+    echo ""
+    echo "NOTE: research-view dist binaries are NOT rebuilt by this script."
+    echo "      They are compiled FROM the version stamp this script just wrote,"
+    echo "      so rebuild them on the POST-bump commit (not before it):"
+    echo "      after this bump is pushed, trigger the 'Build research-view binaries'"
+    echo "      workflow (workflow_dispatch, commit_binaries=true) against the"
+    echo "      bumped commit so dist/<triple>/research-view self-reports v$new."
+    echo "      Until that CI run lands, the supported-platform dist binaries"
+    echo "      intentionally fail the installer version check; do not publish"
+    echo "      or cut a release until the binary refresh commit lands."
+  } >&2
+fi
+
 git push

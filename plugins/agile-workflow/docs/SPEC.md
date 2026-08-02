@@ -12,7 +12,7 @@ Located at `plugins/agile-workflow/.claude-plugin/plugin.json`:
 {
   "name": "agile-workflow",
   "description": "Markdown-based work-tracking substrate for AI-driven projects. Items as files in .work/, late-binding releases, gates that produce items, goal-backed autopilot queue runner. See docs/VISION.md.",
-  "version": "0.10.0",
+  "version": "0.15.3",
   "author": { "name": "nklisch" },
   "repository": "https://github.com/nklisch/skills",
   "license": "MIT"
@@ -47,8 +47,9 @@ release_binding: <version>|null  # required
 gate_origin: <gate-name>|null    # required (null unless gate-produced)
 research_refs: [<slug>...]       # optional (research artifacts this item tracks/consumes)
 research_origin: <slug>|null    # optional (research artifact that spawned this item)
+scan_origin: <slug>|null        # optional (scan campaign that spawned this item)
 created: YYYY-MM-DD              # required
-updated: 2026-06-08
+updated: YYYY-MM-DD              # required, auto-bumped by PostToolUse hook
 ---
 ```
 
@@ -61,25 +62,96 @@ updated: 2026-06-08
 | `stage` | enum | Per-kind valid values; see Stage flow below. |
 | `tags` | array of slug strings | Routing tags from the project's taxonomy in `.work/CONVENTIONS.md`. May be empty. Kebab-case. |
 | `parent` | slug or null | **Hierarchy.** `null` for top-level. Points to a parent item's `id`. |
-| `depends_on` | array of slugs | **Sequencing.** Items this cannot start until all listed are at `stage: done`. May be empty. Distinct from `parent`. |
+| `depends_on` | array of slugs | **Implementation sequencing.** Items this cannot start until all listed dependencies have completed verified implementation (`stage: review` or terminal `done`/`released`). Review remains required for final completion but does not block the next implementation layer. May be empty. Distinct from `parent`. |
 | `release_binding` | version string or null | Late-binding. `null` until the user binds. Format matches the release file's version (e.g., `v1.2.0`). |
-| `gate_origin` | gate name or null | `null` for user-scoped items. One of `security`, `tests`, `cruft`, `docs`, `patterns`, `infra` when produced by a gate. Projects may define additional gate names (e.g. `bugs`, `repo-eval`). |
+| `gate_origin` | gate name or null | `null` for user-scoped items. One of `security`, `tests`, `cruft`, `docs`, `patterns`, `refactor` when produced by a gate (`refactor` is the opt-in gate's value). |
 | `research_refs` | array of slug strings | **Optional; defaults to `[]`.** The research artifacts (`.research/` slugs or handles) this work item tracks or consumes — the Arrow 1 coordination link. Missing → `[]`. Query: `work-view --research-refs <slug>` (membership). See `plugins/agentic-research/docs/HANDOFF.md` for the cross-tier contract. |
 | `research_origin` | slug or null | **Optional; defaults to `null`.** The research artifact that spawned this work item — the Arrow 2 grounding link. Mirrors `gate_origin`. Missing/empty/`"null"` → `null`. Query: `work-view --research-origin <slug>` (or `null`). See `plugins/agentic-research/docs/HANDOFF.md`. |
+| `scan_origin` | slug or null | **Optional; defaults to `null`.** The scan campaign (`scan-<goal>`) that produced this work item — the `deep-code-scan` linkage. Mirrors `research_origin`. Missing/empty/`"null"` → `null`. Query: `work-view --scan-origin <slug>` (or `null`). |
 | `created` | ISO date | `YYYY-MM-DD`. Set on creation; never modified. FIFO tie-break in autopilot. |
 | `updated` | ISO date | `YYYY-MM-DD`. Auto-bumped by PostToolUse hook on every item edit. |
 
 ### Stage flow per kind
 
 ```
-epic:    drafting → implementing → review → done
-feature: drafting → implementing → review → done
-story:   implementing → review → done   (often skips drafting)
-release: planned → quality-gate → released
-task:    [ ] → [x]                       (checklist line in parent body)
+epic:             drafting → implementing → review → done
+feature:          drafting → implementing → review → done
+child story:      implementing → done
+standalone story: implementing → review → done   (often skips drafting)
+release:          planned → quality-gate → released
+task:             [ ] → [x]                      (checklist line in parent body)
 ```
 
-Stages advance only when work completes. No pre-population.
+Stages advance only when work completes. No pre-population. Child stories are
+design and acceptance checkpoints: green implementation verification advances
+them directly from `implementing` to `done`. They never enter `review`. A
+standalone story (`parent: null`) receives a bounded inline review because no
+parent feature supplies that boundary, but never an independent, fresh-context,
+or cross-model review. A feature is the normal implementation, integration,
+verification, and review boundary. Production skills advance a feature to
+`review` only after all child stories are `done` and integrated verification is
+green, then continue through the selected feature review lane by default. An
+explicit `stop-at-review` request may leave a feature or standalone story there.
+An item at `review` has completed verified implementation and therefore satisfies
+`depends_on` for downstream implementation: review may run concurrently with the
+next dependency layer. Final completion and release still require review to
+finish and the item to reach `done`.
+
+Once all child features have completed feature-level review and are `done`, the
+epic advances from `implementing` to `review` for its own deeper aggregate pass.
+Epic review targets end-to-end capability, cross-feature contracts, cumulative
+operational/release risk, and foundation alignment rather than repeating child
+feature details. Review depth generally rises with scope: broad boundaries reveal
+integration gaps, while tiny-scope review tends toward pedantry and
+unproductive over-engineering. Review effort applies to features, epics, and
+final autopilot completion bundles; standalone stories always use the bounded
+inline lane. Fresh-reviewer findings are proposals: the receiving agent
+verifies and classifies them against repository context. Only credible material
+current-cycle risk blocks feature advancement; valid lower-priority findings
+are parked unbound.
+
+### Questions and advisory review
+
+Normal design resolves routine, reversible decisions with judgment and records
+the rationale. The structured question tool is reserved for choices that set
+product direction, materially change user-facing behavior or an external
+contract, or commit the project to an expensive, difficult-to-reverse path.
+`--only-questions` remains an explicit interactive alignment mode and does not
+design or advance an item; an active autopilot run instead chooses the least
+irreversible sound option and logs it.
+
+Advisory review is risk-driven in direct and autopilot modes. When independent
+review is warranted, completeness/advisory review precedes adversarial review,
+and a pass is called cross-model only when the reviewer is a known different
+model class. Design-time advisory failure is non-blocking; final autopilot
+completion must clear the review path required by its effective weight. The
+effective `review_weight` resolves from an explicit invocation, then project
+convention, then `standard`:
+
+- `none` — no independent reviewer; green implementation verification and
+  acceptance evidence are still required.
+- `light` — at most one focused pass where risk warrants it, followed by
+  adjudication, material-blocker fixes, verification, and closure without
+  re-review.
+- `standard` — the default: exactly one balanced fresh-context pass, followed by
+  adjudication, material-blocker fixes, verification, and closure without
+  re-review.
+- `thorough` — repeat review → adjudicate → fix → verify until a pass yields no
+  receiver-confirmed material current-cycle blockers.
+- `maximum` — use the `thorough` convergence rule with multi-model,
+  complementary-then-adversarial coverage when available.
+
+Reviewer capability and lens breadth adapt to target risk, but closure policy is
+binding. Epic scope and deep lenses do not silently escalate `standard` beyond
+one pass. In convergence lanes, smaller findings are parked unbound, kept as
+nits, or rejected by receiver judgment; they do not keep the loop open. A
+successful review path requires every proposed finding to be adjudicated, not
+implemented. The receiving orchestrator weighs acceptance
+criteria, supported users and deployment shape, likelihood, blast radius,
+recoverability, safeguards, and delay cost. It fixes or activates material
+current-cycle blockers, parks valid lower-priority concerns in the unbound
+backlog, and rejects unsupported advice with a rationale. Reviewer labels and
+repetition are evidence, not authority.
 
 ### Backlog item shape
 
@@ -90,9 +162,17 @@ a scoping pass fixes them.
 ---
 id: <slug>
 created: YYYY-MM-DD
+updated: YYYY-MM-DD   # optional; written by park (== created), bumped by the hook on edit
 tags: [<tag>, ...]
 ---
 ```
+
+`updated` is **optional** on the backlog contract (it is not in
+`BACKLOG_REQUIRED`). `park` writes it equal to `created` at creation, and the
+PostToolUse hook bumps it on every edit. When absent (e.g. a legacy item parked
+before this contract), consumers treat the last-touched date as `created`. This
+gives a backlog grooming/staleness query a reliable last-touched signal without
+requiring the field — see `backlog_staleness_days` under §`.work/CONVENTIONS.md`.
 
 Body: an unscoped capture sized to the input. Simple ideas can be one
 paragraph; richer context notes or roadmap-style multi-arc thoughts can keep
@@ -118,9 +198,8 @@ skill reads this at session start (via the SessionStart hook or directly).
 - security    auth, validation, secrets, supply chain
 - perf        throughput, latency, memory — routes to perf-design
 - refactor    behavior-preserving structural change ONLY — fails the black-box test (any observable behavior change for callers) means NOT a refactor — routes to refactor-design
-- e2e-test / testing   end-to-end coverage — routes to e2e-test-design
-- needs-brief          design needs a curated domain brief first — routes to brief (research-pipeline)
-- needs-research       domain needs a research campaign first — routes to research / deep-research / research-program (research-pipeline)
+- prose       no-code-surface deliverable (docs, conventions, copy) — routes to prose-author (lean authoring lane: brief-as-design, inline implement)  # optional — omit if `prose` already means something else in your project (token name may change before v1.0)
+- research    grounded research engagement — an input, not a shippable — routes cross-plugin to agentic-research:research-orchestrator; carries a research_dials: block (the commissioning subset of the registration), does not bind to a release, gates run inline (only when the agentic-research plugin is installed)
 
 ## Slug conventions
 <format and prefix rules>
@@ -132,24 +211,94 @@ skill reads this at session start (via the SessionStart hook or directly).
 <delete-refs | retain-bodies>
 
 ## Gate config
-gates_for_release: [security, tests, cruft, docs, patterns, infra]
-
-## Design-skill routing (optional)
-design_skill_routing:
-  epic_design: epic-design
-  feature_design: feature-design
+gates_for_release: [security, tests, cruft, docs, patterns]
+gate_finding_routing:
+  critical: implementing
+  high: implementing
+  medium: drafting
+  low: backlog
+  info: skip
+gate_refactor_scan_library_roots:
+  - .agents/skills
+  - .claude/skills
+binding_guard: warn
+epic_cohesion: phased
+review_weight: standard
+backlog_staleness_days: 90
 ```
 
-The default `gates_for_release` order is **security → tests → cruft → docs →
-patterns → infra**. Override only if the project has a justified reason.
+The default `gates_for_release` order is fixed: **security → tests → cruft
+→ docs → patterns**. Override only if the project has a justified reason.
 
-`design_skill_routing` is optional. It maps autopilot's design dispatch for
-`kind: epic` (`epic_design`) and plain features (`feature_design`) to a concrete,
-optionally namespaced skill. When absent, autopilot uses its built-in defaults
-(`epic-design`, `feature-design`). Projects layered with the `research-pipeline`
-plugin set these to `research-pipeline:epic-design` /
-`research-pipeline:feature-design` so the research-grounded,
-`[needs-brief]`-gated versions win on the autopilot path.
+Release-bound items define each gate's focus, not a hard scan boundary. A gate
+may follow concrete evidence into adjacent dependencies, shared infrastructure,
+or system-wide mechanisms. Findings caused by, exposed by, or materially
+relevant to the release bind to it. Merely ambient discoveries must be written
+to the unbound backlog, so wider inspection does not silently expand release
+scope. Any cruft proposal that reduces behavior, validation, determinism,
+compatibility, safety, or another meaningful guarantee requires explicit user
+confirmation before it becomes active removal work.
+
+**`gate-refactor` is an opt-in gate** — not in the default list. Add it when your project has
+scan-rule libraries installed under `gate_refactor_scan_library_roots` (defaults:
+`{project}/.agents/skills/scan-*/SKILL.md`, then
+`{project}/.claude/skills/scan-*/SKILL.md`). The gate discovers and loads all libraries it finds,
+then checks the release bundle's changed files against every rule. With no libraries installed it
+logs a graceful skip and continues — not an error. Example opt-in:
+
+```yaml
+gates_for_release: [security, tests, cruft, docs, patterns, refactor]
+```
+
+**`gate_finding_routing`** controls how item-producing gates place findings after
+each gate normalizes its local vocabulary. Defaults preserve the built-in routing:
+`critical` and `high` create active stories at `stage: implementing`, `medium`
+creates active stories at `stage: drafting`, `low` writes a backlog file, and
+`info` is skipped. Valid target values are `implementing`, `drafting`, `backlog`,
+and `skip`; missing keys fall back to defaults. `skip` means no work item is
+emitted, but the gate still reports skipped counts in its conversational output
+and in any durable gate-run record it already writes. Gate vocabularies stay
+gate-local: security and tests normalize `Critical|High|Medium|Low`, docs
+normalizes `High|Medium`, and cruft/refactor normalize `High|Medium|Low`.
+
+**`gate_refactor_scan_library_roots`** controls the parent directories
+`gate-refactor` searches for scan-rule libraries. Defaults preserve current
+behavior: `.agents/skills` first, `.claude/skills` second. Relative paths resolve
+from the project/substrate root; absolute paths are allowed. The gate still only
+loads libraries matching `scan-*/SKILL.md` below each configured root. Duplicate
+libraries are deduped by derived library tag in configured root order, so the
+first discovered library wins. Roots outside the project tree expand the trust
+boundary because the gate loads instructions and reference files from those
+locations.
+
+**`binding_guard`** (default **`warn`** when absent) controls the Phase 3.5 binding-consistency check
+in `release-deploy`. Values: `warn` | `halt` | `off`. `warn` runs all three checks and records any
+finding as a durable warning in the release body (replace-or-skip, not appended), then continues.
+`halt` stops the release on any acted-on finding (for projects that hold the no-cross-version-drift
+invariant). `off` skips the checks entirely (short-circuits before any walk).
+
+**`epic_cohesion`** (default **`phased`** when absent) governs the severity of an *unbound child of
+a bound parent* (an INCOMPLETE finding). `phased` treats INCOMPLETE entries as informational —
+listed in the warn report, never counting toward a halt (an epic may ship across releases). `total`
+treats them as mismatches acted on per `binding_guard`, like CONFLICTs (the project holds "epics
+ship whole"). CONFLICTs (a child bound to a *different* version than its bound parent, or a done
+parent unbound while its children are bound) always follow `binding_guard` regardless of this dial.
+
+**`review_weight`** is optional and defaults to **`standard`** when absent. Valid values are
+`none`, `light`, `standard`, `thorough`, and `maximum`. An explicit invocation selector overrides
+the project value. The setting controls independent-review depth and closure policy; it never
+relaxes implementation verification or acceptance evidence. `standard` is the
+single-pass default, while only `thorough` and `maximum` enable multi-pass
+convergence. The canonical level semantics and lane selection live in the
+`principles` and `review` skills rather than in project bootstrap configuration.
+
+**`backlog_staleness_days`** (integer; **absent ⇒ feature inert**) is the age threshold for the
+opt-in backlog staleness query `work-view --stale`. When set, `--stale` lists `.work/backlog/`
+items whose last-touched date — `updated` if present, else `created` — is more than this many days
+before today (local time). When the key is absent, `--stale` surfaces nothing and prints a
+one-line "no `backlog_staleness_days` configured" notice (exit 0) — a project that does not opt in
+sees no behavior change. This is the query surface a backlog grooming capability consumes; it does
+not auto-prune anything.
 
 `terminal-tier retention` (default **`delete-refs`**) is **one merged convention** covering the
 whole terminal lifecycle — archival, late-binding, and release collapse — not just on-disk byte
@@ -167,8 +316,8 @@ retention. With `delete-refs`:
    are re-gated during the release. Gates that need the item body must hydrate it from the stub's
    `git_ref`; a pruned stub body is a lookup requirement, not a reason to skip the item.
 3. **One-summary release.** All bound items (active done + late-bound stubs) collapse into a single
-   `releases/<version>/release-<version>.md` table (id, title, kind, `archived_atop`, git ref). No
-   per-item placement; full bodies live only in git history.
+   `.work/releases/<version>/release-<version>.md` table (id, title, kind, `archived_atop`, git ref).
+   No per-item placement; full bodies live only in git history.
 
 `retain-bodies` is the legacy opt-out (full bodies kept under `.work/archive/` and
 `.work/releases/<version>/`); it keeps the same `archived_atop`/late-binding semantics, just without
@@ -199,7 +348,7 @@ release_binding: null          # null until a release late-binds it
 archived_atop: <release | pre-release>
 git_ref: <sha>
 created: <orig>
-updated: 2026-06-08
+updated: <today>
 ---
 
 # <Title>
@@ -354,12 +503,17 @@ The plugin distributes through three equal channels:
 - OpenAI Codex via the same marketplace index and
   `plugins/agile-workflow/.codex-plugin/plugin.json`.
 - Pi via package metadata in the plugin root, with the same `skills/` directory
-  plus Pi-native extensions or prompt templates where they improve substrate
-  ergonomics.
+  and the same `hooks/hooks.json` command hooks, delivered through a
+  hook-capable plugin host.
 
 The three channel metadata files stay in lockstep on name, version,
-description, repository, and license. Pi-specific runtime surfaces wrap the same
-`.work/` substrate; they do not fork the workflow model.
+description, repository, and license. Pi consumes the same hook scripts and
+generated sources; no parallel TypeScript adapter is maintained.
+
+**Channel parity posture:** hook behavior lives once in `hooks/hooks.json` and
+the shared Python scripts. Every hook-capable host (Claude Code, Codex, Pi via a
+plugin host) consumes that single surface, so parity drift is structural rather
+than guarded by a parallel-implementation check.
 
 ## Version strategy
 
@@ -452,12 +606,13 @@ retirement of the Bash fallback (Rust-only) is tracked as a parked epic.
 | `--parent` | `<id>` | Filter to direct children of the given item |
 | `--release` | `<version>` | Filter by `release_binding` |
 | `--gate` | `<gate>` | Filter by `gate_origin` |
-| `--ready` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` with all `depends_on` terminal (`done`/`released`, or resident in `releases/`/`archive/`) |
-| `--blocked` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` with at least one non-terminal dependency |
+| `--ready` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` whose `depends_on` entries have verified implementation complete (`review`, `done`, `released`, or resident in `releases/`/`archive/`). **Excludes `[scan]`-tagged items** — they are engagement-owned by `deep-code-scan` and must not be drained by autopilot. |
+| `--blocked` | (none) | Active-tier items at `stage: drafting`, `implementing`, or `review` with at least one dependency that has not completed verified implementation. Also excludes `[scan]`-tagged items. |
 | `--blocking` | `<id>` | Reverse lookup: items that depend on `<id>` |
 | `--scope` | `<active\|backlog\|releases\|archive\|all>` | Tiers to surface. Default (flag absent) = **active + backlog** (non-terminal); terminal tiers (`releases`/`archive`) are hidden unless requested. `--release`/`--gate` auto-widen to `all` unless `--scope` is set explicitly |
 | `--research-origin` | `<slug>` | Filter by `research_origin` (use `null` to select items with no origin) |
 | `--research-refs` | `<slug>` | Items whose `research_refs` list contains `<slug>` |
+| `--scan-origin` | `<slug>` | Filter by `scan_origin` (use `null` to select items with no scan origin) |
 | `--paths` | (none) | Output only file paths (grep-pipe-friendly) |
 | `--cat` | (none) | Output full bodies of matching items |
 | `--count` | (none) | Output only the match count |
@@ -553,6 +708,7 @@ array of item objects:
     gate_origin: string | null;
     research_origin: string | null;
     research_refs: string[];
+    scan_origin: string | null;
     created: string | null;
     updated: string | null;
     tags: string[];
@@ -703,7 +859,15 @@ explicit workflow verbs, or a known item id.
   capsule: code design, dispatch economy, or advisory review.
 
 It does not inject `.agents/rules/*.md` or queue snapshots at prompt time. Queue
-state remains available through explicit `work-view`, `/aw`, or board commands.
+state remains available through explicit `work-view` or board commands.
+
+### Pi delivery
+
+Pi consumes the same `hooks/hooks.json` and shared Python scripts through a
+hook-capable plugin host; no parallel TypeScript adapter is maintained. The
+single hook surface covers SessionStart/PostCompact context, prompt-gated
+principles, and PostToolUse substrate maintenance identically across Claude
+Code, Codex, and Pi.
 
 ### PostToolUse hook
 

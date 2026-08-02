@@ -1,5 +1,95 @@
 # Changelog
 
+## Unreleased
+
+- Remove the Pi extension (`extensions/agile-workflow.ts`, `/aw` command): hooks now ship only through `hooks/hooks.json`, which every hook-capable host (Claude Code, Codex, Pi via a plugin host) consumes directly. The parallel TypeScript adapter and the channel-parity check script are gone.
+
+### Adaptive feature refactoring
+
+- **Refactoring stays inside normal feature work** — feature design and
+  implementation now widen simplification checks according to accumulated
+  substantial feature change rather than completed-item counts. Rough reminders
+  such as three related features or five major feature-sized items are prompts,
+  not thresholds; child stories are not cadence units.
+- **No automatic autopilot refactor cadence** — ordinary autopilot no longer
+  launches `refactor-design` discovery every five items. Dedicated discovery and
+  `bold-refactor` remain explicitly user-requested, while existing `[refactor]`
+  items continue through normal routing.
+
+### Review model selection
+
+- **GPT-5.6-first OpenAI review routing** — review selection now prefers an
+  available GPT-5.6 model (Sol first for deep review) and uses GPT-5.5 only when
+  the current harness has no review-capable 5.6 model available.
+
+### Luna-first implementation routing
+
+- **Luna is the default implementation worker** — after explicit caller and
+  project overrides, implementation dispatch now selects GPT-5.6 Luna whenever
+  it is available. Normal work uses `high`, demanding work uses `xhigh`, and
+  `medium` is reserved for very simple bounded tasks. Other implementors are
+  availability fallbacks rather than complexity-based upgrades.
+
+### Autopilot queue-scope clarity
+
+- **Queue selection is not implementation scope** — `--all` selects every
+  active item for draining, but autopilot now grounds kickoff narration and
+  capability rationale in concrete ready work. It does not synthesize a broad
+  current implementation claim from future, blocked, or undecomposed items.
+
+### Weight-aware review closure
+
+- **Standard is explicitly single-pass** — the default feature, epic, and final
+  completion path runs one independent review, adjudicates proposals, fixes and
+  verifies material blockers, then finishes without re-review. Deep or epic
+  scope broadens lenses but does not silently add passes.
+- **Convergence is opt-in** — `thorough` and `maximum` repeat review → fix →
+  verify until a pass yields no receiver-confirmed material current-cycle
+  blockers. Smaller findings are parked, noted as nits, or rejected by receiver
+  judgment and never hold the loop open. There is no arbitrary bounce cap for
+  these explicit convergence weights.
+
+### Dynamic subagent prompting
+
+- **No shipped custom agents** — removed agile-workflow's Claude/Pi agent
+  manifest entries, Pi `subagents` package metadata, Codex `aw-*` templates, and
+  the Pi extension's global agent sync. The plugin now ships skills and runtime
+  commands only.
+- **Structured generic delegation** — skills now route design, implementation,
+  review, scanner, and explorer work through the host's existing
+  generic/general-purpose subagent mechanism using the dynamic prompt postures in
+  `skills/principles/references/subagents.md`.
+
+## v0.14.0
+
+### Backlog grooming + staleness signal
+
+- **`groom` skill** — new user-invocable backlog-hygiene sweep
+  (`/agile-workflow:groom`). Classifies `.work/backlog/` items
+  DONE/SUPERSEDED/DUPLICATE/STALE/MERGEABLE/VALID via mechanical signals plus a
+  grounded semantic pass, and writes a triage report. Propose-not-prune:
+  dispositions are operator-confirmed and route through the terminal-tier
+  retention convention; it never auto-prunes and is not a release gate. Opt-in.
+- **`work-view --stale`** — lists backlog items whose last-touched date
+  (`updated` if present, else `created`) exceeds the new `backlog_staleness_days`
+  `.work/CONVENTIONS.md` key. Absent key ⇒ inert notice + exit 0, so a project
+  that doesn't opt in is unaffected. Backlog-tier only; std-only, local-time.
+- **`updated` on the backlog contract** — documented as an optional backlog
+  frontmatter field (`== created` at birth, written by `park`; bumped by the
+  PostToolUse hook on edit; treated as `created` when absent). `BACKLOG_REQUIRED`
+  unchanged — the field stays optional.
+
+## v0.12.1
+
+### Gate configurability
+
+- **Gate finding routing** — documented `gate_finding_routing` in
+  `.work/CONVENTIONS.md` so release gates normalize severity/priority/confidence
+  to one project-level item-placement policy.
+- **gate-refactor scan roots** — documented `gate_refactor_scan_library_roots`
+  so monorepos can share scan-rule libraries while preserving the default
+  `.agents/skills` then `.claude/skills` discovery order.
+
 ## v0.11.3
 
 ### Research-substrate linkage fields + agentic-research adoption

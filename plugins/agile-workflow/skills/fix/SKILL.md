@@ -1,24 +1,22 @@
 ---
 name: fix
 description: >
-  ALWAYS invoke this skill when the user asks to fix a specific verified bug — do not
-  just edit code inline. Diagnoses and repairs a specific bug as a single-stride
-  substrate story. Reproduces the issue, identifies the root cause, writes a failing
-  test, applies the minimal fix, confirms, and creates a story item at
-  .work/active/stories/<id>.md at stage:review capturing the work. Use when something
-  is verifiably broken — not for unverified hunches, refactors, or feature additions.
-  Triggers on "fix bug X", "fix the typo in", "fix this issue", "this is broken — fix
-  it", "patch <id>".
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+  ALWAYS invoke this skill when the user asks to fix a specific verified bug — do not just edit code
+  inline. Diagnoses and repairs the bug as a focused substrate story: reproduces it, identifies the
+  root cause, writes a failing test, applies the minimal fix, verifies it, and runs the bounded
+  standalone-story review lane. Use when something is verifiably broken,
+  not for unverified hunches, refactors, feature additions, or architectural work. Triggers on "fix
+  bug X", "fix the typo in", "fix this issue", "this is broken — fix it", and "patch this item".
 ---
 
 # Fix
 
-You diagnose and repair a specific reported bug, capturing the work as a single
-substrate story that lands at `stage: review`. The discipline is the same as a
-careful bug-fix workflow — reproduce, diagnose to root cause, write a regression
-test, apply the minimal fix, confirm — but the artifact is a substrate item, not
-a separate fix doc.
+You diagnose and repair a specific reported bug, capturing the work as a focused
+standalone substrate story. The discipline is reproduce, diagnose to root cause,
+write a regression test, apply the minimal fix, confirm, and run a bounded inline
+review. Standalone stories receive review because no parent feature supplies that
+boundary, but they never receive independent, fresh-context, or cross-model
+review. The artifact is the substrate item, not a separate fix doc.
 
 ## When to invoke
 
@@ -130,46 +128,54 @@ for separate consideration — don't bundle.
 
 If any step fails, return to diagnosis. Do not ship a fix you can't confirm works.
 
-**Test integrity during Phase 6.** If running the full suite surfaces
-*other* failing tests:
+**Test integrity during Phase 6.** Follow the project's test-integrity rules and
+the worker posture in `../principles/references/subagents.md`: fix bad tests
+in-session, park other production bugs rather than bundling them, and never game
+a test to make it pass.
 
-- Bad tests (stale fixtures, drifted assertions, broken mocks) → fix
-  in-session if the fix is small and scoped to this bug's surface area;
-  otherwise park.
-- Pre-existing real production bugs → park via `/agile-workflow:park`.
-  Do NOT bundle them into this fix's commit; this skill is for *one*
-  bug.
-- NEVER make a test pass by weakening its assertion or silencing it
-  without a documented reason. The regression test you wrote in Phase 3
-  must verify behavior, not "whatever the code returns now".
+### Phase 7: Commit and complete the lifecycle
 
-### Phase 7: Advance to review and commit
-
-1. Update story stage: `implementing → review`. The PostToolUse hook auto-bumps `updated:`.
-2. Append an "Implementation notes" section to the story body capturing:
+1. Update the standalone story stage: `implementing → review`. The PostToolUse
+   hook auto-bumps `updated:`.
+2. Append an "Implementation notes" section capturing:
+   - Execution capability selected from risk and scope, plus the rationale
    - Files changed
-   - Test added
-   - Adjacent issues parked (with their backlog ids)
-3. Commit:
+   - Test added and four-step confirmation evidence
+   - Adjacent issues parked (with backlog ids)
+
+   Choose capability without a routine model-tier question unless the caller or
+   project explicitly overrides it.
+3. Commit the verified fix:
    ```bash
    git add .work/active/stories/<id>.md <changed-files> <test-file>
    git commit -m "fix: <short description> (<story-id>)"
    ```
+4. Unless `stop-at-review` applies, invoke `/agile-workflow:review <id>` using
+   the standalone-story lane. That lane reviews inline from the diff,
+   reproduction, regression test, and acceptance evidence; it must not spawn an
+   independent, fresh-context, or cross-model reviewer.
+
+If the repair is broad enough to need independent review, it is a feature rather
+than a focused fix; route it through `/agile-workflow:scope` before implementation.
 
 ## Output
 
 Brief report in conversation:
-- **Story**: `<id>` at `stage: review`
+- **Story**: `<id>` at `stage: done`, `stage: review` by explicit boundary, or
+  `stage: implementing` after a bounded review bounce
+- **Review**: bounded inline verdict; never independent or cross-model
 - **Root cause**: one sentence
 - **Fix**: file(s) changed
-- **Test**: file path, what it asserts
-- **Parked for separate consideration**: any adjacent issues you noticed but didn't bundle
+- **Test**: file path and behavior asserted
+- **Execution capability**: choice and rationale
+- **Parked for separate consideration**: adjacent issues not bundled
 
 ## Guardrails
 
 - Do NOT skip the test (Phase 3). Fixes without tests recur.
 - Do NOT bundle refactoring or unrelated improvements into the fix's commit.
-- Do NOT advance the story past `review` — the user reviews and runs
-  `/agile-workflow:review` to advance to `done`.
-- If the fix would touch > 5 files or change a public interface, stop. This isn't a
-  fix; it's a feature with refactor implications. Use `/agile-workflow:scope` instead.
+- A fix story is standalone and therefore receives bounded inline review. Never
+  invoke an independent, fresh-context, or cross-model reviewer for it.
+- Broad scope (for example, many files, a public-interface change, or multiple
+  subsystems) is a signal that this is a feature rather than a targeted fix.
+  Route it through `/agile-workflow:scope`, where feature-level review applies.

@@ -1,213 +1,264 @@
 ---
 name: review
 description: >
-  ALWAYS invoke this skill when the user asks to review a substrate item, an
-  item is at stage:review, or the user says "review this". Substrate-first:
-  reviews tracked items, files follow-up items, and advances or bounces them.
-  Also supports out-of-band reviews of branches, commits, PRs, working trees, or
-  unpushed commits without substrate side effects. Uses fast, standard, and deep
-  lanes; deep review runs in fresh context when useful. Triggers on "review item
-  X", "review this", "review <id>", "deep review", "is this ready", and
-  "verdict on <id>".
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to review a substrate feature or standalone story, an
+  eligible item is at stage:review, or the user says "review this". Routes by item scope: child
+  stories close on verification without review, standalone stories get a bounded inline pass,
+  features get integrated review, and epics get deeper aggregate review. Also supports out-of-band
+  reviews of branches, commits, PRs, working trees, or unpushed commits without substrate side
+  effects. Defaults to one standard pass followed by fix/verify/done; only thorough or maximum
+  weights repeat review until no material blockers remain.
 ---
 
 # Review
 
-You review work that is ready for evaluation. The primary path is a substrate
-item at `stage: review`: a feature, story, or epic whose work is done and ready
-to advance or bounce. The skill can also perform an out-of-band review of a
-branch, commit, PR, working tree, or unpushed commits when the user wants a
-one-off verdict outside the substrate.
+Review integrated work at its real contract boundary without serializing later
+implementation. An item at `review` has completed verified implementation and
+therefore satisfies downstream `depends_on` edges while review runs. In substrate mode that
+boundary is a **feature at `stage: review`**. Child stories are design and
+acceptance checkpoints: implementation verification advances them directly to
+`done`; they never enter review. A standalone story (`parent: null`) is the narrow
+exception and receives a bounded inline review, never an independent,
+fresh-context, or cross-model review. Epics receive their own deeper aggregate
+review once all child features are done; broader review is valuable because
+integration and capability gaps emerge above the child diff.
 
-Core invariant: resolve the mode before changing files. **Substrate mode** may
-create `.work` findings, advance or bounce items, archive files, and commit
-review metadata. **Standalone mode** prints a review and leaves the substrate and
-git history alone unless the user explicitly asks to track or commit the review.
+The skill also supports out-of-band review of a branch, commit, PR, working tree,
+or unpushed commits. Resolve the mode before changing files:
+
+- **Substrate mode** reviews features, epics, or standalone stories, may file findings,
+  advances or bounces the target, rolls eligible parents to `review`, and commits
+  review metadata.
+- **Standalone mode** prints a review and leaves the substrate and git history
+  alone unless the user explicitly asks to track findings.
 
 ## References
 
-Load only the reference needed for the selected lane:
+Load only what the selected path needs:
 
 | Reference | Load when |
 |---|---|
-| [target-resolution.md](references/target-resolution.md) | Determining the target diff, PR, branch, commit range, or epic aggregate scope. |
-| [review-lenses.md](references/review-lenses.md) | Running a standard or deep review of code changes. |
-| [deep-review.md](references/deep-review.md) | The lane is feature, epic, explicit `--deep`, or the user asks for a more robust review. |
-| [substrate-side-effects.md](references/substrate-side-effects.md) | Substrate mode needs findings filed, stages advanced or bounced, records appended, or a commit made. |
+| [target-resolution.md](references/target-resolution.md) | Determining a feature/epic aggregate, PR, branch, commit range, or standalone target. |
+| [review-lenses.md](references/review-lenses.md) | Reviewing code changes. |
+| [deep-review.md](references/deep-review.md) | A feature, epic, or explicit deep target needs fresh-context breadth. |
+| [../principles/references/models.md](../principles/references/models.md) | Selecting different-class or same-harness fresh-context reviewers. |
+| [../principles/references/subagents.md](../principles/references/subagents.md) | Building a fresh-context reviewer brief. |
+| [substrate-side-effects.md](references/substrate-side-effects.md) | Filing findings, changing reviewed-item stages, rolling up parents, archiving, or committing. |
 
-## Invocation Modes
+## Invocation modes
 
 | Invocation | Behavior |
 |---|---|
-| `review <id>` | Review one substrate item. |
-| `review` | Default to `--all`: drain every item at `stage: review`. |
-| `review --all` | Drain every item at `stage: review`. |
-| `review <NL filter>` | Drain a filtered subset of the review queue. Interpret the filter against item bodies, tags, and parent chains. |
-| `review <branch/commit/range/PR/wip>` | Out-of-band review. Review the target diff and print a verdict. |
-| `deep review <target>` / `review --deep <target>` | Use deep mode for a substrate item or out-of-band target. |
+| `review <feature-id>` | Review one feature at `stage: review`. |
+| `review` / `review --all` | Drain every eligible feature, epic, and standalone story at `stage: review`; normalize legacy child stories. |
+| `review <NL filter>` | Drain matching review-ready items using kind-appropriate lanes. |
+| `review <story-id>` | If child: do not review; normalize from verification. If standalone: run bounded inline review without an independent/cross-model reviewer. |
+| `review <epic-id>` | After all child features are done, run the epic's deeper aggregate review. |
+| `review <branch/commit/range/PR/wip>` | Review out of band and print a verdict. |
+| `review --review-weight <level> <target>` | Set feature/epic/standalone independent-review effort: `none`, `light`, `standard`, `thorough`, or `maximum`. |
+| `review --deep <target>` | Request the strongest depth permitted by the effective weight. |
 
-In batch modes (`--all` / NL filter), loop through the matched set and output a
-single consolidated summary at the end: verdicts per item plus total finding
-counts.
+In batch modes, run independent feature and epic reviews concurrently when
+reviewer capacity allows; they do not need to be sequential. Output one
+consolidated summary with verdicts per reviewed item and total finding counts.
 
-## Review Lanes
+## Review weight
 
-Review cost should match what the target can actually surface. Resolve mode
-first, then pick the lane:
+Resolve one effective `review_weight`: explicit caller selector, caller note,
+`.work/CONVENTIONS.md`, then **`standard`**. The weight controls both review depth
+and whether fixes trigger another independent pass.
 
-| Target | Lane | What runs |
-|---|---|---|
-| **story item** | **Fast** | Confirm the green implementation verification already recorded by `implement`, then advance and roll up. No lens walk, no diff re-analysis, no peer. |
-| **out-of-band target** | **Standard** | Review the diff in the current context using the core lenses. Print a structured verdict. No substrate writes, no stage changes, no commit. |
-| **feature / epic item** | **Deep** | Full lens review using fresh-context evaluation when available. |
-| **explicit `--deep` target** | **Deep** | Use the deep lens set even for an out-of-band target. For a story item, keep the fast lane unless the caller explicitly asked for `--deep`. |
+| Weight | Feature/epic closure policy |
+|---|---|
+| `none` | No independent reviewer. Administratively require green integrated verification and acceptance evidence. |
+| `light` | At most one focused fresh-context pass where risk warrants it; adjudicate, fix, verify, and finish without re-review. |
+| `standard` | **The default: exactly one balanced fresh-context pass**, then adjudicate, fix receiver-confirmed blockers, verify, and finish without re-review. |
+| `thorough` | Repeat review → adjudicate → fix → verify until a pass yields no receiver-confirmed material current-cycle blockers; park or note smaller findings. |
+| `maximum` | Use the `thorough` convergence loop with complementary → adversarial, multi-model coverage when available. |
 
-### Fast Lane
+`standard` means standard: target size, epic scope, `--deep`, or first-pass
+findings may broaden lenses but must not silently create a second review pass.
+Only an explicit effective weight of `thorough` or `maximum` enables multi-pass
+convergence.
 
-Stories use the fast lane by default:
+Child stories do not consume review weight. Standalone stories always use the
+same bounded inline lane regardless of weight and never spawn an independent or
+cross-model reviewer. Risk broad enough to deserve independent review means the
+work should be scoped as a feature. A final autopilot completion review may
+inspect an aggregate bundle in addition to the epic item review; neither turns
+child stories into review targets.
 
-1. Read the story body.
-2. Confirm an implementation/verification record exists and reports green build
-   and tests.
-3. If verification is present and green, load
-   [substrate-side-effects.md](references/substrate-side-effects.md) and advance
-   `review -> done` with a one-line record:
-   `Verdict: Approve - story verified by implement; fast-lane advance`.
-4. If verification is absent or failing, either run cheap verification yourself
-   or bounce `review -> implementing` with a `## Review findings` note.
+## Lanes
 
-Skip the lens walk for fast-lane stories. Do not deep-review a story unless the
-caller explicitly requested `--deep`.
+### Story routing
 
-### Standard Lane
+Resolve `parent` before doing review work.
 
-Standalone reviews use the standard lane. Load
-[target-resolution.md](references/target-resolution.md) and
-[review-lenses.md](references/review-lenses.md), read enough surrounding code to
-understand the change, then print the structured review. Do not create `.work`
-items, advance stages, archive files, or commit metadata unless the user
-explicitly converts the findings into substrate work.
+**Child story (`parent: <feature-id>`) — direct closure, not review:**
 
-### Deep Lane
+1. Read implementation notes and confirm green verification addresses the
+   checkpoint.
+2. Advance directly to `done`, or return to `implementing` for missing/failing
+   evidence. Do not run code-review lenses or spawn a reviewer.
+3. If all siblings are now `done`, make the parent feature review-ready after
+   integrated feature verification.
 
-Feature, epic, and explicit deep reviews use the deep lane. Load
-[deep-review.md](references/deep-review.md) plus any target or lens reference it
-points to. Prefer fresh-context evaluation when available; if no fresh reviewer
-is reachable, do a degraded inline deep review and record that limitation in
-Notes rather than skipping the review.
+New production skills must never put child stories into `review`; this path only
+normalizes legacy state.
+
+**Standalone story (`parent: null`) — bounded inline review:**
+
+1. Read the story, implementation diff, reproduction/acceptance evidence, and
+   verification record.
+2. Walk the applicable core review lenses in the host context, bounded to the
+   story's narrow scope.
+3. Never spawn an independent, fresh-context, or cross-model reviewer, regardless
+   of review weight or risk. If that depth is warranted, bounce and rescope the
+   work as a feature.
+4. Approve to `done` or bounce to `implementing` with durable findings.
+
+### Feature and epic review
+
+A feature is the normal substrate implementation-review unit. Green child-story
+evidence is input, not approval: review the integrated feature contract,
+aggregate diff, and acceptance criteria.
+
+An epic receives a separate, deeper aggregate review after every child feature
+is done. Do not repeat line-level feature review. Instead inspect end-to-end
+capability completeness, cross-feature contracts, cumulative foundation-doc
+alignment, operational/release interactions, and risks that only appear at the
+larger boundary. In general, review depth rises with scope; tiny-scope review is
+kept deliberately light to avoid pedantry and over-engineering.
+
+Load target resolution, review lenses, and deep-review guidance for both tiers.
+
+When independent review is enabled, use a different-class reviewer when
+available; otherwise use the strongest suitable same-harness fresh-context
+reviewer. Label a pass cross-model only when the selected model class differs
+from the host. When both complementary and adversarial perspectives run,
+preserve that order. Under `standard`, combine the applicable lenses into one
+balanced pass rather than manufacturing two phases. If the selected weight
+requires fresh context and no path is available, record the limitation and
+block rather than approving inline.
+
+### Standalone review
+
+Resolve the branch, commit, range, PR, working tree, or unpushed target. Walk the
+applicable lenses and print findings. Do not mutate `.work` or commit unless the
+user explicitly requests tracking.
 
 ## Workflow
 
-### Phase 0: Resolve Mode And Depth
+### Phase 0: Resolve mode and target kind
 
-Default to substrate mode when the target looks like a work item id, when any
-item is at `stage: review`, or when autopilot delegated the review. Use
-standalone mode when the user names a branch, commit, commit range, PR number,
-`wip`, working tree, or otherwise asks for an out-of-band code review.
+Prefer substrate mode for matching active item ids or when review-ready features
+exist. Use standalone mode for named branches, commits, ranges, PRs, or working
+trees. Under autopilot, resolve ambiguity from substrate state rather than asking.
 
-If both interpretations are plausible, prefer substrate mode but ask the user
-before mutating `.work`. If the caller is autopilot or a harness goal, do not
-ask: choose substrate mode and the next review item.
+Route by kind and parent before review work:
 
-Depth:
-- **Fast**: story item with green implementation verification.
-- **Standard**: out-of-band target or explicitly lightweight review.
-- **Deep**: feature/epic item, explicit `--deep`, or a review where the user asks
-  for robustness across design, contracts, release, and operational dimensions.
+- child story → direct verification closure, never review;
+- standalone story → bounded inline substrate review, never independent or
+  cross-model;
+- feature → normal integrated substrate review;
+- epic → deeper aggregate substrate review after all child features are done;
+- non-item target → standalone review.
 
-### Phase 1: Identify The Target
+### Phase 1: Gather context
 
-Substrate mode:
-- If the caller passed an item id, target that item.
-- Otherwise run `.work/bin/work-view --stage review --paths`.
-- If multiple items are at `review` and autopilot delegated the call, pick the
-  most recent by `updated:` and proceed.
-- If multiple items are at `review` for an interactive caller, ask which one.
+For feature substrate review, read:
 
-Standalone mode:
-- Use the branch, commit, range, PR, working tree, or `wip` target from the user.
-- If the target is ambiguous, ask before fetching the diff.
+- the feature body, acceptance criteria, implementation summary, and verification;
+- all direct child-story bodies and their completion evidence;
+- the aggregate implementation commits and surrounding code;
+- project instructions, `.agents/rules/*.md` as the project's force-loaded agent
+  rules, and touched foundation assertions.
 
-### Phase 2: Gather Context
+For epic review, read the epic brief and decomposition, every child feature's
+review record, cumulative touched paths and contracts, and the end-to-end
+acceptance/foundation context. Review aggregate behavior rather than repeating
+per-line child review.
 
-Substrate mode:
-- Read the item file.
-- Internalize the brief, design, implementation notes, and verification evidence.
-- For a feature, also read each child story body.
+For standalone-story review, read its body, implementation diff, and
+verification evidence. For out-of-band standalone review, read the target
+description and enough surrounding code to understand intent.
 
-Standalone mode:
-- Read the user's stated target.
-- Read PR description or commit messages when available.
-- Read enough surrounding project context to understand the author's intent.
+### Phase 2: Review the feature, epic, or standalone target
 
-All modes:
-- Read `AGENTS.md` / `CLAUDE.md` for conventions when present.
-- Read `.agents/rules/*.md` (if present) — the project's force-loaded agent
-  rules (tag semantics, test integrity, review policy).
-- Read foundation docs the change touches, such as `docs/SPEC.md` or
-  `docs/ARCHITECTURE.md`.
+For features and epics, load
+[target-resolution.md](references/target-resolution.md),
+[review-lenses.md](references/review-lenses.md), and
+[deep-review.md](references/deep-review.md). Calibrate reviewer capability and
+lens breadth to the effective weight, observed risk, and scope tier, while
+keeping pass count bound to the selected weight. Review integrated feature
+behavior rather than each child story; review epic-level capability and
+cross-feature interactions rather than repeating child-feature detail.
 
-### Phase 3: Determine The Change Scope
+For standalone stories, use a bounded inline core-lens walk and never delegate
+review. For out-of-band targets, use the standard lens walk unless deep review
+was requested or clearly warranted within the weight ceiling.
 
-Load [target-resolution.md](references/target-resolution.md). Use it to gather
-the diff, PR metadata, commit messages, or epic aggregate scope.
+If a feature diff is empty, approve only when complete green integrated
+verification and acceptance evidence explain why; otherwise bounce for missing
+review scope. In interactive standalone mode, report the empty target and stop.
 
-If the non-epic diff is empty:
-- Autopilot substrate mode: advance only if the item has complete green
-  verification evidence; otherwise bounce for missing review scope.
-- Interactive substrate mode: ask which range to review.
-- Standalone mode: report that there is no diff to review and stop.
+### Phase 3: Adjudicate findings
 
-### Phase 4: Review
+Reviewer output is evidence, not authority. The receiving agent verifies each
+claim against repository context and classifies it:
 
-Fast lane:
-- Confirm verification and skip code lenses.
+- **Blocker** — credible material current-cycle risk to required correctness,
+  security, data integrity, public contracts, acceptance criteria, release
+  safety, or trustworthy verification. Fix or keep active before advancing.
+- **Important** — valid work below that bar. Park unbound with the risk rationale
+  and continue the reviewed feature.
+- **Nit** — optional polish kept only in review notes.
+- **Rejected** — unsupported, inapplicable, or cost-disproportionate advice;
+  record a brief reason.
 
-Standard lane:
-- Load [review-lenses.md](references/review-lenses.md).
-- Walk the applicable lenses and note any skipped lens with the reason.
+Reviewer confidence, severity labels, or repetition do not determine the verdict.
 
-Deep lane:
-- Load [deep-review.md](references/deep-review.md).
-- Use fresh-context evaluation when available.
-- Apply the core lenses plus the deep dimensions.
+### Phase 4: Apply the weight's closure policy
 
-### Phase 5: Classify Findings
+Load [substrate-side-effects.md](references/substrate-side-effects.md).
 
-- **Blocker**: must be fixed before advancing or merging. Examples:
-  correctness bug, security vulnerability, undocumented breaking change,
-  foundation-doc drift, or a test that proves the change is wrong.
-- **Important**: should be addressed but is not strictly blocking. Examples:
-  missing tests for meaningful logic, questionable design, unclear naming, minor
-  security gap, or refactor opportunity.
-- **Nit**: optional improvement, style polish, small documentation improvement,
-  or nonessential refactor.
+For `none`, close administratively from green integrated verification and
+acceptance evidence. For `light` and `standard`, run at most one independent
+pass, adjudicate every proposal, fix receiver-confirmed blockers, verify those
+fixes, and then advance the feature or epic `review → done` **without another
+independent review pass**. If a fix must be deferred, preserve the finding and
+keep the item active; later closure verifies the named fix set rather than
+silently restarting standard review.
 
-If there are zero blockers and zero important findings, say so plainly. Do not
-pad the review with invented concerns.
+For `thorough` and `maximum`, repeat review → adjudicate → fix → verify against
+the new snapshot. Continue until a pass yields no receiver-confirmed material
+current-cycle blockers. The receiving agent judges materiality; parked
+lower-priority concerns, nits, and rejected proposals do not keep the loop open.
+An unfixable material blocker blocks rather than converges.
 
-### Phase 6: Finish
+For every weight:
 
-Standalone mode:
-- Print the structured review.
-- Do not modify `.work`.
-- Do not commit anything.
-- If the user asks to track findings, load
-  [substrate-side-effects.md](references/substrate-side-effects.md) and convert
-  only the requested findings into substrate work.
+- File accepted current-cycle work and lower-priority findings according to the
+  side-effects contract.
+- Append the review record, including effective weight, pass count, and closure
+  reason, then commit the reviewed-item transition.
 
-Substrate mode:
-- Load [substrate-side-effects.md](references/substrate-side-effects.md).
-- File above-nit findings into the substrate.
-- Advance the item if there are no blockers, or bounce it if blockers exist.
-- Append the review record.
-- Commit the substrate changes.
+After a feature reaches `done`, inspect its parent epic. If every direct child
+feature is `done`, advance the epic from `implementing → review`, append a
+`Child features reviewed and complete` note, and commit that transition. Start
+the deeper epic review without blocking any downstream implementation whose
+dependencies are now implementation-complete.
+
+### Phase 5: Finish standalone review
+
+Print the structured verdict. Do not modify `.work` or commit. If the user asks
+to track findings, load the side-effects reference and create only the requested
+items.
 
 ## Output
 
 ```markdown
-# Review: <target>
+# Review: <feature-epic-or-standalone-target>
 
 ## Summary
 <2-3 sentences>
@@ -216,46 +267,44 @@ Substrate mode:
 Approve | Approve with comments | Request changes | Block
 
 ## Findings
-
 ### Blockers
-- **<title>** (`file:line`): <what is wrong, why it matters>
-  -> Item: `<finding-item-id>` (substrate mode only)
+- **<title>** (`file:line`): <impact and required direction>
 
 ### Important
 - **<title>** (`file:line`): <explanation and direction>
-  -> Item: `<finding-item-id>` (substrate mode only)
 
 ### Nits
-- Nit: <brief note> (`file:line`)
+- <optional polish>
+
+### Rejected proposals
+- <proposal>: <repository-context reason>
 
 ## Notes
-<mode, depth, skipped lenses, limitations, or anything else worth recording>
+<mode, effective weight, reviewer path, evidence, skipped lenses, limitations>
 ```
 
-If no findings above nit level in substrate mode: "This change looks good.
-Nothing blocking or significant to flag. Item advanced to `stage: done`."
-
-If no findings above nit level in standalone mode: "This change looks good.
-Nothing blocking or significant to flag."
+For child-story compatibility closure, report verification and the direct
+transition; do not label it a review verdict. For standalone stories, report the
+bounded inline verdict and state that no independent/cross-model reviewer ran.
+For epic roll-up, report the child features whose completed reviews made the
+epic review-ready, then report the deeper epic verdict separately.
 
 ## Guardrails
 
-- Resolve mode before making changes. Substrate mode may mutate `.work`;
-  standalone mode prints a review and leaves the workspace alone.
-- Do not pad with nits to look thorough.
-- Do not invent concerns to balance positive feedback. "Looks good, ship it" is
-  valuable.
-- Do not require tests for changes that clearly do not need them: typo fixes,
-  comment-only changes, or config-only changes.
-- Read actual files for context, not just diff lines.
-- If you do not understand the change well enough to judge it, say so
-  explicitly. "I would want the author to explain why X before approving" is a
-  valid finding.
-- In substrate mode, findings above nit-level become items. Do not let real
-  concerns evaporate into review prose.
-- Review's security check is lightweight. For a full security gate, use
-  `/agile-workflow:gate-security`.
-- Foundation-doc drift is a blocker, not a nit. Rolling foundation is a hard
-  rule.
-- Do not advance an item past review unless the verdict is Approve or Approve
-  with comments. Pushing through blockers defeats the point of the stage.
+- Child stories never enter review.
+- Standalone stories receive bounded inline review but never independent,
+  fresh-context, or cross-model review.
+- Feature is the normal substrate implementation-review boundary.
+- Epics receive their own deeper aggregate review after child features are done.
+  Do not repeat line-level child review; inspect larger-scope integration and
+  capability risk.
+- Resolve mode and kind before making changes.
+- Do not pad reviews with invented concerns or low-value nits.
+- Read actual files and surrounding context, not only diff lines.
+- A false, stale, or contradictory foundation assertion can block; missing
+  coverage and unimplemented future intent are not drift.
+- Do not advance a reviewed item with unresolved receiver-confirmed material
+  blockers. A verified blocker fix permits `light`/`standard` closure without a
+  second review pass; `thorough`/`maximum` require another pass with no
+  receiver-confirmed material current-cycle blockers. Parking lower-risk work
+  does not block completion.

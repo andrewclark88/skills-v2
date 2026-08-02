@@ -43,7 +43,8 @@ impl Tier {
 ///
 /// All optional scalar fields are normalized: missing / YAML `null` / literal
 /// `"null"` string / empty string → `None`. This applies to `kind`, `stage`,
-/// `parent`, `release_binding`, `gate_origin`, and `research_origin`.
+/// `parent`, `release_binding`, `gate_origin`, `research_origin`, and
+/// `scan_origin`.
 ///
 /// `tags`, `depends_on`, and `research_refs` are always a `Vec<String>`;
 /// missing/empty frontmatter yields an empty vec (never `None`).
@@ -66,7 +67,8 @@ pub struct Item {
     /// Parent item id, if any.
     pub parent: Option<String>,
 
-    /// Ids of items this item depends on (must be terminal before this starts).
+    /// Ids whose verified implementation must complete before this starts.
+    /// Active items at review satisfy this without being terminal.
     pub depends_on: Vec<String>,
 
     /// Release version this item is bound to (late-binding).
@@ -79,6 +81,9 @@ pub struct Item {
     pub research_refs: Vec<String>,
     /// Research artifact that spawned this work item (Arrow 2, grounding).
     pub research_origin: Option<String>,
+
+    /// Scan artifact that originated/spawned this work item (mirror of research_origin).
+    pub scan_origin: Option<String>,
 
     /// ISO date when this item was created (`YYYY-MM-DD`).
     pub created: Option<String>,
@@ -123,6 +128,16 @@ impl Item {
             }
         }
     }
+
+    /// Returns `true` when dependent implementation may proceed.
+    ///
+    /// An item at `review` has completed implementation verification, so its
+    /// review runs asynchronously and must not serialize the next dependency
+    /// layer. It is still non-terminal for release and completion purposes;
+    /// only dependency readiness uses this distinction.
+    pub fn satisfies_dependency(&self) -> bool {
+        self.is_terminal() || self.stage.as_deref() == Some("review")
+    }
 }
 
 #[cfg(test)]
@@ -142,6 +157,7 @@ mod tests {
             gate_origin: None,
             research_refs: vec![],
             research_origin: None,
+            scan_origin: None,
             created: None,
             updated: None,
             tier,
@@ -177,6 +193,14 @@ mod tests {
         assert!(!make_item(Tier::Active, Some("review")).is_terminal());
         assert!(!make_item(Tier::Active, Some("drafting")).is_terminal());
         assert!(!make_item(Tier::Active, None).is_terminal());
+    }
+
+    #[test]
+    fn review_satisfies_dependency_without_being_terminal() {
+        let item = make_item(Tier::Active, Some("review"));
+
+        assert!(!item.is_terminal());
+        assert!(item.satisfies_dependency());
     }
 
     #[test]

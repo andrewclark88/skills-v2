@@ -1,55 +1,121 @@
 {
   "name": "andrewclark88-skills-v2",
+  "description": "Nathan Klisch's agent plugins plus Andrew Clark's research-grounded project-process extensions.",
   "owner": {
     "name": "andrewclark88"
   },
   "plugins": [
     {
-      "name": "research-pipeline",
-      "source": "./plugins/research-pipeline",
-      "description": "Research-grounded pipeline plugin — adds the research family (research / deep-research / research-program), architecture phase, blocking briefs, knowledge index + knowledge-graph visualizer, doc-review, and quality-checkpoint on top of the agile-workflow substrate. Companion to agile-workflow; produces research-grounded epic items, runs cascading consistency checks, and orchestrates 7 release-gate skills.",
+      "name": "nates-toolkit",
+      "source": "./plugins/nates-toolkit",
+      "description": "Standalone, project-agnostic utility skills with no workflow lock-in — plainspeak (plain-language re-explanation), agent-reflection (self-reflection on tool & skill usage), write-tool-skill + skill-auditor (skill authoring and quality auditing).",
       "category": "productivity",
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "code-audit",
+      "source": "./plugins/code-audit",
+      "description": "Standalone markdown-first code audit skills — deep code scan, bug scan, security scan, test scan, perf scout, bold refactor, and repo eval without requiring agile-workflow or .work.",
+      "category": "productivity",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
       "name": "agile-workflow",
       "source": "./plugins/agile-workflow",
-      "description": "Markdown-based work-tracking substrate for AI-driven projects. Items as files in .work/, late-binding releases, gates that produce items, goal-backed autopilot queue runner. Extended in skills-v2 with gate-infra (Terraform/CI/secrets safety auditing).",
+      "description": "Markdown-based work-tracking substrate for AI-driven projects. Items as files in .work/, late-binding releases, gates that produce items, goal-backed autopilot queue runner.",
       "category": "productivity",
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
-      "name": "workflow",
-      "source": "./plugins/workflow",
-      "description": "Software development workflow skills (legacy, doc-driven; superseded by agile-workflow + research-pipeline) — ideate projects, design features, implement from plans, profile and optimize performance, refactor codebases with bold architectural reconceptions, extract patterns, design tests, and ship releases.",
+      "name": "research-pipeline",
+      "source": "./plugins/research-pipeline",
+      "description": "Research-grounded project-process overlay for agile-workflow: prior-art scouting, research planning, knowledge indexing and visualization, architecture grounding, design integration, and cross-host context hooks.",
       "category": "productivity",
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
-      "name": "nates-toolkit",
-      "source": "./plugins/nates-toolkit",
-      "description": "Standalone, project-agnostic utility skills with no workflow lock-in — plainspeak (plain-language re-explanation), repo-eval (codebase scorecard), agent-reflection (self-reflection on tool & skill usage), write-tool-skill + skill-auditor (skill authoring and quality auditing). Supersedes the retired skill-authoring plugin.",
+      "name": "workbench",
+      "source": "./plugins/workbench",
+      "description": "Requirements-first delivery with semantic autonomy, lens-driven design, weighted review, and externally grounded research.",
       "category": "productivity",
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
       "name": "ux-ui-design",
       "source": "./plugins/ux-ui-design",
       "description": "HTML/CSS/JS mockup-first UI/UX design. Generate multi-option screen mockups, multi-page user flows, and design-system palettes as throwaway single-file mockups in .mockups/ for alignment before implementation. Loosely integrates with agile-workflow.",
       "category": "productivity",
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "agentic-research",
+      "source": "./plugins/agentic-research",
+      "description": "Agentic Research Discipline (ARD) — grounded, verifiable AI research with a non-erodable anti-fabrication floor, selectable verification gates, and a .research/ substrate tier paralleling .work/. ARD is the plugin's internal, empirically-warranted discipline (ard-core/).",
+      "category": "productivity",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "agent-coordination",
+      "source": "./plugins/agent-coordination",
+      "description": "Sparse cross-agent coordination ledger for shared repositories. Uses deliberate GitHub Discussion events for claims, handoffs, blockers, review summaries, and merge summaries without turning Discussions into chat.",
+      "category": "productivity",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "prose-craft",
+      "source": "./plugins/prose-craft",
+      "description": "Standalone prose craftsmanship for human-facing docs — style-contract drafting (prose-draft), editorial lens review (prose-review), and a multi-model rewrite-and-weave cycle to publication quality (prose-refine).",
+      "category": "productivity",
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
       "name": "krometrail",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/nklisch/krometrail",
-        "path": "plugin"
+        "path": "./plugin"
       },
-      "description": "Runtime debugging for AI agents — debug 10 languages via DAP, record and control Chrome via CDP.",
+      "description": "Control a local Chromium browser and inspect transient behavior with source-linked temporal visual evidence.",
       "category": "developer-tools",
-      "tags": ["debugging", "dap", "cdp", "mcp", "browser"],
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "version": "1.6.2",
+      "tags": [
+        "browser",
+        "cdp",
+        "mcp",
+        "temporal-visual-evidence",
+        "debugging"
+      ],
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     },
     {
       "name": "peeragent",
@@ -58,10 +124,42 @@
         "url": "https://github.com/nklisch/peeragent",
         "path": "plugin"
       },
-      "description": "Delegate arbitrary task work between local coding agents — any host (Claude Code, Codex) can call any peer (Codex, Claude Code, or Gemini through Antigravity). Ships the peer and peer-review skills.",
+      "description": "Delegate arbitrary task work between local coding agents — any host (Claude Code, Codex, or Pi) can call any peer (Codex, Claude Code, Gemini through Antigravity, or Z.AI GLM 5.2 through Pi). Ships the peer and peer-review skills.",
       "category": "productivity",
-      "tags": ["peer-review", "delegation", "codex", "gemini", "multi-agent"],
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+      "tags": [
+        "peer-review",
+        "delegation",
+        "codex",
+        "gemini",
+        "zai",
+        "pi",
+        "multi-agent"
+      ],
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
+    },
+    {
+      "name": "skilltap",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/nklisch/skilltap",
+        "path": "plugin"
+      },
+      "description": "Personal control plane for Codex and Claude Code environments — adopt, reconcile, update, and bootstrap native plugins, complete skills, and shared instructions without marketplace discovery.",
+      "category": "developer-tools",
+      "tags": [
+        "skilltap",
+        "codex",
+        "claude-code",
+        "bootstrap",
+        "reconciliation"
+      ],
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      }
     }
   ]
 }

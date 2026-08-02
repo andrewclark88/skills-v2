@@ -1,12 +1,11 @@
 ---
 name: codex-plugin-format
 description: >
-  OpenAI Codex CLI plugin, skill, and AGENTS.md format reference. Auto-loads when working with
-  Codex plugins, `.codex-plugin/plugin.json`, Codex marketplaces, AGENTS.md, AGENTS.override.md,
-  `~/.codex/config.toml`, project_doc_fallback_filenames, `agents/openai.yaml`, the
-  agentskills.io open standard, $plugin-creator, $skill-installer, `codex plugin marketplace`
-  CLI, or designing dual Claude/Codex plugin distribution.
-user-invocable: false
+  OpenAI Codex CLI plugin, skill, and AGENTS.md format reference. Auto-loads when working with Codex
+  plugins, `.codex-plugin/plugin.json`, Codex marketplaces, AGENTS.md, AGENTS.override.md,
+  `~/.codex/config.toml`, project_doc_fallback_filenames, `agents/openai.yaml`, the agentskills.io
+  open standard, $plugin-creator, $skill-installer, `codex plugin marketplace` CLI, or designing dual
+  Claude/Codex plugin distribution.
 ---
 
 # Codex Plugin / Skill / AGENTS.md Reference
@@ -145,6 +144,19 @@ Differences vs Claude `plugin.json`:
 - Other fields (`name`, `version`, `description`, `author`, `repository`, `license`) are
   identical shape.
 
+### Plugin hooks
+
+Codex loads plugin hooks from the manifest's `hooks` pointer, normally `./hooks/hooks.json`.
+Installing or enabling a plugin does not automatically trust its bundled hooks; Codex skips them
+until the user reviews and trusts the current hook definition.
+
+Hook commands receive `PLUGIN_ROOT` and `PLUGIN_DATA`; Codex also exports
+`CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` so existing Claude-compatible plugin hook commands
+can use the portable form `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`. Plugin hooks use the same event
+schema as regular hooks. Claude Code's hook schema uses the same command-hook shape this repo
+targets for `UserPromptSubmit`, `PostToolUse`, `SessionStart`, `PostCompact`, and
+`hookSpecificOutput.additionalContext`.
+
 ## Codex marketplace: `marketplace.json`
 
 Codex reads from any of:
@@ -279,10 +291,12 @@ The chosen approach (see research doc for trade-offs):
 
 - developers.openai.com/codex/plugins — overview, install model, CLI surface.
 - developers.openai.com/codex/plugins/build — full plugin.json + marketplace.json schemas.
+- developers.openai.com/codex/hooks — hook events, inputs, outputs, and trust review.
 - developers.openai.com/codex/skills — skill scopes, context budgets.
 - developers.openai.com/codex/skills/create-skill — `agents/openai.yaml` schema.
 - developers.openai.com/codex/guides/agents-md — discovery order, override files, fallback.
 - developers.openai.com/codex/config-reference — `~/.codex/config.toml` schema.
+- code.claude.com/docs/en/hooks — Claude Code hook events and JSON output.
 - agentskills.io/specification — formal SKILL.md frontmatter spec.
 - agents.md — universal instruction-file spec.
 - github.com/openai/codex — codex-rs and codex-cli source.

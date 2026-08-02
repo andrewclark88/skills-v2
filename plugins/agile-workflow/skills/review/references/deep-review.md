@@ -1,36 +1,65 @@
 # Deep Review
 
-Load this reference for feature reviews, epic reviews, explicit `--deep`
-requests, or any request that asks for a more robust review across design,
-contracts, release, and operational dimensions.
+Load this reference for feature and epic reviews, explicit `--deep` standalone
+requests, or any out-of-band request that asks for a more robust review across
+design, contracts, release, and operational dimensions. Child stories are not
+reviewed; standalone stories use the bounded inline lane and never load deep
+review. Epics receive the deepest aggregate item review.
 
-## Reviewer Selection
+## Reviewer Selection And Pass Count
 
-Prefer a fresh-context reviewer for deep mode:
+Prefer a fresh-context reviewer for deep mode. **Deep changes the lenses and
+reviewer capability, not the effective weight.** Resolve `review_weight` before
+dispatch:
 
-1. Use a different model class through peeragent when available and appropriate.
-   Do not use peeragent when it would be the same model class as the host.
-2. When hosted in Pi and a native Pi subagent adapter is available, use a
-   reviewer or oracle subagent as the same-harness fresh-context fallback.
-   Record that it was not cross-model.
-3. Otherwise, use a fresh local sub-agent at the highest available model class
-   when the environment provides one.
-4. If no fresh-context mechanism is available, continue inline as a degraded
-   deep review and record that limitation in `Notes`.
+- `light` and `standard` use at most one fresh-context pass. For `standard`, ask
+  one balanced prompt covering completeness and adversarial failure modes;
+  adjudicate, fix, verify, and finish without commissioning another pass.
+- `thorough` and `maximum` use review → adjudicate → fix → verify convergence,
+  continuing until a pass yields no receiver-confirmed material current-cycle
+  blockers. Smaller findings are parked, noted, or rejected by receiver
+  judgment rather than prolonging the loop.
+- `maximum` splits complementary and adversarial coverage when useful and uses
+  different model classes across those perspectives when available.
 
-Peer or sub-agent failures are non-blocking. Fall back to the next option rather
-than halting the review.
+An epic receives broader aggregate lenses than a feature, but a standard epic
+still gets one independent pass. `--deep`, artifact size, or first-pass findings
+must not silently escalate `standard` into a convergence loop.
 
-If peeragent launches Claude Opus, especially for a large feature, epic, or
-out-of-band review, expect 10 to 30 minutes before it returns. A quiet process
-that has not returned after a few minutes is still normal Opus review latency,
-not a hang.
+For any independent pass, prefer a reviewer from a different model class than
+the host when reachable. Use `peeragent` only when it supplies a different
+class. Otherwise use a fresh generic sub-agent prompted with the reviewer
+capsule from
+[../../principles/references/subagents.md](../../principles/references/subagents.md)
+and label it same-harness fresh context unless its selected model class actually
+differs from the host.
+
+Within `maximum`, completeness/complementary review precedes adversarial attack.
+Within `thorough`, preserve that order whenever both perspectives run. Reviewer
+or model disagreement is evidence to investigate, not a vote.
+
+For the host→peer pairing table and concrete peer mechanism flags, load
+[../../principles/references/models.md](../../principles/references/models.md).
+When an OpenAI reviewer is eligible under the different-class rule or is being
+used as the same-harness fallback, prefer GPT-5.6 over GPT-5.5. Use Sol for deep
+review when available, then another suitable 5.6 tier; use GPT-5.5 only when no
+GPT-5.6 review-capable model is available in the current harness, and record that
+fallback.
+
+A failed required fresh-context path blocks feature/epic completion unless a
+permitted fallback succeeds; design-time advisory failure remains non-blocking.
+
+A top-tier reasoning peer (Opus-class, xhigh Codex/GLM, or equivalent) commonly
+takes 10 to 30 minutes before it returns, especially for a large feature, epic,
+or out-of-band review. Quiet output after a few minutes is not a hang. Budget
+for additional rounds only when the effective weight is `thorough` or
+`maximum`.
 
 ## Reviewer Packet
 
 Give the fresh reviewer enough context to judge without bloating the task:
 
-- Review target and mode: substrate item, PR, branch, range, or epic.
+- Review target and mode: substrate feature/epic, PR, branch, or range.
 - Diff or aggregate scope from `target-resolution.md`.
 - Item brief/design/implementation notes, or PR/commit description.
 - Relevant project conventions from `AGENTS.md` / `CLAUDE.md`.
@@ -67,5 +96,8 @@ Deep does not mean exhaustive. Pull the dimensions that match the change:
   failure modes.
 - UI/workflow changes: emphasize capability completeness, accessibility-relevant
   behavior, state transitions, and regression coverage.
-- Epic reviews: emphasize aggregate alignment and release readiness, not per-line
-  diff analysis.
+- Large feature reviews: emphasize integrated capability alignment and release
+  readiness in addition to the applicable code-level dimensions.
+- Epic reviews: go deeper at aggregate scope—end-to-end capability completeness,
+  cross-feature contracts, cumulative operational/release risk, and foundation
+  alignment—without repeating per-line child review.

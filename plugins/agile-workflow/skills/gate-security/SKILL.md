@@ -1,34 +1,26 @@
 ---
 name: gate-security
 description: >
-  Security gate that scans items bound to a release and produces items as findings.
-  Delegates the full audit to a deep security-audit sub-agent which discovers stack, picks
-  relevant security domains (auth, injection, secrets, deps, API, infra, crypto,
-  data protection, error handling), audits the bundle's code changes, and returns
-  findings. The orchestrator converts findings into items in .work/active/ with
-  gate_origin:security and appropriate tags. Auto-triggers during
-  /agile-workflow:release-deploy quality-gate stage. Item-producer, NOT a
-  pass/fail report.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+  Security gate that scans items bound to a release and produces items as findings. Delegates the full
+  audit to a deep security scanner agent which discovers stack, picks relevant security domains
+  (auth, injection, secrets, deps, API, infra, crypto, data protection, error handling), audits the
+  bundle's code changes, and returns findings. The orchestrator converts findings into items in
+  .work/active/ with gate_origin:security and appropriate tags. Auto-triggers during
+  /agile-workflow:release-deploy quality-gate stage. Item-producer, NOT a pass/fail report.
 ---
 
 # Gate-Security
 
 You orchestrate a security gate over the items bound to a release. The actual
-audit runs inside a **deep security-audit sub-agent**; your role is to prepare
-the bundle context, dispatch the sub-agent, and convert the findings it returns
-into items in the substrate.
+audit runs inside a **deep security scanner agent** (a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`); your role is to prepare the bundle context,
+dispatch the scanner, and convert the findings it returns into items in the
+substrate.
 
-Sub-agent strength is explicit:
-- **Claude Code / Anthropic:** spawn one Agent with `model: "opus"` and
-  `subagent_type: "general-purpose"`.
-- **Codex / OpenAI:** spawn one analysis sub-agent with `reasoning_effort:
-  high`; use `xhigh` only for auth/crypto/data-loss surfaces, broad public API
-  changes, or a large/polyglot release bundle. Use a reviewer/default agent if
-  available, otherwise a worker with read-only instructions.
-- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for the deep
-  security audit when hosted in Pi and available; otherwise use the same-host
-  read-only analysis fallback.
+Scanner strength is explicit: spawn exactly one source-read-only deep security
+scanner with the strongest inspection/reviewer setting the host exposes. Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`. Use extra-high reasoning
+only for auth, crypto, data-loss, broad public API, or large/polyglot release
+bundles. If the host has no scanner path, run the audit inline and
+record the reduced isolation in the release body.
 
 This is NOT a standalone audit (for that, use a standalone `repo-eval` skill). This
 is a gate over a specific release bundle, producing items the release-deploy
@@ -45,27 +37,32 @@ flow can drain to `done` before shipping.
 
 If a release version was provided:
 ```bash
-# `--release` auto-widens to ALL tiers (active + archive + releases). Drop any
-# returned path under `.work/archive/`: those are already-done, body-pruned
-# stubs that were gated when active and MUST NOT be re-gated (no-re-gate rule).
-# Filter by path, not `--scope active` — the bash fallback ignores `--scope`.
-.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'
+# Bound non-release items. `--release` auto-widens to ALL tiers (active + archive + releases).
+# Include late-bound archived stubs; their bodies may be pruned, but their item id is still
+# present and can recover the bundle commits/files. Ignore only the release orchestration item.
+.work/bin/work-view --release <version> --paths | while IFS= read -r item; do
+  kind=$(grep -m1 '^kind:' "$item" | awk '{print $2}')
+  [ "$kind" = "release" ] && continue
+  echo "$item"
+done > /tmp/bundle-items-<version>.txt
 ```
 
 Otherwise, find the active release file (the one at `stage: planned` or
 `stage: quality-gate`) and use its version.
 
-If no items are bound (after dropping archived stubs), halt with: "No items
+If no items are bound (the bundle-items file is empty), halt with: "No items
 bound to release `<version>`. Bind items first via
 `/agile-workflow:release-deploy`."
 
-Build the union of files changed by the bundle (archived stubs already excluded):
+Build the union of files changed by the bundle. For archived stubs, the body is pruned on disk by
+design; use the item id to find implementation commits instead of treating the missing body as a
+skip reason:
 
 ```bash
-for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
+while IFS= read -r item; do
   id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
   git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
-done | sort -u > /tmp/bundle-files-<version>.txt
+done < /tmp/bundle-items-<version>.txt | sort -u > /tmp/bundle-files-<version>.txt
 ```
 
 ### Phase 2: Read existing gate items (idempotency prep)
@@ -75,33 +72,34 @@ done | sort -u > /tmp/bundle-files-<version>.txt
 ```
 
 Capture the set of `(file:line, severity)` already-tracked findings so the
-sub-agent can be told to skip duplicates.
+scanner can be told to skip duplicates.
 
-### Phase 3: Dispatch the audit sub-agent
+### Phase 3: Dispatch the security scanner
 
-Spawn ONE deep audit sub-agent with the full audit brief. For Claude Code, this
-is `Agent(subagent_type=general-purpose, model=opus)`. For Codex, use
-`reasoning_effort: high`, escalating to `xhigh` for auth/crypto/data-loss
-surfaces, broad public API changes, or large/polyglot bundles. For Pi, use a
-native `reviewer` or `oracle` subagent when available; otherwise use the
-same-host read-only analysis fallback. The sub-agent does all of the analysis end-to-end —
-stack discovery, domain selection, parallel domain audits, severity
-classification — and returns structured findings.
+Spawn ONE source-read-only deep scanner agent with the full audit brief. Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md` and the strongest
+inspection/reviewer setting the host exposes, escalating for auth, crypto,
+data-loss, broad public API, or large/polyglot bundles. If scanner agents
+are unavailable, run the audit inline and record the reduced isolation in the
+release body. The scanner does all of the analysis end-to-end — stack discovery,
+domain selection, domain audit passes, severity classification — and returns
+structured findings.
 
 **Brief template** (substitute `<version>`, `<bundle-files>`,
 `<bound-item-ids>`, `<already-tracked>`):
 
-> You are conducting a security gate audit for release `<version>`. You have
-> access to the full toolset (Read, Glob, Grep, Bash, WebSearch, WebFetch,
-> Task) and may spawn parallel sub-tasks for per-domain audits.
+> You are conducting a security gate audit for release `<version>` as an
+> agile-workflow scanner. Use read/search/shell/current-source lookup tools as
+> needed, but do not spawn nested sub-agents or implement fixes.
 >
-> **Bundle scope** (audit ONLY these files; this is a release gate, not a
-> repo-wide audit):
+> **Bundle focus** (start here; follow concrete security-relevant call paths,
+> dependencies, shared infrastructure, and controls as needed):
 > ```
 > <bundle-files>
 > ```
 >
-> **Bound items**: `<bound-item-ids>`
+> **Bound items** (an archived stub's body is pruned on disk — hydrate it from
+> the stub's `git_ref` frontmatter via `git show <git_ref>:<path>`, trying the
+> item's former `.work/active/` path at that ref): `<bound-item-ids>`
 >
 > **Already-tracked findings to skip** (do not re-report these):
 > ```
@@ -139,10 +137,11 @@ classification — and returns structured findings.
 >    9. Error Handling & Logging — stack trace leakage, audit gaps, PII in
 >       logs, missing error boundaries, verbose prod errors. All prod apps.
 >
-> 3. **Parallel domain audits** — for each selected domain, spawn a parallel
->    sub-task (Task tool) that audits the bundle's changed files for that
->    domain's checklist. Use WebSearch to verify current best practices for
->    `<stack>+<domain>` combinations before judging.
+> 3. **Domain audit passes** — for each selected domain, audit the bundle's
+>    changed files against that domain's checklist, following concrete evidence
+>    into adjacent security boundaries, dependencies, and shared controls. Use current-source lookup
+>    when needed to verify best practices for `<stack>+<domain>` combinations
+>    before judging.
 >
 > 4. **Severity classification** — every finding gets one of:
 >    | Severity | Meaning |
@@ -162,6 +161,7 @@ classification — and returns structured findings.
 > - **Title**: <one-line>
 > - **Severity**: Critical | High | Medium | Low
 > - **Domain**: <domain name>
+> - **Relevance**: Release-relevant | Ambient
 > - **Location**: `<file>:<line>`
 > - **Evidence**:
 >   ```<lang>
@@ -184,7 +184,8 @@ classification — and returns structured findings.
 > ```
 >
 > **Rules**:
-> - Audit only the files listed in Bundle scope. Do NOT expand the audit.
+> - Bundle files are the focus, not a hard boundary. Expand only along concrete
+>   security-relevant evidence and record why out-of-bundle surfaces were inspected.
 > - Cite file:line for every finding.
 > - Don't fabricate. If evidence is missing, don't report.
 > - Skip findings that match the already-tracked list.
@@ -192,7 +193,16 @@ classification — and returns structured findings.
 
 ### Phase 4: Convert findings to items
 
-For each finding the sub-agent returned (above Info severity):
+For each finding the scanner returned (above Info severity):
+
+Read `gate_finding_routing` from `.work/CONVENTIONS.md` before writing items.
+If absent, use the default routing below. Normalize security severity to routing
+keys as: `Critical -> critical`, `High -> high`, `Medium -> medium`,
+`Low -> low`, and `Info -> info` (Info is not returned as a finding by the
+scanner, but the route is reserved for consistency). If a normalized key maps
+to `skip`, do not emit an item for that finding; include the skipped count in
+the gate output. If it maps to `backlog`, write a `.work/backlog/` item instead
+of an active story.
 
 ```yaml
 ---
@@ -204,7 +214,7 @@ stage: implementing      # Critical or High
 tags: [security]
 parent: null
 depends_on: []
-release_binding: <version>
+release_binding: <version> | null  # null for ambient findings
 gate_origin: security
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -230,10 +240,16 @@ Critical | High | Medium | Low
 <what should change — direction, not a finished fix>
 ```
 
-Severity → stage mapping:
+Release-relevant findings use the normal severity mapping and bind to the
+release. Ambient findings discovered outside the release's material risk go to
+the unbound backlog regardless of severity; a genuinely critical repository
+vulnerability is release-relevant when shipping would expose or perpetuate it.
+
+Default severity -> placement mapping:
 - **Critical** / **High** → `stage: implementing` in `.work/active/stories/`
 - **Medium** → `stage: drafting` in `.work/active/stories/`
 - **Low** → backlog file in `.work/backlog/` (not stage-managed)
+- **Info** → skipped (no item emitted)
 
 ### Phase 5: Commit
 
@@ -254,14 +270,15 @@ In conversation:
 
 ## Guardrails
 
-- **The audit happens in the sub-agent, not here.** Your job is bundle prep,
-  dispatch, and item-writing. Don't replicate the sub-agent's analysis in
+- **The audit happens in the scanner agent, not here.** Your job is bundle
+  prep, dispatch, and item-writing. Don't replicate the scanner's analysis in
   the orchestrator's context.
 - Never implement fixes — produce items only.
 - Always cite file:line in finding bodies.
-- Don't fabricate findings. If the sub-agent returns nothing for a domain, it
+- Don't fabricate findings. If the scanner returns nothing for a domain, it
   returns nothing. Don't paper that over.
-- Idempotent re-runs: pass already-tracked findings into the sub-agent's brief
-  so it skips duplicates. Double-check on item-write before creating.
-- Audit only the bundle's changes, not the whole repo. Repo-wide audits are
-  a standalone `repo-eval`'s job, not a release gate's.
+- Idempotent re-runs: pass already-tracked findings into the scanner brief so it
+  skips duplicates. Double-check on item-write before creating.
+- Release-bound items define focus, not a hard boundary. Follow concrete
+  security evidence into adjacent or system-wide controls, but do not perform
+  an unfocused whole-repo audit. Route merely ambient findings to the unbound backlog.

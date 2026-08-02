@@ -323,6 +323,12 @@ class RulesLoaderTest(unittest.TestCase):
         second = prompt_context.emit_rules(self.root, payload)
         self.assertEqual(second, "")
 
+    def test_emit_force_bypasses_dedup_for_pi_rebuilt_prompt(self) -> None:
+        (self.rules_dir / "a.md").write_text("Rule A", encoding="utf-8")
+        payload = self._payload()
+        self.assertIn("Rule A", prompt_context.emit_rules(self.root, payload, force=True))
+        self.assertIn("Rule A", prompt_context.emit_rules(self.root, payload, force=True))
+
     def test_emit_reinject_on_content_change(self) -> None:
         (self.rules_dir / "a.md").write_text("Rule A", encoding="utf-8")
         payload = self._payload()
@@ -354,6 +360,71 @@ class RulesLoaderTest(unittest.TestCase):
         self.assertIn("Agile Workflow Principles", printed)
         self.assertNotIn("Rule A", printed)
         self.assertNotIn("Agile Workflow Snapshot", printed)
+
+    def test_short_workflow_command_emits_principles(self) -> None:
+        payload = self._payload(cwd=str(self.root), prompt="implement")
+        out = io.StringIO()
+        with mock.patch.object(
+            prompt_context.sys, "stdin", io.StringIO(json.dumps(payload))
+        ), mock.patch.object(prompt_context.sys, "stdout", out):
+            rc = prompt_context.main()
+        self.assertEqual(rc, 0)
+        printed = out.getvalue()
+        self.assertIn("Agile Workflow Principles", printed)
+        self.assertIn("Code-design capsule", printed)
+        self.assertIn("Code economy", printed)
+        self.assertIn("Useful tests", printed)
+        self.assertIn("ask before reducing guarantees", printed)
+
+    def test_orchestration_prompt_emits_feature_bundle_guidance(self) -> None:
+        payload = self._payload(
+            session_id="feature-bundles",
+            cwd=str(self.root),
+            prompt="drain the implement-orchestrator queue",
+        )
+        out = io.StringIO()
+        with mock.patch.object(
+            prompt_context.sys, "stdin", io.StringIO(json.dumps(payload))
+        ), mock.patch.object(prompt_context.sys, "stdout", out):
+            rc = prompt_context.main()
+        self.assertEqual(rc, 0)
+        printed = out.getvalue()
+        self.assertIn("One implementation agent per feature is the baseline", printed)
+        self.assertIn("bundle related features", printed)
+        self.assertIn("Stories are design checkpoints", printed)
+
+    def test_review_prompt_emits_item_kind_and_nonblocking_guidance(self) -> None:
+        payload = self._payload(
+            session_id="review-kinds", cwd=str(self.root), prompt="review feature-auth"
+        )
+        out = io.StringIO()
+        with mock.patch.object(
+            prompt_context.sys, "stdin", io.StringIO(json.dumps(payload))
+        ), mock.patch.object(prompt_context.sys, "stdout", out):
+            rc = prompt_context.main()
+        self.assertEqual(rc, 0)
+        printed = out.getvalue()
+        self.assertIn("Child stories never enter review", printed)
+        self.assertIn("only standalone stories receive review", printed)
+        self.assertIn("Review is non-blocking", printed)
+        self.assertIn("epics receive their own deeper aggregate review", printed)
+        self.assertIn("Review weight defaults to standard", printed)
+        self.assertIn("finish without re-review", printed)
+        self.assertIn("Only thorough and maximum use multi-pass review", printed)
+        self.assertIn("no receiver-confirmed material blockers", printed)
+
+    def test_gate_prompt_emits_wider_scope_rule(self) -> None:
+        payload = self._payload(
+            session_id="gate-scope", cwd=str(self.root), prompt="gate the release items"
+        )
+        out = io.StringIO()
+        with mock.patch.object(
+            prompt_context.sys, "stdin", io.StringIO(json.dumps(payload))
+        ), mock.patch.object(prompt_context.sys, "stdout", out):
+            rc = prompt_context.main()
+        self.assertEqual(rc, 0)
+        self.assertIn("release-bound work is the focus, not a hard boundary", out.getvalue())
+        self.assertIn("ambient findings", out.getvalue())
 
     def test_main_sessionstart_emits_rules(self) -> None:
         (self.rules_dir / "a.md").write_text("Rule A body", encoding="utf-8")

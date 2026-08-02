@@ -1,20 +1,16 @@
 ---
 name: convert
 description: >
-  Bootstrap or sync the agile-workflow substrate. Auto-detects repo state:
-  bootstrap creates .work/, CONVENTIONS.md, the canonical AGENTS.md section,
-  Claude compatibility, work-view, and migrated items; sync refreshes
-  plugin-owned artifacts plus optional skill catalog mirrors while preserving
-  user-owned CONVENTIONS.md, refactor rules, and substrate state. `convert
-  --update` performs one-pass artifact alignment. Discovery-driven: sweeps both
-  skill roots to detect bespoke DIY skills that overlap plugin-owned concepts
-  (patterns, refactor conventions, plan-doc generators) and offers to converge
-  them to the canonical layout, deferring to the owning skill for placement.
-  Checks inbound references before moving any path and rewrites or shims them.
-  Always asks whether destructive cleanup is in scope before deleting, moving,
-  or replacing legacy artifacts; preserve-only is the default.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
+  Bootstrap or sync the agile-workflow substrate. Auto-detects repo state: bootstrap creates .work/,
+  CONVENTIONS.md, the canonical AGENTS.md section, Claude compatibility, work-view, and migrated
+  items; sync refreshes plugin-owned artifacts plus optional skill catalog mirrors while preserving
+  user-owned CONVENTIONS.md, refactor rules, and substrate state. `convert --update` performs one-pass
+  artifact alignment. Discovery-driven: sweeps both skill roots to detect bespoke DIY skills that
+  overlap plugin-owned concepts (patterns, refactor conventions, plan-doc generators) and offers to
+  converge them to the canonical layout, deferring to the owning skill for placement. Checks inbound
+  references before moving any path and rewrites or shims them. Always asks whether destructive
+  cleanup is in scope before deleting, moving, or replacing legacy artifacts; preserve-only is the
+  default.
 ---
 
 # Convert
@@ -418,7 +414,7 @@ imported. Do not create `.claude/rules/*.md` files that don't already exist.
 
 ### Phase 3: Conventions interview
 
-Run an interactive interview via AskUserQuestion. Seven questions, in order:
+Run an interactive interview via structured question tool. Six questions, in order:
 
 1. **Release mapping** — `branch-held | tag-based | release-branch | none`. Default
    offered: `tag-based`. Always asked.
@@ -428,21 +424,31 @@ Run an interactive interview via AskUserQuestion. Seven questions, in order:
 3. **Slug conventions** — defaults to kebab-case with parent-prefix for children.
 4. **Stage overrides** — none by default. Discouraged.
 5. **Gate config** — defaults to
-   `gates_for_release: [security, tests, cruft, docs, patterns, infra]`. User can
-   reorder or omit.
+   `gates_for_release: [security, tests, cruft, docs, patterns]` plus the
+   default `gate_finding_routing` map (`critical/high -> implementing`,
+   `medium -> drafting`, `low -> backlog`, `info -> skip`). User can reorder
+   or omit gates and can override finding routing for the project. `gate-refactor`
+   is an **opt-in gate** (not in the default list) — add it when the project has
+   scan-rule libraries under `gate_refactor_scan_library_roots` (default:
+   `.agents/skills`, `.claude/skills`). `binding_guard` sets the Phase 3.5
+   binding-consistency check behavior: `warn` (default — surfaces findings without
+   halting), `halt` (for projects that hold the no-cross-version-drift invariant), or
+   `off` (skip). `epic_cohesion` sets how an unbound child of a bound parent is
+   scored: `phased` (default — informational, an epic may ship across releases) or
+   `total` (treated as a mismatch, "epics ship whole").
 6. **Terminal-tier retention** — `delete-refs | retain-bodies`. This is the ONE merged terminal
    convention (archival + `archived_atop` late-binding + one-summary release), not just byte
    retention. Default offered: `delete-refs` — archiving a done item leaves a **bodyless stub**
    carrying `archived_atop` (the immutable release baseline it was done atop, kept as provenance) +
-   `git_ref`; a release **late-binds all unbound archived stubs** (no re-gating of already-done stubs)
-   and **collapses** all bound items into one `releases/<version>/release-<version>.md` summary (id,
+   `git_ref`; a release **late-binds all unbound archived stubs** (re-gated during the release —
+   gates recover changed files by item id and hydrate pruned bodies from `git_ref`)
+   and **collapses** all bound items into one `.work/releases/<version>/release-<version>.md` summary (id,
    title, kind, `archived_atop`, git ref); full bodies live in git history, so terminal prose cannot
    leak to future agents. Offer `retain-bodies` only for projects that deliberately keep full terminal
    bodies on disk (same `archived_atop`/late-binding semantics, bodies just not pruned).
-7. **Design-skill routing** — if the `research-pipeline` plugin is installed, set
-   `design_skill_routing: { epic_design: research-pipeline:epic-design, feature_design: research-pipeline:feature-design }`
-   so autopilot dispatches the research-grounded (`[needs-brief]`-gated) design
-   skills. Otherwise omit it (autopilot uses the base `epic-design`/`feature-design`).
+
+Review weight is deliberately not another interview question. Bootstrap writes the balanced default
+in Phase 5; callers can change the project convention later or override it per invocation.
 
 ### Phase 4: Create substrate skeleton
 
@@ -464,11 +470,23 @@ environment, locate the plugin source via the active skill/plugin path or manife
 
 ### Phase 5: Write CONVENTIONS.md
 
-Write `.work/CONVENTIONS.md` from the interview answers, following the format in SPEC.md. The
-`## Terminal-tier retention` section is **value-only** — write the bare `delete-refs`/`retain-bodies`
-value the user chose, not the merged prose (the prose lives in SPEC.md, never duplicated per project).
-This bare-value form is exactly what a later sync classifies as `match`, so a freshly bootstrapped
-repo never self-reports terminal-retention drift.
+Write `.work/CONVENTIONS.md` from the interview answers, following the format in SPEC.md. Also add
+this non-interactive project default:
+
+```markdown
+## Review weight
+review_weight: standard
+```
+
+Allowed values are `none | light | standard | thorough | maximum`. The setting is optional: when it
+is absent, review and autopilot resolve it to `standard`. Keep the level semantics and selection
+policy in `principles/SKILL.md` Part IV and `review/SKILL.md`; do not duplicate their review matrix or
+model guidance here.
+
+The `## Terminal-tier retention` section is **value-only** — write the bare
+`delete-refs`/`retain-bodies` value the user chose, not the merged prose (the prose lives in SPEC.md,
+never duplicated per project). This bare-value form is exactly what a later sync classifies as
+`match`, so a freshly bootstrapped repo never self-reports terminal-retention drift.
 
 ### Phase 6: Write the canonical AGENTS.md section
 
@@ -496,7 +514,9 @@ parent, and dependency. Common patterns:
 - `work-view --help` for the full flag set
 
 Foundation docs in `docs/` describe the system's current state or intended
-future state, never the past; git history is the audit trail. Item files are
+future state, never the past; git history is the audit trail. Review existing
+assertions only: missing coverage and unimplemented future intent are not drift;
+flag only false, stale, or contradictory claims. Item files are
 the durable state: update the body with implementation discoveries, review
 findings, blockers, and decisions instead of relying on chat history.
 
@@ -540,6 +560,38 @@ research docs — they are an optional agentic-research extension. (`work-view`
 parses both fields harmlessly when unset, so an existing `.work/` substrate is
 never broken by their absence; convert simply does not advertise them.)
 
+**The `[research]` routing tag + `research_dials:` block are also conditional on
+`agentic-research`.** When that plugin is present (same detection as above), two
+more things land — both **omitted** when it is absent (agile-workflow's core stays
+agentic-research-agnostic):
+
+1. **Schema** — also advertise the `research_dials:` block in the field list note: a
+   `[research]` item carries the **commissioning subset** of its engagement
+   registration in a `research_dials:` nested frontmatter block (the four scoping
+   fields: `scope_authority`, `verification_rigor`, `intent`, `output_kind`) read by
+   the orchestrator at dispatch, which settles the remaining registration fields then.
+   (`work-view` parses only its own known fields and ignores the block harmlessly; it
+   is orchestrator-read, not a `work-view` filter dimension.)
+2. **Tag semantics** — append a `[research]` entry to the Phase 6.5 `### Tag
+   semantics` section (and pluralize its intro to "A few tags carry load-bearing
+   routing semantics — get these right:"), using this block:
+
+   ```markdown
+   - **`[research]`** — a grounded research engagement: an *input* that grounds
+     other work (a decision, a design, an adoption call), not a shippable
+     deliverable. Routes **cross-plugin** to `agentic-research:research-orchestrator`,
+     not a design-family skill. The work item carries the **commissioning subset** of
+     the engagement registration in a `research_dials:` block (the four scoping fields:
+     scope_authority, verification_rigor, intent, output_kind) — **scoping the item IS
+     the dispatch act**; the orchestrator reads those dials at kickoff and settles the
+     rest at dispatch. A `[research]` item **does not bind to a release** (it is
+     an input, not a bundle member) and its verification **gates run inline** in the
+     orchestrator (it never reaches `release-deploy`). Routes through `feature-design`
+     only as the inert-tag fallback.
+   ```
+
+   Without `agentic-research`, leave the Phase 6.5 template at `[refactor]` + `[perf]`.
+
 ### Phase 6.5: Write `.agents/rules/agile-workflow.md` (rules-first, then slim)
 
 The dense agile-workflow behavioral rules live in a plugin-managed
@@ -578,6 +630,33 @@ must already exist at their new home or the dense content is lost.
    All other tags are project-specific (see `.work/CONVENTIONS.md`) and do not
    affect skill routing.
 
+   ### Engineering posture
+
+   Prefer short, clear code and context-appropriate rigor over speculative
+   generality. Not every project needs exhaustive invariants, edge handling,
+   firm determinism, or universal coverage. Test important interfaces, complex
+   units, and regressions learned from bugs—not every line. When touching an
+   area, eliminate unnecessary code, tests, checks, abstractions, and
+   compatibility paths; leave it simpler. Ask before removing meaningful
+   behavior, guarantees, validation, compatibility, or safety.
+
+   Compatibility is earned, not assumed. Absent a project declaration of
+   external consumers, only two things create compatibility obligations:
+   dependencies outside the repository that are not owned by the author, and
+   substantial real data that must be preserved or transformed. Agent tooling,
+   MCP servers, internal services, and unpublished libraries have no external
+   consumers by default—never version project-owned schemas (v1/v2/v3) or
+   keep compat shims for surfaces the project owns; change them in place.
+   Real-data migrations are planned by the agent but approved and executed by
+   the user for production data; do not run production transforms
+   autonomously.
+
+   Release-bound items define a gate's focus, not a hard scan boundary. Gates
+   may follow concrete evidence into adjacent dependencies, shared
+   infrastructure, or system-wide mechanisms. Bind release-relevant findings;
+   route merely ambient discoveries to the unbound backlog so a scan does not
+   silently expand a release.
+
    ### Test integrity
 
    When running, writing, or modifying tests:
@@ -593,6 +672,11 @@ must already exist at their new home or the dense content is lost.
      green again, if a parked production bug is small enough for a single
      stride, pick it up immediately as `/agile-workflow:scope` → design →
      implement. Larger bugs stay in backlog for prioritization.
+   - **Tests must earn their upkeep.** Prefer tests at stable interfaces,
+     regression tests for real bugs, and unit tests for genuinely complex
+     units. Do not add tests merely to cover every line or surface; remove
+     duplicate, tautological, implementation-bound, or obsolete tests when
+     they add less confidence than maintenance cost.
    - **NEVER game a test to make it pass.** A failing test that documents
      *why* it fails — an inline comment naming the bug, a `skip` linked to a
      backlog id, an `xfail` with a reason — is more honest than a green test
@@ -600,14 +684,40 @@ must already exist at their new home or the dense content is lost.
      code happens to return, no deleting a test as "flaky" without
      root-causing first.
 
+   Implementation orchestration defaults to one worker per feature. Bundle
+   related features into one sequential worker when shared context reduces
+   handoffs; split an unusually large feature only by coherent write ownership.
+   Child stories are design and acceptance checkpoints, not default worker units.
+
+   Review is non-blocking for dependency-ordered implementation: an item at
+   `review` satisfies downstream implementation dependencies while its review
+   runs. Child stories advance directly to `done` after green verification and
+   never receive review. Standalone stories receive bounded inline review but
+   never an independent, fresh-context, or cross-model reviewer. Features are the
+   normal implementation-review boundary; epics receive their own deeper
+   aggregate review after child features are done. Broader scope gets deeper
+   review because integration and capability gaps emerge there; child-story
+   review is avoided because it tends toward pedantry and over-engineering.
+   Independent feature and epic reviews may run in parallel and must not
+   serialize the next implementation wave. Review weight defaults to
+   `standard`: one independent pass, then receiver adjudication, fixes for
+   material blockers, verification, and `done` without re-review. Epic review
+   is broader than feature review, but it does not add passes to `standard`.
+   Only `thorough` and `maximum` use multi-pass review; they repeat until a pass
+   yields no receiver-confirmed material current-cycle blockers. Smaller
+   findings are parked unbound, kept as nits, or rejected by judgment and do not
+   keep the loop open.
+
    Cross-model advisory review: explicit user/project review instructions
    override agile-workflow defaults. When peeragent is available with a different
-   model class, large/risky autopilot design decisions may use one advisory pass;
-   small/low-risk work skips it. Autopilot also runs a final peer-review loop
-   before reporting completion and fixes or files accepted findings first.
-   Same-model peers fall back to local sub-agents instead. Claude Opus peeragent
-   calls can take 10 to 30 minutes on large reviews; no return after a few minutes
-   is not evidence that the call has hung.
+   model class, large/risky feature, epic, or final-completion reviews may use it;
+   standalone stories never do. Reviewer findings are proposals: the receiving
+   orchestrator verifies them against repository context and actual risk. Only
+   credible material current-cycle risks block; park valid lower-priority
+   findings in the unbound backlog and continue. Same-model peers fall back to
+   local sub-agents instead. Claude Opus peeragent calls can take 10 to 30 minutes
+   on large reviews; no return after a few minutes is not evidence that the call
+   has hung.
 
    Broad entry points:
    `/agile-workflow:ideate`, `/agile-workflow:epicize`,
@@ -620,7 +730,7 @@ must already exist at their new home or the dense content is lost.
    this managed-section overwrite — content verification, NOT just a non-empty +
    end-marker check): confirm `.agents/rules/agile-workflow.md` exists AND that the
    dense rule content the slim removes from AGENTS actually landed there — each
-   section is present (`### Tag semantics`, `### Test integrity`, the
+   section is present (`### Tag semantics`, `### Engineering posture`, `### Test integrity`, the
    advisory-review paragraph, and Broad entry points), or recompute per the Phase
    1.8 provenance check. Only when the content is verified present do you write or
    refresh the slim AGENTS section (Phase 6), overwriting the managed AGENTS block.
@@ -776,7 +886,7 @@ Heuristics for inferred default (use these to pre-fill the per-design ask):
 - In `docs/designs/`, code partially landed → `implementing`
 - In `docs/designs/`, no code yet → `drafting`
 
-Ask the user to confirm/edit the classification per design via AskUserQuestion
+Ask the user to confirm/edit the classification per design via structured question tool
 (group designs by inferred bucket if there are many, to keep the question count
 under 4-options-per-call). The body of each new feature item = the original
 design content.
@@ -795,7 +905,7 @@ bodies.
 **Sync existing substrates to delete-refs.** When converting/syncing a repo that already uses the
 substrate and `delete-refs` is selected, detect retained full-body terminal items — full bodies in
 `.work/archive/*.md` and `.work/releases/<version>/<id>.md` (anything beyond the
-`release-<version>.md` summary) — and **offer** (AskUserQuestion; never force) to prune them to
+`release-<version>.md` summary) — and **offer** (structured question tool; never force) to prune them to
 current practice. The prune ALSO stamps `archived_atop`:
 
 - archived bodies → bodyless stubs. Capture each `git_ref` from `git log -- <path>`. Stamp
@@ -811,7 +921,7 @@ Preserve-only stays the default per convert's posture.
 **Converge a bespoke "Done-item archival" convention.** A repo may already carry a hand-rolled
 `## Done-item archival` (or similarly named) section in `.work/CONVENTIONS.md` describing
 `archived_atop` late-binding. Detect it; do NOT duplicate it alongside the merged
-`Terminal-tier retention` convention. Offer (AskUserQuestion; never force) to **converge** it: fold
+`Terminal-tier retention` convention. Offer (structured question tool; never force) to **converge** it: fold
 its semantics into the one merged `Terminal-tier retention` section and remove the bespoke section,
 preserving any project-specific rules it carried (custom in-body markers, date metadata, etc.) by
 routing them to a user-owned `.agents/rules/<name>.md` rather than dropping them. The
@@ -824,7 +934,7 @@ For `docs/ROADMAP.md` phases:
    `.work/archive/epics/`. If any child is `implementing` or `review`, epic is
    at `stage: implementing`. Otherwise `stage: drafting`.
 3. Phase ordering becomes `depends_on` chains (phase 2 depends on phase 1, etc.).
-4. Confirm with the user via AskUserQuestion before committing.
+4. Confirm with the user via structured question tool before committing.
 
 For `docs/PROGRESS.md` deviation logs: fold notes into relevant items' bodies.
 
@@ -879,12 +989,12 @@ something to drain after bootstrap:
 1. **Cluster** the changed files. Start with path grouping plus `git diff
    --stat`; if the changed set is still small enough to inspect directly, read
    the relevant diffs yourself. For large or unclear sets, use a read-only
-   Explore sub-agent: "Categorize these <N> files into 1-5 coherent feature
+   exploratory sub-agent: "Categorize these <N> files into 1-5 coherent feature
    buckets by path, imports, and diff content. Report each as slug +
    one-paragraph description + file list." Pass `git status --porcelain` and
    `git diff --stat` as the sub-agent's context rather than dumping many full
    diffs into the prompt.
-2. **Confirm with the user** via AskUserQuestion (groups of 2-4 buckets if
+2. **Confirm with the user** via structured question tool (groups of 2-4 buckets if
    there are many). Allow merge / split / rename.
 3. **Scope each cluster** as `.work/active/features/feature-<slug>.md` with
    `kind: feature, stage: implementing`, body = brief + "Files in this
@@ -1012,6 +1122,10 @@ path list), plus deeper checks:
   - `.claude/rules/patterns.md` state (legacy content vs AGENTS shim)
   - `.work/CONVENTIONS.md` load-bearing tag entries (see below). The rest of
     CONVENTIONS is user-owned and untouched.
+  - `.work/CONVENTIONS.md` `review_weight` — preserve any existing value unchanged; review validates
+    the five-value boundary when it consumes the setting. Absence is also valid and resolves to
+    `standard`, so sync neither inserts the default into older projects nor asks a migration question.
+    The allowed values and canonical policy are in Phase 5.
   - `.work/CONVENTIONS.md` **Terminal-tier retention** state (the merged convention — see
     "Terminal-tier retention drift" below). The per-project CONVENTIONS template is **value-only** (a
     `## Terminal-tier retention` heading + a bare `delete-refs`/`retain-bodies` value); the merged
@@ -1179,6 +1293,19 @@ For each artifact with a non-`match` state:
   surface that rule for removal or a negation entry under convert's
   preserve-by-default cleanup policy rather than silently editing ignore files.
   Ensure `.work/bin/work-view` is included in the Phase S5 `git add`.
+  - **Scan-awareness rides this reinstall.** The current `work-view` delivers the
+    `deep-code-scan` substrate support: the `--scan-origin <slug>` filter (the
+    `scan_origin` linkage field) and the **`[scan]`-tag exclusion from `--ready`/
+    `--blocked`** (so engagement-owned scan scaffold is never drained by autopilot).
+    Reinstalling the binary is what brings an existing install up to scan-awareness —
+    no separate step. Verify post-reinstall with `.work/bin/work-view --scan-origin x`
+    exiting cleanly.
+- **Scan taxonomy in CONVENTIONS (user-owned — offer, never force).** If
+  `.work/CONVENTIONS.md` doesn't yet register the `deep-code-scan` reserved tags
+  (`scan` + the lane/band tags) or the `scan_origin` linkage field, **offer** to add
+  them (structured question tool), exactly like other convergence offers — preserving all user
+  content. These are documentation/taxonomy; the behavioral guarantee lives in the
+  reinstalled binary, so this offer is non-blocking.
 - Entrypoint compatibility — refresh the pointer in the direction set by
   `entrypoint_model`:
   - `agents-canonical` — import legacy generated content from any detected
@@ -1224,7 +1351,7 @@ For each artifact with a non-`match` state:
   concise `## Refactor Style Conventions` section. If the user declines, leave
   the catalog intact and report the mismatch.
 - Load-bearing tag entries in `.work/CONVENTIONS.md` — for each entry flagged
-  `drift_plugin` or `missing` in Phase S1, ask the user via `AskUserQuestion`
+  `drift_plugin` or `missing` in Phase S1, ask the user via `structured question tool`
   before rewriting:
   > "Your `.work/CONVENTIONS.md` has the old default text for the `[refactor]`
   > tag. The current plugin default tightens the definition to lock the
@@ -1238,7 +1365,7 @@ For each artifact with a non-`match` state:
   taxonomy section.
 
 - **Terminal-tier retention convention in `.work/CONVENTIONS.md`** — for the state flagged in S1
-  (`missing` / `partial` / bespoke-overlap), offer via `AskUserQuestion` (never silently rewrite
+  (`missing` / `partial` / bespoke-overlap), offer via `structured question tool` (never silently rewrite
   user-owned CONVENTIONS). A bare `delete-refs`/`retain-bodies` value is `match` and is left
   untouched — the merged prose lives in SPEC, not per project, so a bare value is canonical:
   - `missing` — "Your `.work/CONVENTIONS.md` has no `## Terminal-tier retention` value. Add it
@@ -1260,7 +1387,7 @@ For each artifact with a non-`match` state:
     section only after the content-integrity gate (Phase 1.8) confirms nothing is dropped.
 
 - **Prune retained terminal bodies to stubs (the offer)** — when S1 found retained full-body terminal
-  items and `delete-refs` is in effect, offer (`AskUserQuestion`; never force, preserve-only stays the
+  items and `delete-refs` is in effect, offer (`structured question tool`; never force, preserve-only stays the
   default) the prune-to-current-practice migration from Phase 8's "Sync existing substrates to
   delete-refs": archived bodies → bodyless stubs (capture `git_ref` from `git log -- <path>`, stamp
   `archived_atop` from the history at the archival/done commit, else `pre-release`); released bodies →
@@ -1289,9 +1416,10 @@ These are NEVER touched in sync mode:
   user confirmation, are: (a) load-bearing tag entries (`refactor`, `perf`) when they match a known
   prior plugin default verbatim, and (b) the `## Terminal-tier retention` convention when it is
   `missing`/`partial`/a bespoke `## Done-item archival` overlap (add / reconcile / converge). A bare
-  `delete-refs`/`retain-bodies` value is `match` and is left untouched. Everything
-  else in CONVENTIONS — release mapping, project tags, slug conventions, gate config, any user
-  prose — is untouched.
+  `delete-refs`/`retain-bodies` value is `match` and is left untouched. `review_weight` is optional
+  and is never added, reset, or rewritten by sync; preserve an existing value byte-for-byte, while
+  absence continues to mean `standard`. Everything else in CONVENTIONS — release mapping, project
+  tags, slug conventions, gate config, any user prose — is untouched.
 - Everything under `.work/active/`, `.work/backlog/`, `.work/releases/`,
   `.work/archive/`
 - User-authored rule references under `.agents/skills/refactor-conventions/`.

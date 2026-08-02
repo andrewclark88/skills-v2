@@ -9,10 +9,21 @@ substrate.
 | Skill | What it does |
 |---|---|
 | `plainspeak` | Re-explains the last substantive answer in vivid plain language. |
-| `repo-eval` | Produces a calibrated codebase scorecard with prioritized recommendations. |
 | `agent-reflection` | Reviews how the agent's tools and skills performed in the current session. |
 | `write-tool-skill` | Authors reference skills for tools, CLIs, MCP servers, and libraries. |
 | `skill-auditor` | Audits a skill artifact for structure, triggering, and behavior quality. |
+| `worklog-bootstrap` | Generates a self-contained, agent-driven personal work-tracking repo from one job's tool stack. |
+
+## Pi Extensions
+
+This plugin also ships Pi-native runtime extensions. They auto-load when
+installed under Pi; they are inert under Claude Code / Codex, which have no
+equivalent runtime hook.
+
+| Extension | What it does |
+|---|---|
+| `agents-context` | Injects `<cwd>/.agents/AGENTS.md` into the system prompt as a project context file every turn. pi loads `AGENTS.md` from the global dir, cwd ancestors, and cwd itself — but **not** from `.agents/`, where projects that keep agent assets under `.agents/skills/` typically park their instructions. Silent no-op when the file is absent or empty; edits are picked up live. |
+| `nates-toolkit` | Registers `/exit` — graceful shutdown, for shell muscle-memory parity. |
 
 ## Installation
 
@@ -33,11 +44,10 @@ codex plugin install nates-toolkit
 ### Pi
 
 ```bash
-pi install npm:@nklisch/pi-nates-toolkit
-
-# Local checkout/development install
-pi install -l ./plugins/nates-toolkit
+pi install npm:@nklisch/pi-plugins
+# then, inside Pi:
+/plugins marketplace add nklisch/skills
+/plugins add nates-toolkit@nklisch-skills --scope user
 ```
 
-All three channels load the same shared `skills/` directory. This plugin has no
-Pi-only executable extension.
+All channels load the same shared `skills/` directory.

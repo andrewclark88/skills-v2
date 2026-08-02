@@ -59,14 +59,22 @@ An item flows through tiers as work progresses on it.
                        (design written into body; child stories spawned)
                               │
                               ▼
-                  /implement-orchestrator (default; scope-driven,
-                  cross-feature waves) or /implement (inline alternative)
+                  /implement-orchestrator (delegated topology)
+                  or /implement (cohesive inline delivery)
                               │
                               ▼
-                       stage: review
-                              │
-                              ▼
-                       /review (advance to done)
+              child story? ── yes ── verified → stage: done
+                    │ no
+                    ▼
+                 stage: review
+       (standalone story / feature / epic; non-blocking)
+                    │
+                    ▼
+       kind- and scope-appropriate /review lane
+       (bounded standalone; integrated feature; deep epic)
+                    │
+                    ▼
+                 stage: done
                               │
             ┌─────────────────┼─────────────────┐
             ▼                 ▼                 ▼
@@ -98,10 +106,24 @@ Stages advance only when work completes; they are never pre-populated.
 
 | Kind | drafting | implementing | review | done |
 |---|---|---|---|---|
-| epic | initial state when scoped | once children are designed and started | once all children are at review/done | once all children are at done |
-| feature | initial state when scoped | once design is written into body and acceptance criteria clear | once code lands and tests pass | once user-facing review approves |
-| story | optional initial state | initial state more often (skips drafting) | once code lands | once user/code-review approves |
+| epic | initial state when scoped | once children are designed and started | once all child features have completed feature review and the epic is ready for deeper aggregate review | once the epic's selected review lane approves |
+| feature | initial state when scoped | once design is written into the body and acceptance criteria are clear | once all story checkpoints are done and integrated verification is green | once the feature's selected review lane approves |
+| child story | optional initial state | initial state more often (skips drafting) | n/a | once implementation and required verification are green |
+| standalone story | optional initial state | initial state more often (skips drafting) | after verified implementation | once bounded inline review approves; never independent/cross-model |
 | release | initial state when cut | once gates begin running (`stage: quality-gate`) | n/a | n/a — terminal stage is `released` |
+
+`review` is a feature-only implementation state, not a mandatory user handoff.
+Child stories are design and acceptance checkpoints; verified child stories
+advance directly from `implementing` to `done`. Standalone stories receive a
+bounded inline review because no feature supplies that boundary, but never an
+independent, fresh-context, or cross-model review. A feature advances to `review`
+only after its checkpoints and integrated verification are complete, and
+production skills continue through that review in the same invocation by
+default. Review does not block the next dependency layer: an item at `review`
+satisfies downstream implementation dependencies. Once child features are done,
+the epic receives its own deeper aggregate review for end-to-end capability,
+cross-feature contracts, and cumulative risk. This larger-scope pass avoids
+repeating line-level feature review.
 
 The PostToolUse hook auto-bumps `updated:` whenever an item file is edited;
 skills only need to advance `stage:` explicitly.
@@ -114,14 +136,17 @@ distinct from `parent` (which is **hierarchy**).
 ### Rules
 
 - An item is **ready** when it is in the active tier, its `stage` is
-  `drafting`, `implementing`, or `review`, AND every `depends_on` entry is
-  terminal (`stage: done`/`released`, or resident in `releases/`/`archive/`).
+  `drafting`, `implementing`, or `review`, AND every `depends_on` entry has
+  completed verified implementation (`stage: review`, `done`, or `released`, or
+  resident in `releases/`/`archive/`). Review remains required for final
+  completion but does not serialize downstream implementation.
 - Dependencies must form a DAG. Cycles are invalid; skills that produce
   items must validate no cycle is introduced before writing.
 - Cross-tier dependencies are allowed (a feature can depend on an epic;
   a story can depend on a feature in another epic).
-- Dependencies on archived or released items count as `done` — those tiers
-  are terminal-done.
+- Dependencies on archived or released items count as terminal. Active items at
+  `review` count as implementation-ready but remain non-terminal until review
+  approves them to `done`.
 
 ### When skills declare dependencies
 
@@ -192,15 +217,16 @@ paths: ['.work/**', 'docs/**']
 
 ## Item kinds
 epic     multi-feature arc; has children    parent of features
-feature  design + implementation unit       parent of stories
-story    single-session unit                leaf or has tasks
+feature  design + implementation + review unit  parent of stories
+story    checkpoint (child) or small standalone unit  leaf or has tasks
 task     checklist line in parent body      not its own file
 release  version bundle in releases/        binds items via release_binding
 
 ## Stages
-epic     drafting → implementing → review → done
-feature  drafting → implementing → review → done
-story    implementing → review → done       (often skips drafting)
+epic              drafting → implementing → review → done
+feature           drafting → implementing → review → done
+child story       implementing → done
+standalone story  implementing → review → done
 task     [ ] → [x]
 release  planned → quality-gate → released
 
@@ -228,8 +254,8 @@ freely. Run `--help` for the authoritative flag list.
 --parent <id>        direct children of given item
 --release <version>  items with release_binding: <version>
 --gate <name>        items produced by gate <name>
---ready              active-tier drafting/implementing/review, all depends_on terminal
---blocked            active-tier drafting/implementing/review, >=1 non-terminal dep
+--ready              active-tier drafting/implementing/review, deps at review or terminal
+--blocked            active-tier drafting/implementing/review, >=1 implementation-incomplete dep
 --blocking <id>      items that depend on <id>
 
 ### Output modes
@@ -291,8 +317,11 @@ git log --since='1 day ago' -- .work/
 ## Foundation docs (rolling-forward principle)
 docs/ holds standing context: VISION.md, SPEC.md, ARCHITECTURE.md, etc.
 - Foundation docs describe the system's current state or intended future state
-- Never add "previously this was…" or "note: in v1.2 we…"
-- When implementation changes a foundation-doc assertion, update the doc
+- Future-state claims are valid before implementation exists; foundation docs
+  need not mention every capability
+- Never retain superseded behavior descriptions or versioned migration notes
+- Update only assertions that become false, stale, or contradictory; omission is
+  not drift
 - Git history is the audit trail; the doc carries the active truth
 ````
 
@@ -332,49 +361,42 @@ Use agile-workflow autopilot to drain --all
 
 Direct skill invocation remains supported: `/agile-workflow:autopilot
 <epic-id>` drains one epic, and `/agile-workflow:autopilot --all` drains all of
-`.work/active/`. In both cases, autopilot does not create `/loop` schedules or
-maintain a progress file; harness goal/continuation owns long-running
-persistence and `.work/active/` is the resume point.
+`.work/active/`. That argument selects queue breadth; it does not combine the
+selected items into a new implementation scope. Each ready item's body, stage,
+and design define its current work boundary; an undecomposed epic is design
+work, not an implementation claim. In both cases, autopilot does not create
+`/loop` schedules or maintain a progress file; harness goal/continuation owns
+long-running persistence and `.work/active/` is the resume point.
 
-### Pre-flight: align on strategic questions first
+### Strategic alignment before autonomous work
 
-**Before kicking off autopilot, run `epic-design --only-questions` over the
-epics you're about to drain.** This is the single highest-leverage step in
-the agile-workflow loop and should generally always be done.
+Normal design resolves routine, reversible decisions with judgment and records
+the rationale. Use the structured question tool only for choices that set
+product direction, materially affect user-facing behavior or an external
+contract, or commit the project to an expensive, difficult-to-reverse path.
 
-```bash
-# Per-epic — align on one epic before autopilot picks it up
-/agile-workflow:epic-design --only-questions <epic-id>
+`epic-design --only-questions <id>` (or `--all`) remains the explicit
+interactive alignment mode when the operator wants those strategic decisions
+captured under `## Design decisions` before autonomous work. It does not design,
+decompose, or advance an item, and it refuses to run inside autopilot. Autopilot
+does not stop for ordinary ambiguity: it uses the existing decisions and
+foundation evidence, chooses the least irreversible sound path, and records the
+rationale.
 
-# Cover the whole active queue at once — recommended before a --all autopilot goal
-/agile-workflow:epic-design --only-questions --all
-```
-
-What the pass does (see `epic-design` SKILL Phase 4.7): for each epic at
-`stage: drafting`, it grounds in foundation docs + codebase, surfaces the
-2–5 directional product / architecture / scope questions specific to that
-epic, asks the user via `AskUserQuestion`, and writes the answers under
-`## Design decisions` in the epic body. It does NOT decompose into child
-features and does NOT advance stage — that's left to the real design pass.
-
-Why it matters:
-
-- **Autopilot inherits the answers.** When `epic-design` (full pass) runs
-  later under autopilot, it reads the already-captured `## Design decisions`
-  and skips Phase 4.7 — no autonomous judgment on directional choices,
-  because they're already locked in by the user.
-- **Cheap up front, expensive later.** Five minutes of interactive Q&A on
-  the whole drafting queue prevents autopilot from committing to a wrong
-  architectural direction across multiple features before the user notices.
-- **One human checkpoint instead of N.** A single `--only-questions --all`
-  pass answers every strategic question across the queue in one sitting,
-  rather than autopilot pausing per-epic mid-run (or worse, not pausing and
-  guessing).
-
-`--only-questions` mode refuses to run under autopilot itself — it's
-explicitly a pre-autopilot, human-in-the-loop step. The right invocation
-shape is: `--only-questions --all` first, review the captured decisions,
-then start an autopilot goal for `--all` (or `<epic-id>`).
+Advisory review follows risk in both direct and autopilot design. Independent
+review uses completeness/advisory before adversarial posture, is labeled
+cross-model only for a known different model class, and is non-blocking at
+design time. Final autopilot completion still requires the successful review
+path selected by the effective review weight. The receiving orchestrator owns
+finding disposition: it verifies reviewer proposals in repository context,
+keeps only credible material current-cycle risks blocking, and parks valid
+lower-priority work in the unbound backlog. Child stories skip review;
+standalone stories use a bounded non-cross-model lane; features get integrated
+review; epics get a deeper aggregate pass. At the default `standard` weight,
+both feature and epic review are single-pass—the epic pass is broader, not more
+iterative. Only `thorough` and `maximum` re-review corrected snapshots until no
+material blockers remain. Review-ready items satisfy downstream implementation
+dependencies, so review does not serialize the next wave.
 
 ### Queue selection algorithm
 
@@ -385,29 +407,66 @@ then start an autopilot goal for `--all` (or `<epic-id>`).
    - if --all: all items in .work/active/
 2. Filter to stage in {drafting, implementing, review}
 3. For each candidate, check depends_on:
-   - all deps must be at stage: done (or in releases/archive)
-   - candidates with unmet deps are filtered out
+   - all deps must have verified implementation complete (`review`, `done`, or
+     terminal release/archive tier)
+   - candidates with implementation-incomplete deps are filtered out
 4. Sort the remaining candidates by:
    - depends_on count ascending (less-blocked items first)
    - created ascending (FIFO tie-break)
 5. Pop the first item.
 6. Work it:
-   - if drafting → invoke /design (or /refactor-design / /perf-design by tag)
+   - if drafting → invoke the design skill selected by kind and tags
    - if implementing → invoke /implement-orchestrator with the autopilot
-     scope (the picked item is an anchor; the orchestrator drains the whole
-     in-scope implementing band as one batch, cross-feature is fine).
-     /implement is reserved for the inline small-delivery case.
-   - if review → invoke /review (autonomous: produces verdict, advances
-     review→done or sends back to implementing)
-7. Advance stage on completion. Commit.
-8. Goto 1 unless stop condition.
+     scope (the picked item is an anchor; the orchestrator defaults to one
+     worker per feature, may bundle related features, and splits only unusually
+     large features with coherent ownership). Use /implement when one cohesive
+     delivery is safer in the host context.
+   - if review → invoke /review without blocking the next implementation layer;
+     child stories bypass review, standalone stories use bounded inline review,
+     features use normal review, and epics use deeper aggregate review
+7. Re-read substrate state after the production skill returns; it may already
+   have completed review and eligible parent roll-up. Commit each item
+   transition separately.
+8. Apply the effective review weight. At `light`/`standard`, run at most one
+   independent pass, fix and verify receiver-confirmed material blockers, then
+   finish without re-review. At `thorough`/`maximum`, repeat implementation →
+   verification → review until a pass yields no receiver-confirmed material
+   current-cycle blockers. Park valid lower-priority findings unbound; nits and
+   rejected proposals also do not keep a convergence loop open.
+9. Goto 1 unless a stop condition applies.
 ```
+
+The implementation orchestrator guarantees outcomes rather than prescribing a
+recipe: dependency-graph scheduling, cycle validation, write-set-independent
+parallelism, explicit ownership, per-wave integration verification, one commit
+per item, worker self-containment, and conservative parent roll-up. It chooses
+bundle shape, wave width, isolation, and worker briefs for the actual work; no
+fixed sizes or prompt templates are part of the contract. Worker capability is
+chosen from the concrete ready work and its risk—not from the breadth of the
+queue selector—unless an explicit caller or stable project convention overrides
+it, and the choice is recorded rather than routinely asked.
+
+Autopilot resolves one effective `review_weight` for the run: explicit
+invocation selector, then `.work/CONVENTIONS.md`, then `standard`. The five
+levels — `none`, `light`, `standard`, `thorough`, and `maximum` — scale
+independent-review depth and select closure policy. `standard` is explicitly the
+single-pass default: one balanced review, then adjudicate, fix material blockers,
+verify, and finish. Only `thorough` and `maximum` repeat review after fixes, and
+they stop when a pass has no receiver-confirmed material current-cycle blockers;
+smaller findings are parked or noted by judgment. Even `none` requires green
+implementation verification and acceptance evidence.
 
 ### Stop conditions
 
 - Empty queue (all candidates exhausted)
 - User invokes a halt command or sends a manual prompt
-- A skill reports a blocker that can't be resolved autonomously
+- A skill reports a genuine blocker that autonomous diagnosis and correction
+  cannot resolve
+
+For `thorough` and `maximum`, repeated review passes are not a stop condition;
+autopilot keeps correcting until a pass has no material blockers or exposes a
+genuine blocker it cannot fix. `standard` never repeats independent review:
+after its one pass, verified material-blocker fixes close the item.
 
 ### Harness goal continuation
 
@@ -416,15 +475,17 @@ features keep the run alive across compaction and continuation turns. If a run
 resumes, the agent re-reads `.work/active/` and applies the same queue selection
 algorithm. There is no `--resume`, no watchdog `/loop`, and no `PROGRESS.md`.
 
-### Refactor cadence during --all mode
+### Adaptive simplification during autopilot
 
-Every N items completed (default N=5), autopilot delegates a conservative
-discovery pass to `refactor-design` over recently touched files. That skill
-classifies pure refactors vs behavior-changing work and emits the appropriate
-items. The next queue rebuild picks them up naturally.
+Refactoring is part of normal feature design and implementation, where the agent
+adapts its simplification pass to the amount and shape of recent feature work.
+Autopilot does not turn completed-item counts into dedicated refactor scans;
+child stories are design checkpoints, not cadence counters.
 
-The refactor cadence is conservative: never invokes `bold-refactor` (that's
-user-only). Only scopes incremental refactor features.
+A dedicated `refactor-design` discovery pass runs only when the user explicitly
+asks the current run for one. Existing `[refactor]` items still route normally.
+`bold-refactor` also remains explicitly user-requested. Explicit user
+instructions override every default here.
 
 ## Hook script behavior
 
@@ -476,6 +537,9 @@ session epoch:
 Code-design capsule:
 - Ports & Adapters: keep domain logic independent of DB/filesystem/HTTP/time/randomness.
 - Single Source of Truth: define growing variant sets once; derive downstream behavior.
+- Proportional rigor: validate real boundaries; add invariants, edge handling, and determinism only when context warrants them.
+- Code economy: prefer the shortest clear solution; test useful interfaces, complex units, and bug regressions.
+- Leave it simpler: adapt simplification to accumulated feature change as part of normal design and implementation; item counts never trigger standalone refactor runs; ask before reducing guarantees.
 ...
 ```
 
@@ -497,6 +561,15 @@ model turn sees them.
 
 This is a deterministic command hook — no LLM.
 
+### Pi delivery
+
+Pi consumes the same `hooks/hooks.json` and shared Python scripts through a
+hook-capable plugin host; no parallel TypeScript adapter is maintained.
+
+The parity posture is: one substrate model, one generated rules source, one pair
+of deterministic hook scripts, with each host only adapting event names and UI
+plumbing.
+
 ## Gate orchestration
 
 `/release-deploy` orchestrates the gate sequence after items are bound to
@@ -505,20 +578,29 @@ Override via `gates_for_release` in `.work/CONVENTIONS.md`.
 
 ### Gate-as-item-producer pattern
 
-Each gate scans the bundle of items at `release_binding: <current-version>`
-and produces new items rather than emitting a pass/fail report:
+Each gate focuses on the bundle of items at
+`release_binding: <current-version>` and produces new items rather than
+emitting a pass/fail report. The bundle is a center of gravity, not a hard scan
+boundary: gates may follow concrete evidence into adjacent dependencies, shared
+infrastructure, or system-wide mechanisms. Findings caused by, exposed by, or
+materially relevant to the release bind to it; merely ambient discoveries go
+to the unbound backlog so the gate does not silently expand release scope.
 
 | Gate | What it scans | What it produces |
 |---|---|---|
 | `gate-security` | Bound items' code changes against security checklist | Items with `gate_origin: security`, tagged `[security]`, `release_binding` set |
-| `gate-tests` | Coverage of bound items' acceptance criteria | Items with `gate_origin: tests`, tagged `[testing]` for gaps |
-| `gate-cruft` | Dead code introduced or revealed by the bundle | Items with `gate_origin: cruft`, tagged `[cleanup]` |
-| `gate-docs` | Foundation-doc alignment with the bundle's behavior changes | Items with `gate_origin: docs`, tagged `[documentation]` — enforces rolling-foundation |
+| `gate-tests` | Useful coverage at stable interfaces, complex units, and bug regressions; low-value tests exposed by the bundle | Items with `gate_origin: tests`, tagged `[testing]` for valuable gaps or removals |
+| `gate-cruft` | Local or system-wide code, tests, checks, compatibility paths, and abstractions that may no longer earn their cost | Items with `gate_origin: cruft`, tagged `[cleanup]`; guarantee-reducing removals require user confirmation |
+| `gate-docs` | Existing foundation assertions that may be false, stale, or contradictory; omissions and unimplemented future claims are excluded | Items with `gate_origin: docs`, tagged `[documentation]` — enforces rolling-foundation |
 | `gate-patterns` | Reusable patterns that emerged in the bundle | Detailed pattern-skill files in `.agents/skills/patterns/` (single source of truth) with optional Claude mirror, the generated hook-loaded `.agents/rules/patterns.md` digest (slug+one-liner index pointing back at the skill, with banner + source hash), plus a tracking item with `gate_origin: patterns` |
 
-Gate-produced items get `stage: implementing` (high-confidence findings),
-`stage: drafting` (medium-confidence), or land in `.work/backlog/`
-(low-confidence — for future consideration).
+For gates that emit findings as items, placement flows through
+`gate_finding_routing` in `.work/CONVENTIONS.md` after the gate normalizes its
+local vocabulary. The default routing is `critical`/`high` -> active story at
+`stage: implementing`, `medium` -> active story at `stage: drafting`, `low` ->
+`.work/backlog/`, and `info` -> `skip`. Gate-specific definitions remain local
+to each gate: security uses severity, tests uses priority, and
+docs/cruft/refactor use confidence.
 
 ### Release readiness
 
@@ -558,7 +640,9 @@ parent, and dependency. Common patterns:
 - `work-view --help` for the full flag set
 
 Foundation docs in `docs/` describe the system's current state or intended
-future state, never the past; git history is the audit trail. The substrate
+future state, never the past; git history is the audit trail. Review existing
+assertions only: missing coverage and unimplemented future intent are not drift;
+flag only false, stale, or contradictory claims. The substrate
 itself is durable memory: record decisions, blockers, implementation
 discoveries, and review findings in item bodies instead of depending on chat
 history.
@@ -605,6 +689,36 @@ live there alongside tag semantics, test integrity, and advisory-review rules.
 
 All skills with their roles, invocability, and triggers.
 
+### Delegation posture
+
+Agile-workflow ships skills, hooks, and substrate tools;
+it does **not** ship custom subagent definitions for Pi, Claude Code, or Codex.
+When a skill needs breadth, isolation, fresh-context review, scanner work, or
+parallel write ownership, it prompts the host's existing generic/general-purpose
+subagent mechanism with a structured task brief. The shared prompt postures live
+in `skills/principles/references/subagents.md`.
+
+A same-harness delegated run is fresh-context by default. It counts as
+cross-model only when the host explicitly spawns the subagent with a different
+model class; otherwise use `peeragent` only when a cross-harness different model
+class is needed and allowed.
+
+Concrete model guidance lives in `skills/principles/references/models.md` and is
+resolved against current availability when selection matters. GPT-5.6 Luna is
+the cost-efficient routine implementation and fan-out workhorse; Sol is the
+quality-first general coding choice and remains preferred for design, review,
+and complex code; Terra is a situational middle pick. For OpenAI review
+selection, any available GPT-5.6 tier takes precedence over GPT-5.5; use 5.5
+only when no review-capable 5.6 model is available in the current harness.
+Sonnet 5 is the capable
+high-throughput Claude worker, Opus 4.8 the stable premium complex-coding and
+review default, and Fable 5 the high-cost escalation for the hardest ambiguous,
+long-running, orchestration, design, and review work. Model-specific prompting
+is conditional and symptom-driven rather than fixed boilerplate. These are
+capability recommendations, not fixed routing. Luna, Terra, Sol, and Codex share
+OpenAI lineage, so moving among them can provide fresh context but is not
+cross-model evidence.
+
 ### Bootstrap (user-invocable only)
 
 | Skill | Role | Trigger |
@@ -619,7 +733,8 @@ All skills with their roles, invocability, and triggers.
 |---|---|---|
 | `park` | Capture an unscoped idea, context note, or roadmap-style thought into `.work/backlog/`. Minimal frontmatter; body sized to the supplied context. | "park this", "remind me about X", "add to backlog" |
 | `scope` | Promote backlog item or fresh request to `.work/active/`. Sizes as epic/feature/story. If large, rolls foundation docs forward. Declares dependencies. | "scope this", "promote this", "let's track this" |
-| `fix` | Park-and-implement quick bug as a story. Single-stride: creates story at `stage: implementing`, writes fix, advances to review. | "fix bug X", "fix the typo in", "fix this issue" |
+| `fix` | Diagnose a verified bug as a cohesive story, reproduce it, add the failing test, apply the bounded repair, verify it, and continue through the selected review lane to `done` by default. Honors an explicit `stop-at-review` boundary and records bounces/blockers. | "fix bug X", "fix the typo in", "fix this issue" |
+| `groom` | Backlog-hygiene sweep over `.work/backlog/`. Classifies items DONE/SUPERSEDED/DUPLICATE/STALE/MERGEABLE/VALID via mechanical signals (`work-view --stale`, missing-field, cites-done-work) + a grounded semantic pass; writes a triage report. Propose-not-prune: dispositions are operator-confirmed and route through terminal-tier retention; never auto-prunes. Not a release gate. Opt-in; staleness face inert unless `backlog_staleness_days` is set. | "groom the backlog", "backlog hygiene", "find stale/dead/duplicate items" |
 
 ### Design family (model-invocable, kind- and tag-routed)
 
@@ -634,14 +749,20 @@ All skills with their roles, invocability, and triggers.
 
 | Skill | Role | Trigger |
 |---|---|---|
-| `implement-orchestrator` | Default. Orchestrates implementation sub-agents over a scope (feature, epic, --all, or explicit list). Builds a unified `depends_on` graph across the scope (cross-feature is fine), chooses bundles/waves/write-scope isolation, and advances every parent feature whose children all reach `review`. | item(s) at `stage: implementing` |
-| `implement` | Inline alternative. Read item body, write code, run build+tests, advance stage. | small / focused work where sub-agent fan-out wouldn't pay off, or user asks to implement inline |
+| `implement-orchestrator` | Delegated implementation over a feature, epic, `--all`, or explicit set. Defaults to one worker per feature, may bundle related features into one sequential worker, and splits unusually large features only by coherent ownership. Story children are checkpoints, not worker units. Reviews run without blocking the next dependency layer. | implementing scope where separate ownership, isolation, sequencing, or shared feature context improves the result |
+| `implement` | Cohesive inline delivery. Grounds in the item, implements and verifies it in the host context, closes child-story checkpoints directly, and continues standalone stories or features through their review lane. | work best kept under one ownership context, or an explicit inline request |
+
+Choose between these production lanes from cohesion, write ownership,
+dependency sequencing, isolation needs, and uncertainty. Line or file counts may
+inform judgment but never gate the choice. Both honor valid review boundaries;
+child stories never stop at review, standalone stories never use cross-model
+review, and review does not serialize downstream implementation.
 
 ### Review & delivery (mixed invocability)
 
 | Skill | Invocability | Role | Trigger |
 |---|---|---|---|
-| `review` | model-invocable | Code review of changes for an item. Triages findings into items with proper tags. Advances to done if approved. | item at `stage: review` |
+| `review` | model-invocable | Reviews integrated features, uses a bounded inline lane for standalone stories, bypasses child stories, and gives epics a deeper aggregate review. Review-ready items satisfy downstream implementation dependencies, so reviews may run concurrently with later implementation waves. | feature, epic, or standalone story at `stage: review`, or explicit out-of-band target |
 | `board` | user-invocable | Launch the live localhost substrate board through `work-view board`. Opens a browser after binding when a desktop session is available; prints the URL in headless sessions. | User-invoked when the user wants to inspect active work visually |
 | `release-deploy` | user-invocable | Bind items to release, run gates, ship, archive. Idempotent. | User-invoked when ready to cut a version |
 | `bold-refactor` | user-invocable | Multi-feature architectural refactor. Scopes a refactor epic with child features. Aggressive — only on user request. | User-invoked |
@@ -654,7 +775,7 @@ All skills with their roles, invocability, and triggers.
 | `gate-security` | Security scan over bound items; produces items with `gate_origin: security` |
 | `gate-tests` | Test-coverage scan; produces gap items with `gate_origin: tests` |
 | `gate-cruft` | Dead-code scan; produces cleanup items with `gate_origin: cruft` |
-| `gate-docs` | Foundation-doc alignment; enforces rolling-foundation; produces doc-update items |
+| `gate-docs` | Assertion-only foundation-doc alignment; ignores omissions and unimplemented future claims; produces doc-update items |
 | `gate-patterns` | Pattern extraction; writes pattern skills (`.agents/skills/patterns/`), the generated `.agents/rules/patterns.md` digest, + tracking item with `gate_origin: patterns` |
 
 All five fire during `release-deploy`'s `quality-gate` stage in the order
@@ -665,11 +786,13 @@ configured in `CONVENTIONS.md` (default: security → tests → cruft → docs
 
 | Skill | Role | Notes |
 |---|---|---|
-| `principles` | Loads code-design + substrate-execution principles | Code-design (Ports & Adapters, SSOT, Generated Contracts, Fail Fast) carried from workflow; substrate-execution (item-IS-the-work, rolling-foundation, late-binding) added |
+| `principles` | Loads code-design + substrate-execution principles | Code-design includes clear boundaries, proportional rigor, code economy, useful tests, and continuous simplification; substrate-execution includes item-IS-the-work, rolling-foundation, and late-binding |
 | `research` | Investigate libraries/APIs | Carried; produces research docs in `docs/research/` (separate from `.work/`) |
 | `refactor-conventions-creator` | Create project-specific refactor conventions skill | Carried |
 
-(`repo-eval` and `tool-evaluator` were originally carried here, then extracted to the standalone `nates-toolkit` plugin since they have no substrate lock-in; `tool-evaluator` has since been renamed `agent-reflection`.)
+Holistic report-only repository scoring is provided by `code-audit:repo-eval`;
+end-of-session tool and skill reflection is provided by
+`nates-toolkit:agent-reflection`.
 
 ---
 

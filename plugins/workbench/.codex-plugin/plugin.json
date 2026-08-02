@@ -1,0 +1,27 @@
+{
+  "name": "workbench",
+  "version": "0.5.0",
+  "description": "Requirements-first delivery with semantic autonomy, lens-driven design, weighted review, and externally grounded research.",
+  "author": {
+    "name": "nklisch"
+  },
+  "repository": "https://github.com/nklisch/skills",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Workbench",
+    "shortDescription": "Design, deliver, review, and research",
+    "longDescription": "A compact workbench for collaborative ideation, semantic autonomy, lens-driven design, configurable review depth, natural-language delivery across one or several epics, and externally grounded research.",
+    "developerName": "nklisch",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Bash"
+    ],
+    "defaultPrompt": [
+      "Use Workbench to clarify, design, review, and carry this outcome through verified completion."
+    ],
+    "websiteURL": "https://github.com/nklisch/skills"
+  }
+}

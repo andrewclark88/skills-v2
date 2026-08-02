@@ -1,22 +1,14 @@
 ---
 name: epic-design
 description: >
-  ALWAYS invoke this skill when the user asks to design, decompose, or pick up
-  an epic at stage:drafting. Reads the epic, foundation docs, and codebase;
-  identifies child feature arcs; writes feature files with parent and depends_on
-  metadata; updates the epic body with the realized decomposition; and advances
-  drafting -> implementing. When ux-ui-design is installed, includes mockup
-  planning for net-new screens and journeys.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to design, decompose, or pick up an epic at
+  stage:drafting. Reads the epic, foundation docs, and codebase; identifies child feature arcs; writes
+  feature files with parent and depends_on metadata; updates the epic body with the realized
+  decomposition; and advances drafting to implementing. When ux-ui-design is installed, includes
+  mockup planning for net-new screens and journeys.
 ---
 
 # Epic-Design
-
-> **Plugin precedence:** if the `research-pipeline` plugin is installed, prefer
-> `research-pipeline:epic-design` — a research-grounded superset that adds
-> knowledge-index grounding and `[needs-brief]` gating. This base version is the
-> standalone fallback; on the autopilot path the choice is set via
-> `.work/CONVENTIONS.md` `design_skill_routing`.
 
 You design an epic in the agile-workflow substrate. The decomposition lives in
 the epic item's body (replacing the provisional "Anticipated child features"
@@ -89,7 +81,7 @@ For each epic:
    installed, run the full Phase 4.6 pass; reference resulting paths in
    the epic body's `## Mockups` section.
 5. Run Phase 4.7 (Surface high-level design ambiguities) in the interactive
-   branch, always using `AskUserQuestion`
+   branch, always using `structured question tool`
 6. Capture answers under `## Design decisions` in the epic body (merge with
    existing entries; don't overwrite without flagging)
 7. Do NOT decompose into child features or advance stage
@@ -133,9 +125,9 @@ Instead:
 
 ### Phase 2: Ground yourself
 
-The principles skill auto-loads — both code-design (Ports & Adapters, SSOT,
-Generated Contracts, Fail Fast) and substrate-execution (Item-IS-the-Work,
-Rolling-Foundation, Late-Binding) are active.
+The principles skill auto-loads — code-design includes proportional rigor, code
+economy, useful tests, and leaving touched areas simpler; substrate-execution
+includes Item-IS-the-Work, Rolling-Foundation, and Late-Binding.
 
 Read:
 1. `docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md` — foundation that
@@ -152,7 +144,7 @@ Read:
 
 ### Phase 3: Map the codebase
 
-Run a read-first scope-size probe before spawning Explore agents:
+Run a read-first scope-size probe before spawning exploratory sub-agents:
 
 1. Use Glob/`rg --files` to identify likely directories, entry points, active
    sibling work, and tests.
@@ -162,21 +154,19 @@ Run a read-first scope-size probe before spawning Explore agents:
 
 Then choose the dispatch size:
 
-- **Small/bounded epic** — one known subsystem with obvious seams: skip Explore
+- **Small/bounded epic** — one known subsystem with obvious seams: skip exploratory fanout
   and map it directly.
 - **Medium/unclear epic** — one area but missing ownership or dependency
-  clarity: spawn one read-only Explore agent.
+  clarity: spawn one read-only exploratory sub-agent.
 - **Broad/cross-cutting epic** — several independent surfaces or sibling-work
-  interactions: spawn parallel read-only Explore sub-agents.
+  interactions: spawn parallel read-only exploratory sub-agents.
 
-For Explore:
-- **Claude Code / Anthropic:** Task/Explore with Sonnet minimum, Opus for large
-  or complex codebases.
-- **Codex / OpenAI:** `explorer` sub-agents with `reasoning_effort: medium`;
-  use `high` for large or complex codebases.
-- **Pi path:** use native Pi `scout` or `context-builder` subagents for
-  read-only mapping when hosted in Pi and available; otherwise keep direct
-  host-local mapping.
+For exploratory fanout:
+- Use the host's generic/general-purpose subagent prompted with the explorer
+  capsule from `../principles/references/subagents.md`, at medium reasoning by
+  default.
+- Use high or strongest reviewer reasoning for large or complex codebases.
+- If no generic subagent adapter is available, keep direct host-local mapping.
 
 Possible prompts:
 1. **Existing surface in this epic's area** — what modules, components, or
@@ -216,6 +206,17 @@ units each), collapse them into one feature.
 Aim for 2-6 child features per epic. Fewer than 2 means the epic was probably
 sized as a feature; flag the user. More than 6 means you're slicing too thin;
 collapse.
+
+### Phase 4.4: Identify simplification arcs
+
+For each area the epic touches, ask what capabilities, code, tests, checks,
+abstractions, compatibility paths, or whole subsystems the new direction can
+make unnecessary. Prefer feature arcs that replace and remove over arcs that
+only layer on more machinery. Fold cohesive elimination into the owning feature
+brief or create an explicit `[refactor]`/`[cleanup]` child feature when it needs
+independent design and review. Park unrelated cleanup. Any arc that removes
+behavior or meaningful guarantees becomes a high-level design decision for user
+confirmation, not an assumed refactor.
 
 ### Phase 4.5: Identify cross-feature dependencies
 
@@ -258,76 +259,25 @@ decomposition. Child briefs note "mockups pending — see parent epic" so
 
 Skip this phase entirely if `ux-ui-design` is not installed.
 
-### Phase 4.7: Surface high-level design ambiguities
+### Phase 4.7: Resolve high-level design decisions
 
-Read the epic and the candidate decomposition you've sketched, and derive
-specific, concrete high-level design questions about *this* epic's actual
-work. These are the directional choices that, if locked in now, will keep
-every child feature's later design pass aligned. Examples of the *shape* of
-question to surface (the actual content must come from the epic):
+Identify the epic-specific product, architecture, scope, and decomposition
+decisions that must align its child features. Ignore points settled by the epic,
+foundation docs, code, or an existing `## Design decisions` section, and leave
+function signatures, file paths, and unit-level tests to feature design. Zero
+open decisions is valid.
 
-- "For this epic's auth surface, do we use OAuth via the existing provider,
-  or roll a local session model?"
-- "Should the new sync engine push from server to client, pull from client
-  on-demand, or both?"
-- "Are we committing to multi-tenant data isolation in this epic, or is
-  single-tenant acceptable for v1?"
-- "Does the import pipeline need to handle CSV and Parquet, or just CSV?"
+Apply `principles/SKILL.md` Part III exactly: resolve routine, reversible points
+with judgment and a logged rationale; reserve structured questions for product
+direction, external contracts, and expensive hard-to-reverse choices. Apply
+Part IV's risk-driven advisory policy in both direct and autopilot modes; do not
+restate reviewer topology here.
 
-These are product/architecture/scope questions specific to the epic in
-front of you — not generic prompts about boundaries, naming, or sizing.
-Skip anything you can answer from the epic body, foundation docs, or
-codebase. Skip anything that's safely a downstream feature-design call
-(function signatures, exact file paths, per-unit test approach).
-
-Aim for the smallest set of questions that meaningfully resolve direction
-— typically 2-5. Zero is fine if the epic body and foundation docs already
-pin every directional choice.
-
-**Cross-model advisory review under autopilot.** If this skill is running as a
-delegation from active autopilot, the epic has large/risky architectural
-decisions, and the body does not already contain useful `## Design decisions`
-from a prior `--only-questions` pass, apply the cross-model advisory review
-policy from `principles/SKILL.md` before resolving the questions yourself.
-
-Use one focused `peer` pass only when a different model class is available.
-Ask for missing questions, risks, ambiguous constraints, and alternatives for
-this epic's decomposition — not for a final verdict. Do not run the multi-pass
-`peer-review` loop during routine autopilot design. If peeragent is
-unavailable, the peer would use the same model class, or the invocation fails,
-continue with host judgment and note that the advisory pass was skipped.
-If the peeragent target is Claude Opus, allow 10 to 30 minutes for a large
-review; no return after a few minutes is not evidence that it has hung.
-
-Summarize the useful output under `## Other agent review` in the epic body and
-fold accepted questions/risks into the decisions you log. Do not paste the peer
-transcript into the item.
-
-If this skill is running **as a delegation from an active autopilot run or
-harness goal**, resolve each question with judgment (prioritize: consistent
-with foundation docs > simpler option > defers irreversible decisions) and log
-under `## Design decisions` in the epic body:
-
-```markdown
-## Design decisions
-- **<question>**: <choice> — <one-line rationale>
-```
-
-In every other invocation — including direct user invocation under harness
-auto mode (`permissions.defaultMode: "auto"`) — ask the user via
-`AskUserQuestion` before locking in, then write the answers under `## Design
-decisions` in the epic body. Harness-level "work without pausing" reminders
-do **not** suppress these checkpoints. See `principles/SKILL.md` Part III
-for the full caller-awareness rule.
-
-The child feature briefs you write in Phase 6 should reference the relevant
-design decisions so each feature's later design pass inherits the locked-in
-direction.
-
-The exception under autopilot: a 50/50 between two large irreversible
-choices (e.g., SQL vs document store for this epic's persistence layer).
-Append a `## Blocker` section and return without advancing — autopilot will
-skip and surface the blocker.
+Record decisions under `## Design decisions`. When autopilot is the active
+driver, it never asks; use evidence and the least irreversible sound choice.
+Only contradictory state that Part III identifies as a hard halt blocks
+advancement. Child briefs reference the decisions relevant to their later design
+passes.
 
 ### Phase 5: Pre-mortem
 
@@ -369,6 +319,9 @@ capability it covers, why it exists in this epic, what it does NOT cover>
 - Parent epic: `<epic-id>`
 - Position in epic: <e.g., "foundation feature — others depend on its types"
   / "consumer of feature-X" / "independent capability">
+
+## Simplification opportunity
+- <what this feature should delete, consolidate, replace, or deliberately retain>
 
 ## Foundation references
 - `docs/VISION.md` — relevant section(s) (only if directly relevant)
@@ -422,6 +375,10 @@ feature lands.">
 - `<feature-id-1>` — <one-line description> — depends on: `[]`
 - `<feature-id-2>` — <one-line description> — depends on: `[<feature-id-1>]`
 - `<feature-id-3>` — <one-line description> — depends on: `[<feature-id-1>]`
+
+### Simplification arcs
+
+- <feature-id> — <code/tests/checks/abstractions/subsystems it should remove or consolidate>
 
 ### Decomposition risks
 

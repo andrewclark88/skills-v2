@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prose Review"
+  short_description: "Lens-based editorial review of a prose draft"
+  default_prompt: "Use $prose-review to review this draft."
+policy:
+  allow_implicit_invocation: true

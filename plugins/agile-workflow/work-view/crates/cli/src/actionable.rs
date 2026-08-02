@@ -4,8 +4,9 @@
 //! - it lives in the **active tier** (`Tier::Active`), AND
 //! - its **stage** is one of `drafting`, `implementing`, or `review`
 //!   (the three stages that admit a next move), AND
-//! - for `--ready`: all `depends_on` are terminal (`deps_satisfied`)
-//! - for `--blocked`: at least one `depends_on` is non-terminal (`!deps_satisfied`)
+//! - for `--ready`: all `depends_on` completed verified implementation
+//!   (`review` or terminal)
+//! - for `--blocked`: at least one `depends_on` is implementation-incomplete
 //!
 //! The active-tier gate is essential: the core loads all four tiers, so without
 //! it a stale archive/releases item with an odd stage could leak into `--ready`.
@@ -31,6 +32,10 @@ use crate::args::DependencyView;
 /// autopilot queue definition exactly.
 fn is_actionable_candidate(item: &Item) -> bool {
     item.tier == Tier::Active
+        // `[scan]`-tagged items are engagement-owned by the deep-code-scan
+        // skill: they are never surfaced by `--ready`/`--blocked` nor grabbed
+        // by autopilot, so they are categorically excluded from actionability.
+        && !item.tags.iter().any(|t| t == "scan")
         && matches!(
             item.stage.as_deref(),
             Some("drafting" | "implementing" | "review")
@@ -50,12 +55,12 @@ pub(crate) fn dependency_status(sub: &Substrate, item: &Item) -> (bool, bool) {
 /// Post-filter over `query()` results; preserves input (load) order.
 ///
 /// - `All`     → no change; return items as-is.
-/// - `Ready`   → keep only candidates whose deps are all terminal.
-/// - `Blocked` → keep only candidates with at least one non-terminal dep.
+/// - `Ready`   → keep candidates whose deps completed verified implementation.
+/// - `Blocked` → keep candidates with at least one implementation-incomplete dep.
 ///
 /// Correctness note: `sub.deps_satisfied` evaluates over the **whole substrate**,
-/// not the filtered subset.  This is intentional — a dep that is filtered out
-/// by another flag (e.g. `--stage`) is still terminal if it is done/released.
+/// not the filtered subset. This is intentional — a dep filtered out by another
+/// flag still qualifies when it is at review, done/released, or in a terminal tier.
 pub fn apply_dependency_view<'a>(
     sub: &Substrate,
     items: Vec<&'a Item>,
@@ -159,6 +164,7 @@ mod tests {
             gate_origin: None,
             research_refs: vec![],
             research_origin: None,
+            scan_origin: None,
             created: None,
             updated: None,
             tier,
@@ -244,6 +250,26 @@ mod tests {
         )));
     }
 
+    #[test]
+    fn scan_tagged_active_implementing_is_not_candidate() {
+        // A `[scan]`-tagged item is engagement-owned by the deep-code-scan
+        // skill: it must never be surfaced by --ready/--blocked, even though it
+        // is Active and at a movable stage. An otherwise-identical untagged
+        // item IS a candidate.
+        let mut tagged = make_item_direct("scan-x", Tier::Active, Some("implementing"));
+        tagged.tags = vec!["scan".to_string()];
+        assert!(
+            !is_actionable_candidate(&tagged),
+            "scan-tagged active implementing item must NOT be actionable"
+        );
+
+        let untagged = make_item_direct("plain-x", Tier::Active, Some("implementing"));
+        assert!(
+            is_actionable_candidate(&untagged),
+            "untagged active implementing item must be actionable"
+        );
+    }
+
     // ── apply_dependency_view: All ────────────────────────────────────────────
 
     #[test]
@@ -266,6 +292,22 @@ mod tests {
             ids.contains(&"a".to_string()),
             "drafting item with done dep should be ready"
         );
+    }
+
+    #[test]
+    fn ready_includes_item_whose_dependency_is_at_review() {
+        let (path_review, content_review) = item_md("dep-review", "active/features", "review", &[]);
+        let (path_ready, content_ready) = item_md(
+            "downstream",
+            "active/features",
+            "implementing",
+            &["dep-review"],
+        );
+        let (_tmp, sub) =
+            setup_substrate(&[(path_review, &content_review), (path_ready, &content_ready)]);
+
+        assert!(run(&sub, DependencyView::Ready).contains(&"downstream".to_string()));
+        assert!(!run(&sub, DependencyView::Blocked).contains(&"downstream".to_string()));
     }
 
     #[test]

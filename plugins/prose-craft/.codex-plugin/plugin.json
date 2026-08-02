@@ -1,0 +1,28 @@
+{
+  "name": "prose-craft",
+  "version": "0.1.3",
+  "description": "Standalone prose craftsmanship for human-facing documentation — draft docs to a plain-language style contract (prose-draft), review drafts through editorial lenses (prose-review), and run a multi-model rewrite-and-weave cycle to publication quality (prose-refine). No substrate dependency.",
+  "author": {
+    "name": "nklisch"
+  },
+  "repository": "https://github.com/nklisch/skills",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Prose Craft",
+    "shortDescription": "Draft, lens-review, and refine human-facing docs",
+    "longDescription": "Standalone prose craftsmanship for documentation that will be published: prose-draft pins a five-field doc brief (audience, venue, purpose, must-keeps, scope) and writes to a plain-language style contract with Diátaxis doc-type obligations; prose-review runs a single-pass review through up to six editorial lenses (four by default — audience, structure, clarity, accuracy — plus voice and accessibility) with severity-tagged findings; prose-refine drives the full multi-model cycle — parallel fresh-context re-writers of different model classes, section-by-section weaving into one voice, scope that shrinks each round (full rewrite, machine-prose tell hunting, micro-edits), and convergence to publication quality within a 3-round cap.",
+    "developerName": "nklisch",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Bash",
+      "WebSearch"
+    ],
+    "defaultPrompt": [
+      "Use prose-craft to draft, lens-review, or refine human-facing documentation such as READMEs, foundation docs, and web articles."
+    ],
+    "websiteURL": "https://github.com/nklisch/skills"
+  }
+}

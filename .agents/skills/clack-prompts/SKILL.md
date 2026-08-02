@@ -1,10 +1,10 @@
 ---
 name: clack-prompts
 description: >
-  Reference for @clack/prompts terminal UI library. Auto-loads when importing from
-  '@clack/prompts', or building interactive CLI prompts, spinners, select menus,
-  confirmation dialogs, or any terminal user interaction flow. Covers text, password,
-  confirm, select, multiselect, spinner, group flows, tasks, logging, and cancel handling.
+  Reference for @clack/prompts terminal UI library. Auto-loads when importing from '@clack/prompts',
+  or building interactive CLI prompts, spinners, select menus, confirmation dialogs, or any terminal
+  user interaction flow. Covers text, password, confirm, select, multiselect, spinner, group flows,
+  tasks, logging, and cancel handling.
 ---
 
 # @clack/prompts — Terminal UI Reference
@@ -36,7 +36,7 @@ if (isCancel(name)) {
 ```typescript
 import { intro, outro, cancel } from "@clack/prompts"
 
-intro("skilltap")           // Header bar at start
+intro("mycli")              // Header bar at start
 // ... prompts ...
 outro("Done!")              // Footer bar at end
 
@@ -278,7 +278,7 @@ await tasks([
 Clack renders a connected vertical-bar UI:
 
 ```
-┌  skilltap
+┌  mycli
 │
 ◆  Install to:
 │  ● Global (~/.agents/skills/)
@@ -312,7 +312,7 @@ await text({
 log.info(color.green("All checks passed!"))
 ```
 
-## Pattern: skilltap Prompt Wrappers
+## Pattern: mycli Prompt Wrappers
 
 The project wraps clack prompts in `packages/cli/src/ui/prompts.ts` for consistent behavior:
 

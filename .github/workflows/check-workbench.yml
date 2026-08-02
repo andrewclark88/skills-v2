@@ -1,0 +1,30 @@
+name: Check Workbench
+
+on:
+  pull_request:
+    paths:
+      - "plugins/workbench/**"
+      - ".github/workflows/check-workbench.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/workbench/**"
+      - ".github/workflows/check-workbench.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Workbench script tests
+        run: python3 -m unittest discover -s plugins/workbench/scripts/tests -v
+
+      - name: Compile Workbench scripts
+        run: |
+          python3 -m py_compile \
+            plugins/workbench/scripts/_frontmatter.py \
+            plugins/workbench/scripts/build-knowledge-index.py \
+            plugins/workbench/scripts/lint-research.py \
+            plugins/workbench/scripts/validate-workbench.py

@@ -1,13 +1,12 @@
 ---
 name: principles
 description: >
-  agile-workflow principles — code-design (Ports & Adapters, Single Source of Truth,
-  Generated Contracts, Fail Fast) and substrate-execution (Item-IS-the-Work,
-  Rolling-Foundation, Late-Binding). Auto-loads when designing modules, defining
-  interfaces, writing or implementing code, scoping work in the substrate, advancing
-  stages, scoping releases, or any time the agile-workflow design/implement/review
-  skills are active.
-user-invocable: false
+  agile-workflow principles — code-design (clear boundaries, proportional rigor, code economy,
+  useful tests, continuous simplification, and compatibility only for verified external consumers)
+  and substrate-execution (Item-IS-the-Work, Rolling-Foundation, Late-Binding).
+  Auto-loads when designing modules, defining interfaces, writing or implementing code, scoping work
+  in the substrate, advancing stages, scoping releases, or any time the agile-workflow
+  design/implement/review skills are active.
 ---
 
 # Principles
@@ -25,211 +24,86 @@ Each principle has guidance for design time and implementation time.
 
 # Part I — Code-Design Principles
 
+These principles stay active during design and implementation. Load
+[references/code-design.md](references/code-design.md) when concrete mechanics,
+checklists, or examples are needed.
+
 ## 1. Ports & Adapters
 
-Core domain logic must not depend on infrastructure. Infrastructure depends on the domain.
+Domain logic stays independent of databases, filesystems, HTTP, time,
+randomness, and other infrastructure. The domain defines the ports it needs;
+adapters implement them, and composition roots wire the two together.
 
-**Ports** are interfaces defined in the domain layer that describe what the domain needs (a database, a file store, an HTTP client, a clock). **Adapters** are infrastructure implementations of those interfaces.
+## 2. Single Source of Truth
 
-### At design time
-
-- Identify every external dependency the feature touches (DB, filesystem, HTTP, queues, time, randomness)
-- Define an interface (port) for each one in the domain layer
-- Infrastructure modules implement those interfaces
-- The domain function signature takes the port as a parameter or receives it via dependency injection — it never imports the adapter directly
-
-**Example structure:**
-```
-src/
-  domain/
-    user.ts          # core logic — imports only domain types and ports
-    ports.ts         # UserRepository interface, EmailSender interface
-  infrastructure/
-    db/user-repo.ts  # implements UserRepository using Drizzle
-    email/smtp.ts    # implements EmailSender using nodemailer
-  app/
-    wire.ts          # assembles: new UserService(new DbUserRepo(), new SmtpEmailSender())
-```
-
-**Design checklist:**
-- [ ] Every external dependency has an interface in the domain layer
-- [ ] No `import { db }` or `import { fs }` in domain modules
-- [ ] Infrastructure modules are only referenced in composition roots (wire-up / entry points)
-
-### At implementation time
-
-When implementing domain logic, enforce the boundary: domain code receives infrastructure as a typed parameter, never imports it directly.
-
-**Good:**
-```typescript
-// domain/user-service.ts
-export function createUser(repo: UserRepository, email: string): Promise<User> {
-  return repo.insert({ email })
-}
-
-// app/wire.ts (entry point)
-import { createUser } from '../domain/user-service'
-import { DrizzleUserRepo } from '../infrastructure/db/user-repo'
-const repo = new DrizzleUserRepo(db)
-app.post('/users', (c) => createUser(repo, c.req.body.email))
-```
-
-**Bad:**
-```typescript
-// domain/user-service.ts
-import { db } from '../infrastructure/db'  // NEVER — domain imports infra
-
-export function createUser(email: string) {
-  return db.insert(users).values({ email })
-}
-```
-
-If you find yourself needing to import infrastructure into domain, that's the signal to add a port interface instead.
-
----
-
-## 2. Single Source of Truth (Data-Driven Extensibility)
-
-When a concept can have multiple variants that may grow over time (roles, statuses, event types, providers, feature flags), define that set of variants **once** as a data structure. All logic — types, validation, routing, display — derives from that single definition.
-
-### At design time
-
-- Identify enumerations that classes of things fall into
-- Design a central registry: a typed constant, a config map, or a schema object
-- Derive all downstream types and logic from that registry rather than re-enumerating variants in each consumer
-
-**Example structure:**
-```typescript
-// Defined once
-const ROLES = ['admin', 'editor', 'viewer'] as const
-type Role = typeof ROLES[number]
-
-// Or richer: a config map where behavior flows from data
-const ROLE_CONFIG = {
-  admin:  { level: 2, label: 'Admin' },
-  editor: { level: 1, label: 'Editor' },
-  viewer: { level: 0, label: 'Viewer' },
-} satisfies Record<string, RoleConfig>
-type Role = keyof typeof ROLE_CONFIG
-```
-
-**Design checklist:**
-- [ ] Extensible sets of variants are defined as a single authoritative constant/schema
-- [ ] Downstream types are derived from the registry (not duplicated)
-- [ ] Adding a new variant requires changing only the registry definition
-
-### At implementation time
-
-Implement extensible variant sets as a single typed constant. Derive all downstream behavior from it — do not re-enumerate variants in switch statements, conditionals, or validation schemas.
-
-**Good:**
-```typescript
-const ROLE_CONFIG = {
-  admin:  { level: 2, canDelete: true },
-  editor: { level: 1, canDelete: false },
-  viewer: { level: 0, canDelete: false },
-} as const satisfies Record<string, RoleConfig>
-
-type Role = keyof typeof ROLE_CONFIG
-const ROLES = Object.keys(ROLE_CONFIG) as Role[]
-const RoleSchema = z.enum(ROLES as [Role, ...Role[]])
-
-// Adding 'owner' role = one change, in one place
-```
-
-**Bad:**
-```typescript
-type Role = 'admin' | 'editor' | 'viewer'           // defined here
-const roles = ['admin', 'editor', 'viewer']          // re-enumerated here
-const RoleSchema = z.enum(['admin', 'editor', 'viewer']) // again here
-switch (role) {
-  case 'admin': ...   // and again here
-  case 'editor': ...
-  case 'viewer': ...
-}
-```
-
----
+Growing variant sets have one authoritative typed registry. Types, validation,
+routing, and display derive from it rather than re-enumerating the variants.
 
 ## 3. Generated Contracts
 
-When designing a boundary between two systems (client/server, package/consumer, service/service), prefer generating the contract from the source of truth rather than hand-authoring both sides.
+Boundary types derive from the schema, router, database model, or a generation
+step. Consumers import or infer that contract instead of maintaining hand-written
+copies.
 
-### At design time
+## 4. Fail Fast—Where It Matters
 
-**Common approaches by boundary type:**
-- **HTTP API → client**: OpenAPI schema → generated client types (openapi-typescript, orval)
-- **tRPC router → client**: router type is the contract, shared directly
-- **Database schema → app types**: Drizzle/Prisma inferred types, not hand-written interfaces
-- **GraphQL schema → types**: codegen from SDL
+Validate untrusted input and required external contracts at system boundaries.
+Add internal checks only when the project's actual risks justify them. Do not
+manufacture exhaustive invariants, edge handling, determinism, or defensive
+layers that the product's scope and consequences do not need.
 
-- Identify every cross-boundary interface in the feature
-- For each one, choose a single source of truth (schema file, router definition, DB schema)
-- Design the generation step into the build pipeline — not a manual step
-- Consumers import generated types, not hand-written duplicates
+## 5. Code Economy
 
-**Design checklist:**
-- [ ] Every client-facing contract has a designated source of truth
-- [ ] A generation step is identified (codegen tool, shared type import, inferred type)
-- [ ] No hand-written types that mirror types defined elsewhere
+Short, direct code is a virtue when it stays clear. Prefer fewer concepts,
+layers, branches, options, and lines over speculative generality. Match rigor to
+the project's context rather than engineering every codebase as critical
+infrastructure.
 
-### At implementation time
+## 6. Tests Earn Their Keep
 
-Do not hand-write types that are derivable from a schema, router, or database definition. Import or generate them.
+Test stable interfaces, important behavior, and regressions learned from real
+bugs. Unit-test genuinely complex units, not every wrapper, branch, or line.
+Tests are maintained code: remove duplicate, tautological, implementation-bound,
+or otherwise low-value tests when their upkeep exceeds the confidence they add.
 
-**Good:**
-```typescript
-import type { AppRouter } from '../../server/router'
-// type-safe from the source
+## 7. Leave It Simpler
 
-const { data } = useQuery<InferSelectModel<typeof users>>( ... )
-```
+Exploration, design, and implementation include an adaptive elimination pass.
+In the area being touched, look for code, tests, checks, abstractions,
+compatibility paths, and complexity that the feature can make unnecessary. Fold
+safe, cohesive cleanup into the work or create explicit cleanup/refactor
+stories; park broader opportunities.
 
-**Bad:**
-```typescript
-// Hand-written duplicate of what Drizzle already knows
-interface User {
-  id: number
-  email: string
-  createdAt: Date
-}
-```
+Accumulated substantial feature work is a signal to broaden the look, not a
+schedule. Rough reminders such as three related features or five major
+feature-sized items may prompt inspection of neighboring abstractions, but they
+are not thresholds, and child stories do not count as separate refactor cadence.
+Keep proactive refactoring inside normal feature design and implementation;
+dedicated discovery runs require explicit user direction. Question whole
+systems when warranted, but ask the user before removing behavior, guarantees,
+validation, compatibility, or safety. Explicit user instructions override every
+default here.
 
-If a generated type needs extending, use `type MyType = GeneratedType & { extra: string }` — extend the source of truth, don't replace it.
+## 8. Compatibility Is Earned
 
----
+Compatibility obligations come from verified external consumers, not from the
+mere existence of a schema or API. Most projects — applications, internal
+tools, agent tooling such as MCP servers, unpublished libraries — have no
+external consumers, and for them compatibility machinery is pure cost:
+versioned schemas (v1, v2, v3), deprecation shims, and dual-read paths
+accumulate instead of the correct design simply landing in place.
 
-## 4. Fail Fast (implementation only)
-
-Catch bad data at the door, not three calls deep where the stack trace is useless. Validate inputs at the entry point of every function or system boundary.
-
-- At system boundaries (HTTP handlers, CLI args, external API responses, config files): parse with Zod or equivalent before any logic runs
-- At internal function boundaries: assert preconditions at the top of the function — guard clauses, not nested ifs
-- Prefer `throw`/`return early` over propagating bad state deep into call chains
-- Errors should be loud and specific at the point of violation — "expected positive number, got -3" beats a cryptic null reference five layers down
-
-**Good:**
-```typescript
-function processOrder(input: unknown) {
-  const order = OrderSchema.parse(input) // throws immediately if invalid
-  return computeTotal(order)
-}
-
-function applyDiscount(order: Order, pct: number) {
-  if (pct < 0 || pct > 1) throw new Error(`Invalid discount: ${pct}`)
-  // ... rest of logic
-}
-```
-
-**Bad:**
-```typescript
-function processOrder(input: any) {
-  // passes raw input through, blows up 5 calls deep
-  return computeTotal(input)
-}
-```
-
----
+Unless the project declares external consumers, exactly two things create a
+compatibility obligation: dependencies external to the repository and not
+owned by the author (third-party APIs, published packages with real downstream
+users), and substantial real data that must be preserved or transformed (user
+databases, durable on-disk state, files users keep). Everything the project
+owns outright — request/response shapes, config formats, internal APIs, MCP
+tool schemas, disposable storage layouts — changes in place: delete the old
+shape and land the correct one; never run v2 alongside v1 when both sides are
+yours. Real-data migrations are one-way transforms the agent plans and the
+user approves and executes for production data — never run a production data
+transform autonomously.
 
 # Part II — Substrate-Execution Principles
 
@@ -239,7 +113,7 @@ dispatch. The agent applies these whenever operating on `.work/` or `docs/`,
 and whenever choosing discovery or implementation dispatch during substrate
 work.
 
-## 5. Item-IS-the-Work
+## 9. Item-IS-the-Work
 
 The unit of work is its file. The brief, the design, the implementation notes, and the review findings all accumulate in the item's body as stages advance. Reading the file IS reading the state of the work.
 
@@ -279,9 +153,17 @@ The unit of work is its file. The brief, the design, the implementation notes, a
 
 ---
 
-## 6. Rolling-Foundation
+## 10. Rolling-Foundation
 
-Foundation docs (`docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`, and any others) describe the project's vision (future-looking) and current intent — what is true now, OR what will be true once in-flight design lands. They roll forward in place as either evolves. No legacy comments. Git carries history; the doc carries truth.
+Foundation docs (`docs/VISION.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`, and any others) describe what is true now or the future state the project intends to reach. A future-state claim remains valid before implementation exists. Foundation docs are selective standing context, not an exhaustive inventory: silence about a capability is allowed. They roll forward when an assertion becomes false, stale, or contradictory. Git carries history; the doc carries truth.
+
+Write foundations from the reader's world toward the technical model. Define
+each load-bearing data object, domain model, interface, or object group by what
+it represents and why it matters before using its technical shape. When
+provider vocabulary matters, map provider terms through project concepts to
+generic real-world terms at the object or system level before field mappings.
+Compare representative providers or standards when their models shape the
+project. Define only terms the intended audience cannot safely assume.
 
 ### Two timing styles
 
@@ -290,7 +172,7 @@ Both are legitimate; the project picks one or mixes per change size:
 - **Code-first (default for routine features):** docs update at implementation merge, in the same commit set as the code that lands the change.
 - **Design-first (for large scope, initial ideation, architectural shifts):** docs preflight-update at scope time, leading the code through the implementation window. The doc temporarily describes an intended near-future state. The agile-workflow `scope` skill operates this way for large scope; `ideate` operates this way at project bootstrap.
 
-The discipline is identical in both styles: replace stale assertions in place, never accumulate "previously" / "in v1.x" / migration prose. `gate-docs` at release-deploy time is the backstop — it catches drift between intent and reality regardless of which timing style was used.
+The discipline is identical in both styles: replace stale assertions in place, never accumulate "previously" / "in v1.x" / migration prose. `gate-docs` is an assertion-consistency backstop: it catches false, stale, or contradictory claims, but never treats missing coverage or merely unimplemented future intent as drift.
 
 ### What this forbids
 
@@ -302,16 +184,16 @@ The discipline is identical in both styles: replace stale assertions in place, n
 
 ### What this enables
 
-- A new contributor reads the doc and learns the system as it IS or as it is meant to imminently become — not as it was
+- A new contributor reads the doc and learns the system as it is or as it is intended to become — not as it was
 - Foundation docs stay short and current rather than growing with every change
 - `git log docs/<file>.md` shows every rolling-forward edit — perfect audit trail
-- Discrepancies between intent (what the doc asserts) and reality (what code does) become bugs that gate-docs surfaces, not historical artifacts
+- False, stale, or contradictory assertions become bugs that gate-docs surfaces; omissions and not-yet-implemented future claims do not
 
 ### At design time
 
 - When scoping a feature that changes a foundation-doc assertion, decide the timing: code-first (defer the doc update) or design-first (preflight the update as part of scope)
 - For large-scope `scope` operations, design-first is the default — `scope` rolls foundation docs forward as part of the same operation
-- Identify which foundation doc(s) need rolling forward; reading them at design time prevents stale assumptions
+- Identify any existing foundation assertions the design changes or contradicts; do not add coverage merely because the docs omit the capability
 - If a feature's design contradicts a foundation doc, EITHER the design is wrong OR the doc is. Resolve before designing the implementation.
 
 ### At implementation time
@@ -319,19 +201,20 @@ The discipline is identical in both styles: replace stale assertions in place, n
 - If working code-first: after implementing a change, ask "what does a foundation doc now say that's no longer true?" — update assertions in place, commit with the implementation
 - If working design-first: the doc was preflight-updated at scope time. Verify the implementation matches the doc's assertion; if it deviates, adjust whichever was wrong (implementation or assertion).
 - Replace stale assertions in place. Delete the old text. Never append.
-- The `gate-docs` skill runs at release-deploy time and produces items for any remaining drift — but the goal is to leave it nothing to find.
+- The `gate-docs` skill produces items only for remaining false, stale, or contradictory assertions—not missing coverage or unimplemented future intent.
 
 ### Design checklist
 
-- [ ] Every assertion in SPEC and ARCHITECTURE reflects current code OR imminent in-flight design (no stale assertions from cancelled work)
+- [ ] Every assertion in SPEC and ARCHITECTURE is true for the current or intended-future state it claims (no stale assertions from superseded intent)
 - [ ] VISION.md reflects the project's current direction, not past direction
 - [ ] No "previously" / "originally" / "in v1.x" prose anywhere in `docs/`
-- [ ] When a feature changes behavior or direction, foundation docs update in the same commit set as the change (code-first) or were preflight-updated and are still accurate (design-first)
+- [ ] When a feature invalidates an existing foundation assertion, that assertion updates in the same commit set (code-first) or was preflight-updated and remains accurate (design-first)
+- [ ] No finding or edit was created solely because foundation docs omit a capability or describe future intent not yet implemented
 - [ ] `git log docs/<file>.md` shows the audit trail; the doc shows the present
 
 ---
 
-## 7. Late-Binding
+## 11. Late-Binding
 
 Items advance stages when work actually completes. Releases bind items only when the user cuts a version. Foundation docs are not pre-decided into a phase plan. Work happens, then commitments crystallize — not the other way around.
 
@@ -371,20 +254,24 @@ Items advance stages when work actually completes. Releases bind items only when
 
 ---
 
-## 8. Agent Dispatch Economy
+## 12. Agent Dispatch Economy
 
 Sub-agents are for breadth, isolation, independent judgment, or parallel
 implementation with clear write ownership. They are not a replacement for
 reading, and they are not automatically better than local read-oriented tools.
 
-When hosted in Pi, native Pi subagents are the preferred same-harness adapter for
-worker, scout, reviewer, and oracle-style fanout when the Pi runtime or an
-installed package such as `pi-subagents` exposes them. Treat those runs as
-fresh-context same-harness delegation, not as cross-model evidence. Keep
-`peeragent` for cross-model or cross-harness advisory/review paths, and fall
-back to direct single-agent execution when neither adapter is available.
+Agile-workflow does not ship custom subagent definitions. When delegation is
+useful, prompt the host's existing generic/general-purpose subagent mechanism
+with a structured, task-specific brief. A same-harness subagent is
+fresh-context by default; call it cross-model only when the harness explicitly
+spawns it with a different model class (for example, Pi selecting another
+provider/model for the subagent). Keep `peeragent` for cross-model or
+cross-harness advisory/review paths when the harness cannot provide the needed
+different model class itself, and fall back to direct single-agent execution
+when no suitable subagent adapter is available. For the prompt skeleton and
+posture capsules, load [references/subagents.md](references/subagents.md).
 
-Before spawning read-only Explore/discovery agents, do a local scope-size probe:
+Before spawning read-only exploratory/discovery sub-agents, do a local scope-size probe:
 
 - List likely roots with `rg --files`, Glob, manifests, route maps, package
   metadata, or `.work/bin/work-view`.
@@ -394,18 +281,27 @@ Before spawning read-only Explore/discovery agents, do a local scope-size probe:
 - Name the unknowns that remain. If you cannot name a distinct unknown, do not
   spawn an agent just to feel thorough.
 
-For implementation waves, the same sizing note feeds write-ownership and
-dependency-layer decisions before choosing fan-out width.
+For implementation waves, start from **one implementation agent per feature**.
+A feature is the normal context, verification, and review boundary. Its child
+stories are design checkpoints that make acceptance slices and ordering visible;
+they are not normally separate agent assignments. Bundle multiple related
+features into one worker when shared context and sequential coherence save more
+than the handoff would; preserve separate feature evidence and transitions.
+Split one unusually large feature across multiple workers only when coherent
+write ownership, dependency layers, or isolation justify it. Story boundaries
+may inform that split, but never dictate it by themselves.
 
 Choose the lightest mechanism that will produce better evidence:
 
 | Scope signal | Dispatch choice |
 |---|---|
-| Known file(s), one module, or a handful of obvious integration points | Read directly with Read/Grep/Glob; skip Explore. |
-| One bounded area but uncertain patterns or call sites | Use one focused Explore agent, then spot-check key files yourself. |
-| Several independent surfaces with different questions | Use parallel Explore agents, one per surface/question. |
-| Implementation work with independent write ownership | Fan out by ownership and dependency layer; do not use item count alone as the parallelism signal. |
-| Deep audit/review where fresh context is the point | Spawn the dedicated audit/review sub-agent described by that skill; in Pi, prefer native reviewer/oracle subagents before same-class inline fallback. |
+| Known file(s), one module, or a handful of obvious integration points | Read directly with Read/Grep/Glob; skip exploratory fanout. |
+| One bounded area but uncertain patterns or call sites | Use one focused exploratory sub-agent, then spot-check key files yourself. |
+| Several independent surfaces with different questions | Use parallel exploratory sub-agents, one per surface/question. |
+| Normal feature implementation | Give one worker the feature and its story checkpoints as a cohesive bundle. |
+| Several related features with shared context | Bundle them into one sequential worker when that reduces handoffs; keep per-feature verification, transitions, and review. |
+| Unusually large feature with independent write ownership | Split into coherent ownership bundles by write set and dependency layer; do not assign one worker per story by default. |
+| Deep audit/review where fresh context is the point | Spawn a generic sub-agent with the skill's reviewer/scanner prompt posture and explicit output schema; if unavailable, use the skill's inline fallback. |
 
 Parallel Explore only pays for itself when the prompts are genuinely different.
 Three agents asking the same broad question usually return duplicated shallow
@@ -418,43 +314,37 @@ auditable later.
 
 ---
 
-# Part III — Caller Awareness
+# Part III — Caller Awareness and Question Policy
 
-**The rule:** If an active agile-workflow autopilot run or harness goal is
-driving this skill, no AskUserQuestion and no halts on ordinary ambiguity.
-Resolve with judgment and log the rationale in the item body. Otherwise,
-asking the user is fine and often helpful.
+**The normal rule is consequence-based, not mode-based.** Resolve routine,
+reversible decisions with judgment and record the rationale in the item body.
+Use the structured question tool only when the answer sets product direction,
+materially changes user-facing behavior or an external contract, or commits the
+project to an expensive choice that is difficult to reverse. Existing `## Design decisions` and foundation
+docs are inputs; do not re-ask what they already settle.
 
-This is binary and detectable. Autopilot mode is on when the current skill was
-delegated by an explicit autopilot invocation, an active autopilot harness goal,
-or a prompt that clearly says it is continuing/draining an autopilot scope.
-Autopilot includes a caller note when delegating work; treat that note as the
-strongest signal. If no active autopilot driver exists, you are interactive.
+Interactive mode permits those strategic questions. An active autopilot driver
+never asks them: use available evidence and choose the least irreversible sound
+option, logging the decision. Ordinary ambiguity must not halt the queue.
+
+Autopilot mode is binary and detectable. It is on when this skill was delegated
+by an explicit autopilot invocation, an active autopilot harness goal, or a
+prompt clearly continuing/draining that scope. An autopilot caller note is the
+strongest signal. If no active driver exists, the invocation is interactive.
 
 ## What does NOT count as autopilot
 
-Judgment-mode is triggered only by an active autopilot driver. In particular:
+- **General harness "auto mode"** — a reminder to work autonomously changes
+  conversational posture, but does not create an autopilot queue goal.
+- **An earlier "just decide" instruction** — it applies to that decision, not a
+  later explicit skill invocation.
+- **A completed, blocked, or interrupted autopilot run** — later direct skill
+  invocations are interactive again.
 
-- **General harness "auto mode"** — a reminder to work without unnecessary
-  clarification does **not** suppress `AskUserQuestion` inside these skills.
-  It shapes default conversational tone; it does not mean an autopilot queue
-  goal is active.
-- **A user saying "just decide" earlier in the conversation** — that applies
-  to whatever was being discussed at the time, not to a later explicit skill
-  invocation.
-- **A previous autopilot run that has already ended** — autopilot mode lasts
-  only while autopilot itself is the active driver of the queue. Once the goal
-  completes, blocks, or is interrupted, subsequent direct skill invocations are
-  interactive again.
-
-When a user types `/agile-workflow:feature-design <id>` (or any other
-design/implement/review skill) directly, they want a collaborator at the
-checkpoints. Use `AskUserQuestion` unless the direct prompt also makes clear it
-is part of an active autopilot goal.
-
-The disambiguation test: *"Is an active autopilot queue goal currently driving
-this skill?"* If you cannot point to that active driver or caller note, you are
-interactive.
+A direct `/agile-workflow:feature-design <id>` (or other design, implement, or
+review skill) is interactive unless its prompt clearly belongs to an active
+autopilot driver. The disambiguation test is: *"Can I point to the active
+autopilot goal or caller note driving this invocation?"*
 
 ## What still warrants a hard halt (autopilot or not)
 
@@ -463,167 +353,154 @@ interactive.
 - `depends_on` cycle detected when writing items
 - Genuinely contradictory state the skill cannot recover from
 
-Everything else should resolve via judgment under autopilot. When in doubt,
-prefer the simpler option and log the rationale in the item body so the user
-can review later.
+Everything else resolves through evidence and judgment under autopilot. Prefer
+the simpler, more reversible option and log why.
 
 ## Worked examples (autopilot mode)
 
 | Situation | Judgment-mode action |
 |---|---|
-| Two architectural options both look valid | Pick the one with fewer moving parts; log "Chose X over Y because: simpler surface" |
-| Brief is vague, several plausible interpretations | Pick the one most consistent with foundation docs; log under `## Design decisions` |
-| Multiple candidate items at a stage and no id was passed | Pick most recent by `updated:`; the next iteration picks the next |
-| Wrong-tag invocation routed to you by mistake | Log a misroute note in the body; return without advancing |
-| Empty diff during review after trying ranges | Advance to `done` with a "No diff found" note; don't block the queue |
-| Item at unexpected stage | Use judgment about what transition makes sense; log it |
+| Two architectural options both look valid | Pick the one with fewer moving parts; log the rationale. |
+| Brief is vague, several plausible interpretations | Pick the one most consistent with foundation docs; log under `## Design decisions`. |
+| Multiple candidate items at a stage and no id was passed | Pick most recent by `updated:`; the next iteration picks the next. |
+| Wrong-tag invocation routed to you by mistake | Log a misroute note; return without advancing. |
+| Empty diff during review after trying ranges | Advance to `done` with a "No diff found" note. |
+| Item at unexpected stage | Choose the recoverable transition and log it. |
 
-## How to phrase decision points
+## Explicit alignment mode
 
-> If an active autopilot run or goal is driving this skill, <judgment-mode
-> behavior>. Otherwise, ask the user via AskUserQuestion.
-
-Not "halt and tell the user." The first form supports both modes; the second
-silently kills autopilot.
+`--only-questions` is unchanged: it is an explicit, interactive-only alignment
+pass that captures answers under `## Design decisions`, does not design, and
+does not advance stage. Refuse it when autopilot is the active driver. Inside
+that mode, surface the target's meaningful strategic ambiguities even when a
+normal design pass would resolve a reversible point autonomously.
 
 ## Skills this applies to
 
-Autopilot delegates to: `feature-design`, `epic-design`, `refactor-design`,
-`perf-design`, `implement`, `implement-orchestrator`, `review`. Every one of
-those needs caller-aware decision points.
-
-User-invocable-only skills (`convert`, `epicize`, `ideate`, `bold-refactor`,
-`release-deploy`) can stay interactive-first — autopilot doesn't call them.
-
----
-
-# Part IV — Cross-Model Advisory Review
-
-Cross-model review is an advisory signal, not a stage transition. Use it only
-when a different model class is available through an installed peer mechanism
-such as `peeragent:peer` or `peeragent:peer-review`. If the peer would be the
-same model class as the host, do not use `peer` or `peer-review`; instead spawn a
-**fresh sub-agent at the highest model class available to the host** (a Sonnet host
-spawns a fresh Sonnet reviewer; an **Opus host spawns a new Opus reviewer**) — never
-review inline in the host's own context, which is anchored on the work it just
-produced. Under Pi, native reviewer/oracle subagents count as this same-harness
-fresh-context fallback when no different-model peer is available. Label it a
-same-class or same-harness fresh-context pass, not cross-model review. If the
-peer's model class is uncertain, skip peeragent and use the fresh sub-agent.
-
-Explicit user instructions and project-level `AGENTS.md` / `CLAUDE.md` review
-rules override this policy. If they require review, follow them. If they opt out
-or restrict external model egress, do not invoke peeragent.
-
-Opus latency expectation: when peeragent targets Claude Opus, especially from a
-Codex host with `--agent claude --model opus`, large reviews commonly take 10 to
-30 minutes. A long quiet period or lack of intermediate output is normal. Do not
-treat "it has not returned in a few minutes" as a hang, and do not fall back,
-mark the peer attempt failed, or block the run unless the process exits with an
-error, reports failure, or exceeds a timeout that is long enough for Opus-scale
-review work.
-
-Default judgment:
-
-- Small, low-risk work: skip cross-model review.
-- Small/medium work with real uncertainty: optionally use one focused `peer`
-  pass.
-- Large, risky, or architectural design points under autopilot: use one focused
-  `peer` pass when no prior `--only-questions` / `## Design decisions`
-  alignment exists.
-- Reviewing a completed **feature or epic** at `stage: review` (the `review`
-  skill's deep lane): run the lens review in a fresh context — a different-class
-  `peer-review` when reachable, otherwise a native Pi reviewer/oracle subagent
-  when hosted in Pi and available, otherwise a fresh top-class sub-agent.
-  **Stories skip this** entirely; they fast-advance on `implement`'s
-  verification.
-- End of an autopilot run, after the scoped queue appears drained and before
-  reporting `complete`: run a final `peer-review` loop when a different model
-  class is available; otherwise use the same-harness fresh-context fallback
-  above, then fix or file accepted findings before completion.
-- Completed substantial artifacts, or explicit user requests for review: use
-  `peer-review` only when the full iterative loop is appropriate.
-
-For autopilot-driven design work, the default peer ask is **question/risk
-augmentation before decisions are locked**, not validation after the host has
-already decided. Ask the other model for missing questions, risks, ambiguous
-constraints, and alternatives. The host still chooses, verifies against
-foundation docs and code, and records the rationale.
-
-Design-time advisory peer failures are non-blocking under autopilot. If the
-peer wrapper is missing, the executable cannot be resolved, the invocation
-fails, or the call would use the same model class, continue with host judgment
-and log the reason briefly. A peeragent Opus call still running after only a few
-minutes is not a failure. Do not halt the queue for an advisory review failure.
-
-The final autopilot completion review is stricter: it must succeed through a
-different-model `peer-review` loop or a same-harness fresh-context fallback
-(native Pi reviewer/oracle when hosted in Pi and available, otherwise local)
-before the run reports `complete`. If the selected final-review path fails, the
-run is blocked on final review rather than complete.
-
-When invoked, summarize the result in the item body without dumping transcripts:
-
-```markdown
-## Other agent review
-- Invoked because: <large/risky/autopilot/no prior alignment>
-- Reviewer: <agent/model class, if known>
-- Mode: peer advisory | peer-review
-- Questions/risks considered:
-  - <summary>
-- Accepted:
-  - <decision or adjustment>
-- Rejected:
-  - <point> — <reason>
-```
-
-Limit autopilot to one advisory pass per item per design stage. Do not run a
-multi-pass `peer-review` loop inside routine autopilot design unless the user or
-project instructions explicitly require it. The final completion review at the
-end of autopilot is separate from these design-time advisory passes.
+This policy governs `feature-design`, `epic-design`, `refactor-design`,
+`perf-design`, `implement`, `implement-orchestrator`, and `review`, plus the
+cross-plugin research orchestrator when routed from autopilot. Interactive-only
+skills may remain workshop-oriented, but should still avoid questions whose
+answers are routine and reversible.
 
 ---
 
-# Part V — Skill invocation patterns
+# Part IV — Risk-Driven Advisory Review
 
-Three arg shapes recur across the plugin. New skills should pick the one that
-fits their role rather than inventing a fresh shape.
+Advisory review is selected by risk in both direct and autopilot design modes;
+it is not a stage transition and is never triggered merely because autopilot is
+active. Small, low-risk work skips it. Uncertain or risky work gains independent
+scrutiny, while deep or complex work may use multiple model classes. Load
+[references/advisory-review.md](references/advisory-review.md) for scope defaults,
+two-phase mechanics, and the item-body record format. Model classes, host-peer
+pairing, and concrete mechanism flags remain in
+[references/models.md](references/models.md).
 
-## Orchestration verbs (drain a queue)
+## `review_weight`
 
-`scope`, `implement-orchestrator`, `autopilot`, `review`
+`review_weight` is the canonical caller/project control consumed by review and
+autopilot. Allowed values are `none | light | standard | thorough | maximum`;
+the default is **`standard`**. It controls both independent-review depth and the
+closure policy for features, epics, and final completion bundles:
 
-| Arg | Behavior |
-|---|---|
-| `<id>` or `<id-list>` | Operate on those items |
-| `--all` or no arg | Operate on the full queue (default) |
-| `<NL filter>` | Interpret free text against the queue; log the interpretation |
+- `none` — explicitly opt out of independent review. Implementation
+  verification and acceptance evidence remain mandatory.
+- `light` — at most one focused fresh-context pass where risk warrants it, then
+  adjudicate, fix any receiver-confirmed blockers, verify, and finish without a
+  second independent pass.
+- `standard` — the normal default: exactly one balanced fresh-context review
+  pass, followed by receiver adjudication, blocker fixes, verification, and
+  `done`. **Standard is single-pass review, not a convergence loop.**
+- `thorough` — iterative fresh-context review: review, adjudicate, fix, verify,
+  and review again until a pass produces no receiver-confirmed **material
+  current-cycle blockers**. The receiver judges materiality in repository
+  context; smaller findings are parked, noted as nits, or rejected and do not
+  keep the loop open.
+- `maximum` — the same convergence requirement as `thorough`, with
+  complementary-then-adversarial, multi-model coverage when available.
 
-## Discovery + emit verbs (scan code, produce items)
+Reviewer selection and lens breadth still adapt to artifact risk and item tier,
+but the closure policy is binding. Do not silently escalate `standard` into
+multi-pass review because the target is large, is an epic, uses `--deep`, or the
+first pass found blockers. Multi-pass convergence requires an explicit
+`thorough` or `maximum` effective weight. Explicit caller and project policy
+takes precedence; record the effective weight, source, and any degradation.
 
-`refactor-design`, `perf-design`, `bold-refactor`, and the gate
-family (`gate-cruft`, `gate-security`, `gate-tests`, `gate-docs`,
-`gate-patterns`)
+## Load-bearing invariants
 
-| Arg | Behavior |
-|---|---|
-| no arg / `--all` | Sweep the relevant scope (whole codebase, or release bundle for gates) |
-| `<path>` | Scope to that subtree |
-| `<NL scope>` | Interpret free text against the codebase; log the interpretation |
-| `<feature-id>` (where applicable) | Per-feature design mode (refactor-design, perf-design) |
+- **Feature-level implementation review:** child stories never enter `review`.
+  Green implementation verification advances a child story directly from
+  `implementing` to `done`; completed child stories make their feature eligible
+  for review rather than creating review units of their own. A standalone story
+  (`parent: null`) is the narrow exception: it receives a bounded review after
+  verification, but never an independent or cross-model review. Epics receive
+  their own deeper aggregate review after child features are done; review depth
+  should generally increase with scope because integration and capability gaps
+  emerge at feature and epic boundaries, while tiny-scope review tends toward
+  pedantry and over-engineering.
+- **Non-blocking review:** an item at `review` has completed implementation
+  verification, so it satisfies downstream implementation dependencies while
+  review runs. Dispatch the next dependency layer without waiting for the
+  verdict. A bounce rejoins implementation; reverify affected downstream items
+  only when the fix changes an interface or assumption they consume.
+- **Different-class labeling:** call a pass cross-model only when the reviewer is
+  known to be a different model class from the host. Otherwise label it
+  fresh-context. Different-class review is valuable for independent blind spots,
+  not greater authority.
+- **Fresh-context semantics:** when independent review is warranted and a
+  different class is unavailable, use the strongest suitable fresh-context
+  reviewer available. Do not present inline self-review as independent.
+- **Phase order within the selected weight:** when both complementary and
+  adversarial coverage run, completeness / complementary / advisory comes
+  first. `standard` still uses only one review pass; phase vocabulary must not
+  turn the default into an implicit two-pass review.
+- **Non-blocking design:** unavailable or failed design-time advisory review does
+  not block direct or autopilot design. Continue with judgment and record the
+  reason. A slow top-tier reviewer is not a failure until its appropriately
+  sized timeout or mechanism reports failure.
+- **Weight-aware completion:** final autopilot completion must clear the review
+  path selected by the effective weight and adjudicate every proposal. `light`
+  and `standard` run one successful fresh-context pass, fix and verify accepted
+  blockers, then finish without re-review. `thorough` and `maximum` continue the
+  review → fix → verify loop until a pass yields no receiver-confirmed material
+  current-cycle blockers. Smaller findings are dispositioned by judgment and do
+  not prolong the loop. At explicit weight `none`, documented implementation
+  verification and acceptance evidence satisfy the path without independent
+  review. A required fresh-context path that fails blocks completion.
 
-These skills *emit substrate items as findings* rather than gating pass/fail.
+## Recipient-owned finding disposition
 
-## Per-item design verbs
+Reviewer output is evidence, not authority. The receiving agent orchestrating the
+run independently verifies each claim and assigns its disposition against the
+repository's actual context: acceptance criteria, supported users and deployment
+shape, likelihood, blast radius, recoverability, existing safeguards, and the
+cost of delaying the current work. A reviewer's `blocker` label never binds the
+receiver by itself, and disagreement is resolved by evidence rather than
+seniority or model strength.
 
-`feature-design`, `epic-design`, `refactor-design`, `perf-design`
+A finding blocks the current cycle only when the receiver judges it a credible,
+material risk to required correctness, security, data integrity, public
+contracts, acceptance criteria, release safety, or trustworthy verification.
+Fix those findings now or keep an active item that prevents completion. Park a
+valid concern below that bar in the unbound backlog with its risk rationale and
+continue; leave nits in review notes, and reject unsupported findings with a
+brief reason. Rarity alone does not make a case irrelevant, but a corner case's
+likelihood and consequence must justify its delivery cost. Repetition across
+review passes does not elevate severity by itself.
 
-| Arg | Behavior |
-|---|---|
-| `<id>` | Full design pass on that item (default) |
-| `--only-questions <id>` | Question-only alignment pass; captures answers under `## Design decisions`; does NOT design or advance stage |
-| `--only-questions <id-list>` | Question-only pass over each listed item |
-| `--only-questions --all` | Question-only pass over every drafting item of the matching kind/tags |
+A successful review path therefore means independent scrutiny ran when required
+and the receiving agent adjudicated the results. It does not mean every reviewer
+suggestion was implemented or promoted into the active queue.
 
-`--only-questions` always requires interactive mode and refuses to run under
-autopilot.
+User instructions and project-level review/egress rules override defaults. Do
+not invoke an external peer mechanism when policy prohibits it. `--only-questions`
+is user alignment and therefore skips advisory review.
+
+---
+
+# Part V — Skill Invocation Patterns
+
+Three argument shapes recur across the plugin: queue orchestration, discovery
+and emit, and per-item design. Load
+[references/invocation-patterns.md](references/invocation-patterns.md) when
+defining or invoking one of these surfaces.

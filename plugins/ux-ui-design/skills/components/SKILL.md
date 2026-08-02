@@ -1,21 +1,16 @@
 ---
 name: components
 description: >
-  ALWAYS invoke this skill when the user asks to design, mock, or build a
-  component library, common UI components, or shared design primitives —
-  buttons, dropdowns, form fields, cards, modals, toasts, tabs, badges, plus
-  project-specific unique components — do not start hardcoding component
-  styles inline in screens or flows. Generates a showcase page at
-  .mockups/design-system/components.html (every component in every state) and
-  a reusable .mockups/design-system/components.css that screens and flows
-  link, so every mock shares identical primitives. Runs AFTER palette
-  (depends on tokens.css) and BEFORE screens / flows for a coherent unified
-  look. Triggers on "design components", "component library", "design system
-  components", "button system", "form styles", "showcase components",
-  "build a component kit", "dropdowns and inputs", "unified UI primitives".
-  Defers to ux-ui-principles for storage, tech, and linking conventions.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion
+  ALWAYS invoke this skill when the user asks to design, mock, or build a component library, common UI
+  components, or shared design primitives — buttons, dropdowns, form fields, cards, modals, toasts,
+  tabs, badges, plus project-specific unique components — do not start hardcoding component styles
+  inline in screens or flows. Generates a showcase page at .mockups/design-system/components.html
+  (every component in every state) and a reusable .mockups/design-system/components.css that screens
+  and flows link, so every mock shares identical primitives. Runs AFTER palette (depends on
+  tokens.css) and BEFORE screens / flows for a coherent unified look. Triggers on "design components",
+  "component library", "design system components", "button system", "form styles", "showcase
+  components", "build a component kit", "dropdowns and inputs", "unified UI primitives". Defers to
+  ux-ui-principles for storage, tech, and linking conventions.
 ---
 
 # Components
@@ -77,8 +72,9 @@ downstream mock reads from this file.
 
 ### Phase 1: Ground and detect mode
 
-Confirm `ux-ui-principles` is loaded; install the `CLAUDE.md` block if the
-marker is missing.
+Confirm `ux-ui-principles` is loaded; install the project agent-instructions
+block if the marker is missing (`AGENTS.md` first, `CLAUDE.md` only as a
+compatibility target).
 
 **Verify `tokens.css` exists.** Components are composed from tokens. If
 `.mockups/design-system/tokens.css` is missing, delegate to `palette`
@@ -90,7 +86,7 @@ Read:
 - `.mockups/design-system/components.css` if present → **refinement mode**
 - The substrate item (epic/feature) if applicable, for project-unique
   component hints
-- `CLAUDE.md`, `README.md`, any brand/voice docs
+- `AGENTS.md`, `CLAUDE.md`, `README.md`, any brand/voice docs
 
 ### Phase 2: Pick the common-component starter set
 
@@ -107,7 +103,7 @@ Default starter set (always include unless the user removes them):
   `.empty-state`
 - **Overlays:** `.modal` (header / body / footer / dismissible)
 
-Optional extensions (offer via `AskUserQuestion`, pick what's needed):
+Optional extensions (offer via `structured question tool`, pick what's needed):
 - **Navigation:** `.nav-bar`, `.tabs`, `.breadcrumb`, `.menu`, `.dropdown`
 - **Data display:** `.table`, `.list`, `.badge`, `.tag`, `.pill`, `.avatar`
 - **Overlays:** `.popover`, `.tooltip`, `.drawer`
@@ -160,7 +156,7 @@ For each unique component, capture:
 
 The aesthetic poles chosen in `palette` decide colors and type. The
 component aesthetic decides **depth, density, and sharpness**. Use
-`AskUserQuestion` (skip if palette's aesthetic poles already pin it):
+`structured question tool` (skip if palette's aesthetic poles already pin it):
 
 ```
 Q: What's the depth treatment?
@@ -239,7 +235,7 @@ xdg-open .mockups/design-system/components.html 2>/dev/null & \
   || echo "file://$(pwd)/.mockups/design-system/components.html"
 ```
 
-Then ask via `AskUserQuestion`:
+Then ask via `structured question tool`:
 
 ```
 Q: How does the component layer feel?

@@ -1,35 +1,29 @@
 ---
 name: gate-patterns
 description: >
-  Patterns gate that scans the bundle's changes for reusable code structures.
-  Delegates the full discovery to a deep pattern-discovery sub-agent which identifies recurring
-  shapes (3+ occurrences) introduced or revealed by the bundle, names them,
-  documents them with concrete file:line examples, and returns pattern drafts.
-  The orchestrator writes detailed pattern skills to .agents/skills/patterns/ (the
-  single source of truth) with optional Claude mirrors, updates the index, also
-  generates the hook-loaded .agents/rules/patterns.md digest (a do-not-hand-edit
-  slug+one-liner index that points back at the patterns skill for detail), and
-  produces a tracking item with gate_origin:patterns.
-  Auto-triggers during /agile-workflow:release-deploy as the final gate.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+  Patterns gate that scans the bundle's changes for reusable code structures. Delegates the full
+  discovery to a deep pattern scanner agent which identifies recurring shapes (3+ occurrences)
+  introduced or revealed by the bundle, names them, documents them with concrete file:line examples,
+  and returns pattern drafts. The orchestrator writes detailed pattern skills to
+  .agents/skills/patterns/ (the single source of truth) with optional Claude mirrors, updates the
+  index, also generates the hook-loaded .agents/rules/patterns.md digest (a do-not-hand-edit
+  slug+one-liner index that points back at the patterns skill for detail), and produces a tracking
+  item with gate_origin:patterns. Auto-triggers during /agile-workflow:release-deploy as the final
+  gate.
 ---
 
 # Gate-Patterns
 
 You orchestrate a patterns gate over the bundle's code changes. The actual
-pattern discovery runs inside a **deep pattern-discovery sub-agent**; your role
-is to prepare the bundle context, dispatch the sub-agent, and write the pattern
-files + index it returns.
+pattern discovery runs inside a **deep pattern scanner agent** (a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`); your role is to prepare the
+bundle context, dispatch the scanner, and write the pattern files + index it
+returns.
 
-Sub-agent strength is explicit:
-- **Claude Code / Anthropic:** spawn one Agent with `model: "opus"` and
-  `subagent_type: "general-purpose"`.
-- **Codex / OpenAI:** spawn one analysis sub-agent with `reasoning_effort:
-  high`; use `xhigh` only for large/polyglot bundles, architecture-wide pattern
-  extraction, or conflicting pattern catalogs.
-- **Pi path:** use a native Pi `reviewer` or `oracle` subagent for deep pattern
-  discovery when hosted in Pi and available; otherwise use the same-host
-  read-only analysis fallback.
+Scanner strength is explicit: spawn exactly one source-read-only deep pattern
+scanner with the strongest inspection/reviewer setting the host exposes. Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`. Use extra-high reasoning
+only for large/polyglot bundles, architecture-wide pattern extraction, or
+conflicting pattern catalogs. If the host has no scanner path, run
+discovery inline and record the reduced isolation in the release body.
 
 This is NOT about coding style or naming conventions (that's `AGENTS.md` /
 `CLAUDE.md`'s job). This is about identifying structural patterns for
@@ -54,7 +48,7 @@ cat .agents/AGENTS.md 2>/dev/null
 cat .claude/AGENTS.md 2>/dev/null
 ```
 
-Capture the existing pattern catalog and project rules context so the sub-agent
+Capture the existing pattern catalog and project rules context so the scanner
 doesn't redocument existing patterns or mistake project conventions for
 structural patterns. Prefer `.agents/skills/patterns/` as the source of truth;
 read `.claude/skills/patterns/` only as a legacy mirror. Project-level rules
@@ -75,28 +69,33 @@ the gate; never edit the digest directly.
 ### Phase 2: Identify bundle scope
 
 ```bash
-# `--release` auto-widens to ALL tiers (active + archive + releases). Drop any
-# returned path under `.work/archive/`: those are already-done, body-pruned
-# stubs that were gated when active and MUST NOT be re-gated (no-re-gate rule).
-# Filter by path, not `--scope active` — the bash fallback ignores `--scope`.
-.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'
+# Bound non-release items. `--release` auto-widens to ALL tiers (active + archive + releases).
+# Include late-bound archived stubs; their bodies may be pruned, but their item id is still
+# present and can recover the bundle commits/files. Ignore only the release orchestration item.
+.work/bin/work-view --release <version> --paths | while IFS= read -r item; do
+  kind=$(grep -m1 '^kind:' "$item" | awk '{print $2}')
+  [ "$kind" = "release" ] && continue
+  echo "$item"
+done > /tmp/bundle-items-<version>.txt
 
-for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
+# Files changed by the bundle. For archived stubs, the body is pruned on disk by design; use the
+# item id to find implementation commits instead of treating the missing body as a skip reason.
+while IFS= read -r item; do
   id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
   git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
-done | sort -u > /tmp/bundle-files-<version>.txt
+done < /tmp/bundle-items-<version>.txt | sort -u > /tmp/bundle-files-<version>.txt
 ```
 
-### Phase 3: Dispatch the discovery sub-agent
+### Phase 3: Dispatch the pattern scanner
 
-Spawn ONE deep pattern-discovery sub-agent with the full discovery brief. For
-Claude Code, this is `Agent(subagent_type=general-purpose, model=opus)`. For
-Codex, use `reasoning_effort: high`, escalating to `xhigh` for large/polyglot
-bundles, architecture-wide pattern extraction, or conflicting catalogs. For Pi,
-use a native `reviewer` or `oracle` subagent when available; otherwise use the
-same-host read-only analysis fallback. The sub-agent runs parallel pattern searches, filters to
-genuine 3+ occurrences, drafts pattern documentation, and returns
-structured output.
+Spawn ONE source-read-only deep scanner agent with the full discovery brief. Use
+a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md` and the strongest
+inspection/reviewer setting the host exposes, escalating for large/polyglot
+bundles, architecture-wide pattern extraction, or conflicting catalogs. If
+scanner agents are unavailable, run discovery inline and record the reduced
+isolation in the release body. The scanner runs pattern-search passes, filters
+to genuine 3+ occurrences, drafts pattern documentation, and returns structured
+output.
 
 **Brief template**:
 
@@ -105,10 +104,10 @@ structured output.
 > shapes that appear 3+ times. NOT coding style or naming conventions
 > (that's AGENTS.md / CLAUDE.md's job); structural patterns for consistency and reuse.
 >
-> You have access to Read, Glob, Grep, Bash, Task. You may spawn parallel
-> sub-tasks for the different discovery axes.
+> Use read/search/shell tools as needed. Do not spawn nested sub-agents or modify
+> source files.
 >
-> **Bundle scope**:
+> **Bundle focus** (start here; follow recurring shapes across the repository):
 > ```
 > <bundle-files>
 > ```
@@ -121,9 +120,10 @@ structured output.
 >
 > **Methodology**:
 >
-> 1. **Parallel pattern discovery** — spawn sub-tasks on the bundle's
->    changed files plus their immediate consumers (since reuse implies
->    multiple call sites):
+> 1. **Pattern discovery passes** — inspect the bundle's changed files first,
+>    then follow candidate shapes through consumers and the wider repository
+>    where needed to establish genuine recurrence. Bound files are the focus,
+>    not a hard scan boundary:
 >    - **Shared abstractions & utilities** — find new shared/reusable code
 >      introduced in the bundle: utility functions, base classes, common
 >      helpers, types used across multiple modules. List each with
@@ -136,7 +136,7 @@ structured output.
 >      shared fixtures, test utilities, common setup/teardown, mocking
 >      approaches, assertion helpers.
 >
->    After sub-task results, **read 3-4 key files yourself** to verify.
+>    Read 3-4 key files yourself to verify the candidate patterns.
 >
 > 2. **Filter to genuine patterns.** A finding is a genuine pattern only if
 >    it has **3+ occurrences** in the codebase (not just in the bundle —
@@ -227,19 +227,21 @@ structured output.
 >   the divergence instead.
 > - Don't fabricate patterns. If discovery yields nothing, return an empty
 >   "New patterns" section.
+> - Expansion beyond the bundle must follow a concrete candidate pattern or
+>   inconsistency; do not perform an unfocused whole-repo style audit.
 
 ### Phase 4: Write pattern files
 
-For each new pattern the sub-agent returned, write
+For each new pattern the scanner returned, write
 `.agents/skills/patterns/<slug>.md` with the pattern content (everything
 under the `### Pattern:` heading except the `Index entry` block).
 
 ### Phase 5: Regenerate the index and the rules digest
 
 First, compute the per-pattern entries **once**. For each pattern (existing
-entries combined with the new ones from the sub-agent's output), you have a
+entries combined with the new ones from the scanner's output), you have a
 `<slug>` and a `<one-line rule>` — for new patterns the one-liner is the terse
-rule from the sub-agent's `#### Index entry` block. Order by relevance (most
+rule from the scanner's `#### Index entry` block. Order by relevance (most
 commonly applicable first) and keep the list concise. These same entries feed
 both files below, so they cannot drift.
 
@@ -351,7 +353,7 @@ updated: YYYY-MM-DD
 This item is at `stage: done` because the gate's work IS the writing of the
 pattern files. No further implementation needed.
 
-For each inconsistency the sub-agent flagged, ALSO produce a `[refactor]`
+For each inconsistency the scanner flagged, ALSO produce a `[refactor]`
 story (`stage: drafting`) so the divergence gets reconciled in a subsequent
 release.
 
@@ -374,12 +376,12 @@ In conversation:
 
 ## Guardrails
 
-- **The discovery happens in the sub-agent, not here.** Your job is bundle
+- **The discovery happens in the scanner agent, not here.** Your job is bundle
   prep, dispatch, and writing the pattern files + index + tracking item.
-  Don't replicate the sub-agent's analysis.
-- A pattern requires 3+ occurrences. The sub-agent enforces this; trust it.
+  Don't replicate the scanner's analysis.
+- A pattern requires 3+ occurrences. The scanner enforces this; trust it.
 - Don't document style conventions — that's AGENTS.md / CLAUDE.md's job.
-- Every pattern needs concrete file:line examples — the sub-agent provides
+- Every pattern needs concrete file:line examples — the scanner provides
   them; don't write a pattern file without them.
 - Inconsistencies with existing patterns become `[refactor]` stories, not
   new pattern files.

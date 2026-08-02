@@ -1,38 +1,32 @@
 ---
 name: bug-scan
 description: >
-  Deep multi-angle correctness bug hunt. Use when the user asks to "scan for
-  bugs", "bug hunt", "deep bug audit", "find hidden bugs", "find race
-  conditions", or audit lurking correctness issues. Fans parallel scanner
-  sub-agents across relevant domains such as concurrency, async, state,
-  resource leaks, time/numbers, error handling, data layer, and language
-  footguns. Standalone mode writes a scored report; gate mode binds to a
-  release bundle and emits .work/active/stories/ items with gate_origin:bugs.
-  Distinct from gate-security, review, perf-design, and repo-eval.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Bash, Agent, WebSearch, WebFetch, Write, Edit, AskUserQuestion
+  Deep multi-angle correctness bug hunt. Use when the user asks to "scan for bugs", "bug hunt", "deep
+  bug audit", "find hidden bugs", "find race conditions", or audit lurking correctness issues. Fans
+  parallel scanner agents across relevant domains such as concurrency, async, state, resource
+  leaks, time/numbers, error handling, data layer, and language footguns. Standalone mode writes a
+  scored report; gate mode binds to a release bundle and emits .work/active/stories/ items with
+  gate_origin:bugs. Distinct from gate-security, review, perf-design, and repo-eval.
 ---
 
 # Bug-Scan
 
 You orchestrate a deep, multi-angle hunt for hard-to-find correctness bugs. You detect the
-stack, choose relevant bug domains, dispatch **one deep scanner sub-agent per selected domain in parallel**, and
+stack, choose relevant bug domains, dispatch **one deep scanner agent per selected domain in parallel**, and
 either write a scored report (standalone) or produce items in `.work/active/stories/` (gate
-mode). Domain selection is the scope-size gate: do not spawn a scanner for a domain
-just because it exists in the table. Each scanner loads only its domain's reference —
+mode). Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`. Domain selection is the
+scope-size gate: do not spawn a scanner for a domain just because it exists in the table. Each
+scanner loads only its domain's reference —
 that's the progressive-disclosure move that keeps each scanner focused and the
 orchestrator's context lean.
 
-Sub-agent strength is explicit:
-- **Claude Code / Anthropic:** spawn one Agent per selected domain with
-  `model: "opus"` and `subagent_type: "general-purpose"`.
-- **Codex / OpenAI:** spawn one analysis sub-agent per selected domain with
-  `reasoning_effort: high`; use `xhigh` only for concurrency/data-layer/time
-  bugs in high-risk domains, very large scopes, or repeat scans that previously
-  missed issues. These are read-only scanner agents, not fixers.
-- **Pi path:** use native Pi `reviewer` or `oracle` subagents for read-only
-  domain scanners when hosted in Pi and available; otherwise use the same-host
-  read-only analysis fallback.
+Scanner strength is explicit: spawn one source-read-only scanner agent per
+selected domain with high inspection/reviewer reasoning. Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md`. Use extra-high reasoning only for
+concurrency, data-layer, or time bugs in high-risk domains, very large scopes,
+or repeat scans that previously missed issues. These are scanners, not fixers.
+- For the dynamic scanner prompt posture, load
+  `../principles/references/subagents.md`. If no suitable scanner subagent adapter is
+  available, use the same-host read-only analysis fallback.
 
 This skill hunts **correctness** bugs, not vulnerabilities, not perf, not style. Use the
 sibling skills for those.
@@ -107,7 +101,7 @@ instead of launching empty scanners. For a broad release bundle or repo-wide
 audit, include every domain with real evidence in Phase 1.
 
 ### Standalone mode
-**AskUserQuestion checkpoint** (multi-select): show the 8 domains with relevance annotations,
+**structured question tool checkpoint** (multi-select): show the 8 domains with relevance annotations,
 recommend 4-6 for a focused scan or all 8 for a full audit. Default to all "most relevant" +
 "relevant" if user doesn't choose.
 
@@ -116,29 +110,28 @@ Skip the prompt. Default to all domains that touch any file in the bundle.
 
 ## Phase 3: Fan-out scan
 
-For each selected domain, spawn **one parallel scanner sub-agent in a single
+For each selected domain, spawn **one parallel scanner agent in a single
 message** so they run concurrently.
 
-- Claude Code / Anthropic: use `Agent(subagent_type=general-purpose,
-  model=opus)`.
-- Codex / OpenAI: use an analysis sub-agent with `reasoning_effort: high`;
-  escalate to `xhigh` only for high-risk domains, very large scopes, or repeat
-  scans that previously missed issues.
-- Pi path: use a native `reviewer` or `oracle` subagent for each read-only
-  scanner when available; otherwise use the same-host read-only analysis
-  fallback.
+Use a generic sub-agent prompted with the scanner posture from `../principles/references/subagents.md` with high
+inspection/reviewer reasoning; escalate to extra-high only for high-risk
+domains, very large scopes, or repeat scans that previously missed issues. If a
+host cannot spawn the scanner role, use the same-host read-only analysis
+fallback.
 
 ### Scope (passed into every scanner)
 
 - **Standalone**: the user's path arg, or the whole repo if no arg. Resolve to a concrete file
   list with `git ls-files` (and the path filter, if any).
 - **Gate mode**: only files touched by items bound to the release. `--release`
-  auto-widens to ALL tiers (active + archive + releases); drop any returned path
-  under `.work/archive/` — those are already-done, body-pruned stubs that were
-  gated when active and MUST NOT be re-gated (no-re-gate rule). Filter by path,
-  not `--scope active` — the bash fallback ignores `--scope`.
+  auto-widens to ALL tiers (active + archive + releases). Include late-bound
+  archived stubs — their bodies may be pruned, but the item id still recovers
+  the bundle commits/files. Ignore only the release orchestration item
+  (`kind: release`).
   ```bash
-  for item in $(.work/bin/work-view --release <version> --paths | grep -v '\.work/archive/'); do
+  .work/bin/work-view --release <version> --paths | while IFS= read -r item; do
+    kind=$(grep -m1 '^kind:' "$item" | awk '{print $2}')
+    [ "$kind" = "release" ] && continue
     id=$(grep -m1 '^id:' "$item" | awk '{print $2}')
     git log --grep "$id" --format='%H' | xargs -I{} git diff-tree --no-commit-id --name-only -r {}
   done | sort -u > /tmp/bundle-files-<version>.txt
@@ -152,7 +145,9 @@ message** so they run concurrently.
 
 Each scanner gets:
 
-> You are a bug-scanner sub-agent for the **<domain>** domain.
+> You are a bug scanner agent for the **<domain>** domain. Use the
+> agile-workflow scanner contract: source-read-only, no fixes, no recursive
+> sub-agents.
 >
 > **Reference (load FIRST)**: `<absolute path to references/<domain>.md>`
 > Read the whole file. It contains the patterns to hunt for in this domain.
@@ -234,7 +229,7 @@ Each scanner gets:
 
 - Dispatch all selected scanners in a **single message** (parallel).
 - If a scanner returns an error, record it as a gap in the report — do not re-run blindly.
-- If a scanner returns >25 findings, ask it (via SendMessage) to keep only the top 25 by
+- If a scanner returns >25 findings, ask it (via follow-up message) to keep only the top 25 by
   severity (anything beyond suggests pattern over-matching).
 
 ## Phase 4: Aggregate & dedupe
@@ -324,7 +319,7 @@ Write to `bug-scan-report.md` in the repo root using the template at
 - Top 3 critical findings (one line each, with `file:line`)
 - Path to the report
 - Parked count + duplicates skipped (or "parking skipped (--no-park)" / "parking skipped (no substrate)")
-- **AskUserQuestion** (four options):
+- **structured question tool** (four options):
   - "Elevate criticals to `stage:implementing` via `/agile-workflow:scope`"
   - "Hand top finding to `/agile-workflow:fix` now"
   - "Dive deeper into a specific domain"
@@ -358,9 +353,9 @@ Then report to the user (same format as gate-security):
 
 ## Guardrails
 
-- **The scanning happens in the sub-agents, not here.** Your job is stack discovery, scanner
-  dispatch, and result aggregation. Do not re-do a scanner's work in the orchestrator's
-  context — that throws away the progressive-disclosure win.
+- **The scanning happens in the scanner agents, not here.** Your job is stack discovery,
+  scanner dispatch, and result aggregation. Do not re-do a scanner's work in the
+  orchestrator's context — that throws away the progressive-disclosure win.
 - **Fan out selected domains.** Once Phase 2 has selected domains, run one
   scanner per selected domain in parallel. Do not serialize them, and do not
   spawn skipped domains.
