@@ -38,7 +38,7 @@ SUPERSEDE_RELS = {"supersedes", "superseded-by", "superseded", "superseded_by"}
 # ARD evidence overlay: attestations are a distinct node class, NOT doc nodes (they're
 # excluded from the index by design — see ard-adoption-plan.md D2). Resolved = an attestation
 # file backs a cited [handle]{N}; unresolved = a [handle]{N} cited with no attestation (a broken
-# citation chain — the same defect /citation-lint + gate-citations flag, made visible here).
+# citation chain — the same defect Agentic Research lint + gate-citations flag, made visible here).
 EVIDENCE_COLOR = {"resolved": "#2f9e80", "unresolved": "#ff0033"}
 CITATION_RE = re.compile(r"\[([\w-]+)\]\{(\d+)\}")   # same wire-form the lint resolves
 ATTEST_DIR = ".research/attestation"
@@ -62,8 +62,13 @@ def load_index(root: Path):
 # grouping (unchanged semantics)
 # ---------------------------------------------------------------------------
 def group_of(path: str) -> str:
+    if path.startswith(".research/analysis/campaigns/"):
+        parts = path.split("/")
+        return "prog:" + (parts[3] if len(parts) > 3 else "campaigns")
     if path.startswith(".research/programs/"):
         return "prog:" + path.split("/")[2]
+    if path.startswith(".research/analysis/briefs/"):
+        return "brief:" + Path(path).stem
     if path.startswith(".research/briefs/"):
         return "brief:" + path.split("/")[2]
     if path.startswith(".research/"):
@@ -77,7 +82,9 @@ def group_of(path: str) -> str:
 
 
 def subtree_root(path: str):
-    """The program/brief container directory for containment edges, e.g. .research/programs/<X>."""
+    """The current or legacy campaign/brief container for containment edges."""
+    if path.startswith(".research/analysis/campaigns/"):
+        return "/".join(path.split("/")[:4])
     if path.startswith(".research/programs/") or path.startswith(".research/briefs/"):
         return "/".join(path.split("/")[:3])
     return None

@@ -6,6 +6,7 @@ These exercise render.py against a small portable fixture (tests/fixtures/proj) 
 anywhere — no dependency on ~/dev project corpora.
 """
 import json
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,13 @@ from pathlib import Path
 HERE = Path(__file__).parent
 RENDER = HERE.parent / "render.py"
 FIXTURE = HERE / "fixtures" / "proj"
+
+
+def _load_render_module():
+    spec = importlib.util.spec_from_file_location("knowledge_graph_render", RENDER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def data(*extra_flags):
@@ -70,6 +78,17 @@ def test_containment_edges_from_research_subtree():
     root = ".research/programs/x/super-parent.md"
     assert (root, ".research/programs/x/sub1.md") in cont
     assert (root, ".research/programs/x/sub2.md") in cont
+
+
+def test_current_agentic_research_containment_paths():
+    render = _load_render_module()
+    assert render.subtree_root(".research/analysis/campaigns/x/parent.md") == \
+        ".research/analysis/campaigns/x"
+    assert render.subtree_root(".research/analysis/campaigns/x/specialists/a.md") == \
+        ".research/analysis/campaigns/x"
+    assert render.subtree_root(".research/analysis/briefs/auth.md") is None
+    assert render.group_of(".research/analysis/campaigns/x/parent.md") == "prog:x"
+    assert render.group_of(".research/analysis/briefs/auth.md") == "brief:auth"
 
 
 def test_degree_matches_adjacency():

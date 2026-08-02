@@ -63,10 +63,15 @@ this cleanly. No sub-agents.
 
 ### Step 1: Discover all knowledge docs
 
-**Docs corpus** — glob `docs/**/*.md` AND `.research/**/*.md` recursively. Exclude:
+**Docs corpus** — glob `docs/**/*.md` AND `.research/**/*.md` recursively. Current
+Agentic Research analysis artifacts under `.research/analysis/` remain on their own
+frontmatter contract and are indexed without forcing docs-specific fields. Retained
+legacy `.research/briefs/` and `.research/programs/` remain discoverable. Exclude:
 - `docs/_archive/**/*` (archived)
 - `docs/**/doc-review-report-*.md` (audit artifacts)
 - Any path matching `**/RESUME-STATE.md` or session artifacts (no frontmatter, by convention)
+- `.research/{reference,attestation,precis}/`, `.research/.import-holding/`, and
+  top-level research scaffold files
 
 **Substrate corpus (when `.work/` exists)** — also glob `.work/active/**/*.md`,
 `.work/backlog/**/*.md`, `.work/releases/**/*.md`, `.work/archive/**/*.md`. These are
@@ -219,7 +224,9 @@ full_index_path: docs/knowledge-index.yaml
 detail_index_path: docs/knowledge-index-detail.yaml
 ```
 
-**Size check:** warn at 8KB, error at 10KB. If the file exceeds 8KB, reduce the number of docs flagged `nav_priority: high` or shorten titles. If it exceeds 10KB, the SessionStart hook will truncate it and the auto-load degrades.
+**Size check:** warn at 8KB, fail generation above 10KB. If the file exceeds 8KB,
+reduce the number of docs flagged `nav_priority: high` or shorten titles. The
+SessionStart hook also refuses to inline an oversized pre-existing navigator.
 
 ### Step 6: Write `docs/knowledge-index.yaml` (terse layer)
 

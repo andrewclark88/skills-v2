@@ -92,5 +92,5 @@ Domains that need `/research` before `/architecture`.
 | [Knowledge Generation Pattern](knowledge-generation-pattern.md) | Stubs, lint, refresh cycles — infrastructure the edge creator reuses |
 | [Knowledge Storage Pattern](knowledge-storage-pattern.md) | Frontmatter schema, typed cross-references, knowledge graph |
 | [First-Principles Primer](first-principles.md) | Thinking methodology |
-| [Scout North Star](scout-north-star.md) | Sibling capability — scout looks outward, edge creator looks inward |
+| [Research intents](research-skills-overview.md) | Sibling capabilities — scout looks outward, edge creation looks inward |
 | Architecture (pending) | How the edge creator is structured |

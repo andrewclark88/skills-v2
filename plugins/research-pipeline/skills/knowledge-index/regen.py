@@ -21,12 +21,12 @@ RESEARCH_DIR = REPO / ".research"
 # Harmless for projects without a .work/ directory.
 WORK_DIR = REPO / ".work"
 
-# ARD (Agentic Research Discipline) source-record tiers under .research/. These carry a
-# different frontmatter schema (source_handle/fetched/provenance — not description/type/updated)
-# and are NOT navigable knowledge docs: you read the brief, never the attestation. They are
-# tracked by the citation lint, not this index. Excluded from discovery so they neither fail
-# the docs lint nor pollute the navigator. See docs/ard-adoption-plan.md (decision D2).
+# Agentic Research source-record tiers under .research/. These carry a different
+# frontmatter schema and are not navigator documents: consumers read analytical
+# artifacts, not attestations or raw-source records. The companion plugin owns
+# their validation.
 ARD_SOURCE_TIERS = ("reference", "attestation", "precis")
+RESEARCH_SCAFFOLD_FILES = {"CONVENTIONS.md", "README.md", "references.md"}
 
 # Type → kind derivation per skill spec
 PLANNING_TYPES = {
@@ -52,6 +52,30 @@ def derive_kind(fm):
     if typ in RESEARCH_TYPES:
         return "research"
     return None
+
+def is_agentic_analysis(path):
+    """True for current Agentic Research analytical-tier artifacts."""
+    try:
+        parts = path.relative_to(REPO).parts
+    except ValueError:
+        return False
+    return len(parts) >= 3 and parts[0:2] == (".research", "analysis")
+
+def agentic_analysis_type(path, fm):
+    """Derive an index type without imposing docs frontmatter on ARD artifacts."""
+    if fm.get("output_kind"):
+        output_kind = fm["output_kind"]
+        if isinstance(output_kind, list):
+            return str(output_kind[0]) if output_kind else "research-analysis"
+        return str(output_kind)
+    parts = path.relative_to(REPO).parts
+    tier = parts[2] if len(parts) > 2 else "analysis"
+    return {
+        "briefs": "brief",
+        "campaigns": "campaign",
+        "positions": "position",
+        "hypothesis": "hypothesis",
+    }.get(tier, "research-analysis")
 
 def parse_frontmatter(path):
     """Return (frontmatter_dict | None, error_or_None)."""
@@ -94,6 +118,12 @@ def discover_docs():
             # Skip ARD source-record tiers under .research/ (tracked by the citation lint,
             # not the knowledge index — they carry a non-docs frontmatter schema).
             if len(parts) >= 2 and parts[0] == ".research" and parts[1] in ARD_SOURCE_TIERS:
+                continue
+            # Scaffold and pre-uplift imports are orientation/migration state, not
+            # authoritative analytical knowledge.
+            if len(parts) == 2 and parts[0] == ".research" and p.name in RESEARCH_SCAFFOLD_FILES:
+                continue
+            if len(parts) >= 2 and parts[0:2] == (".research", ".import-holding"):
                 continue
             docs.append(p)
     return docs
@@ -149,6 +179,14 @@ def lint_doc(path, fm, schema_version, all_paths):
 
     if fm is None:
         warnings.append(f"{rel}: no frontmatter")
+        return errors, warnings
+
+    # Agentic Research owns the analytical-tier schema. Knowledge indexing only
+    # requires provenance; it derives navigator metadata from the path and first
+    # heading rather than forcing docs-specific fields onto ARD artifacts.
+    if is_agentic_analysis(path):
+        if not fm.get("provenance"):
+            errors.append(f"{rel}: Agentic Research analysis missing required `provenance:`")
         return errors, warnings
 
     # v1 baseline — always required
@@ -427,7 +465,8 @@ def main():
         rel = str(p.relative_to(REPO))
         if fm is None:
             continue
-        kind = fm.get("kind") or derive_kind(fm)
+        agentic_analysis = is_agentic_analysis(p)
+        kind = "research" if agentic_analysis else (fm.get("kind") or derive_kind(fm))
         # Bucket by canonical kind for emit. The explicit research aliases brief/program
         # (blessed by lint_doc) keep their granular `kind` in the entry, but must emit
         # under `research` — emit_terse only writes planning/research/historical sections,
@@ -448,18 +487,21 @@ def main():
             except Exception:
                 pass
 
+        updated = fm.get("updated") or fm.get("authored")
         entry = {
             "path": rel,
             "title": title,
-            "type": fm.get("type"),
+            "type": agentic_analysis_type(p, fm) if agentic_analysis else fm.get("type"),
             "kind": kind,
-            "updated": str(fm.get("updated")) if fm.get("updated") else None,
+            "updated": str(updated) if updated else None,
         }
         for opt in ("status", "research_method", "blocks_phase", "superseded_by", "nav_priority"):
             if fm.get(opt):
                 entry[opt] = fm[opt]
         if fm.get("description"):
             entry["consumer_hint"] = fm["description"].strip() if isinstance(fm["description"], str) else fm["description"]
+        elif agentic_analysis:
+            entry["consumer_hint"] = f"Agentic Research {entry['type']}: {title or fm.get('slug') or p.stem}"
         by_kind.setdefault(bucket, []).append(entry)
 
         # detail entry
@@ -738,6 +780,7 @@ def main():
     if nav_kb > 10:
         print(f"⛔ Navigator size {nav_kb:.1f}KB EXCEEDS 10KB harness cap — hook output will be truncated.")
         print(f"   Reduce nav_priority: high flags or trim recent list. See docs/design/knowledge-retrieval.md.")
+        sys.exit(1)
     elif nav_kb > 8:
         print(f"⚠ Navigator size {nav_kb:.1f}KB approaching 10KB harness cap (warn threshold 8KB).")
 

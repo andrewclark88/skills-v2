@@ -127,7 +127,7 @@ function showCard(id){ const n=NODE[id]; const P=document.getElementById('panel'
       +(e.source?'<div class="kv"><b>source</b> '+esc(e.source)+'</div>':'')
       +(e.fetched?'<div class="kv"><b>fetched</b> '+esc(e.fetched)+'</div>':'')
       +'<div class="kv"><b>cited by</b> '+e.cited_by+' brief(s)</div>'
-      +(e.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run /citation-lint).</div>'); return; }
+      +(e.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run Agentic Research citation lint).</div>'); return; }
     const g=GH[id]; B.innerHTML='<h3>'+esc(g?g.label:id)+'</h3>'+chip(g?g.dclass:'?', '#ff9f1c')+'<div class="kv">'+esc(id)+'</div>'; return; }
   const a=ADJ[id]||{in:[],out:[]};
   const links=arr=>arr.length?'<ul class="lst">'+arr.map(x=>'<li class="lnk" data-go="'+esc(x.id)+'"><span class="rel">'+esc(x.ecat==='containment'?'contains':x.rel)+' › </span>'+esc(NODE[x.id]?NODE[x.id].label:x.id)+'</li>').join('')+'</ul>':'<div class="kv">— none —</div>';

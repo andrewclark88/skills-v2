@@ -64,7 +64,7 @@ The search-first 2D graph — best for integrity auditing. Built on the **DOI mo
 - ⚫ **out-of-scope** — target outside the indexed roots (e.g. `src/`); expected, not a defect.
 - ⚪ **orphans** — docs with zero edges (after containment); a cross-reference gap worth backfilling.
 - 🟣 **superseded** — docs carrying a `supersession_note`.
-- 🟡 **unresolved citations** — a `[handle]{N}` cited in a `.research/` brief with no attestation under `.research/attestation/` → a broken citation chain (the same defect `/citation-lint` + `/gate-citations` flag, surfaced visually). 2D view only; both views render it as a red attestation node.
+- 🟡 **unresolved citations** — a `[handle]{N}` cited in a `.research/` analysis with no attestation under `.research/attestation/` → a broken citation chain (the same defect Agentic Research's lint and `/gate-citations` flag, surfaced visually). 2D view only; both views render it as a red attestation node.
 
 ### ARD evidence overlay (attestations + citations)
 

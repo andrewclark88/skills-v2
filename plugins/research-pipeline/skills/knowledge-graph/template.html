@@ -282,7 +282,7 @@ function showCard(id){ const pane=document.getElementById('paneDetail');
     +(ev.source?'<div class="kv"><b>source</b> '+esc(ev.source)+'</div>':'')
     +(ev.fetched?'<div class="kv"><b>fetched</b> '+esc(ev.fetched)+'</div>':'')
     +'<div class="kv"><b>cited by</b> '+ev.cited_by+' brief(s)</div>'
-    +(ev.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run /citation-lint).</div>'); return; }
+    +(ev.resolved?'':'<div class="sum">No attestation under .research/attestation/ — a broken citation chain (run Agentic Research citation lint).</div>'); return; }
   const n=NODE[id]; if(!n){ pane.innerHTML='<div class="muted">—</div>'; return; }
   const a=ADJ[id]||{in:[],out:[]};
   const links=(arr)=>arr.length? '<ul class="lst">'+arr.map(x=>'<li class="lnk" data-go="'+esc(x.id)+'"><span class="rel">'+esc(x.ecat==='containment'?'contains':x.rel)+' › </span>'+esc(NODE[x.id]?NODE[x.id].label:x.id)+'</li>').join('')+'</ul>' : '<div class="muted" style="font-size:11px">— none —</div>';
