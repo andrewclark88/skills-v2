@@ -14,8 +14,9 @@ updated: 2026-08-02
 # Make workflow model defaults host-aware
 
 Preserve the existing role-based model and effort guidance while making every
-cross-model workflow work symmetrically when Claude Code, Codex, or Pi is the
-driver. Pi must support at least Z.AI GLM and Kimi as driver lineages. Remove
+cross-model workflow work symmetrically when Claude Code or Codex is the
+driver. Document Pi's Z.AI GLM and Kimi driver defaults and the current bridge
+boundary without claiming that Pi can load these workflows yet. Remove
 stale Claude-only skill metadata from portable Research Pipeline
 skills, route concrete model choices through Agile Workflow's shared model
 matrix, and make peer-readiness diagnostics validate the opposite host rather
@@ -29,8 +30,7 @@ peer is selected.
 ## Acceptance
 
 - Claude-driven workflows select an explicit non-Claude peer; Codex-driven
-  workflows select an explicit non-OpenAI peer; Pi-driven GLM or Kimi workflows
-  select an explicit different-lineage peer appropriate to the role.
+  workflows select an explicit non-OpenAI peer.
 - Shared skill prose does not describe Claude as the assumed driver.
 - Research Pipeline portable skill frontmatter contains only `name` and
   `description`; Codex invocation policy remains in `agents/openai.yaml`.
@@ -42,7 +42,8 @@ peer is selected.
 - The older Claude-only model-selection guidance is replaced by or redirected
   to the shared cross-host decision matrix.
 - Driver defaults are documented for Claude, Codex, and Pi without pretending
-  that identically named effort levels are equivalent across providers.
+  that identically named effort levels are equivalent across providers, and Pi
+  workflow availability is stated accurately while the bridge is blocked.
 
 ## Simplification opportunities
 
@@ -60,9 +61,9 @@ peer is selected.
   required.
 - **Unknown hook host**: The preflight remains silent rather than guessing and
   warning about the wrong peer.
-- **Pi boundary**: Pi consumes portable skills through the existing plugin
-  bridge. Claude/Codex-specific hooks remain absent in Pi, so peer readiness is
-  checked when delegation is attempted rather than at SessionStart.
+- **Pi boundary**: Pi can run GLM/Kimi directly, but consuming portable skills
+  requires the plugin bridge. Until its macOS filesystem-lock probe is fixed,
+  this repository does not advertise Pi as a verified workflow host.
 - **Kimi peer scope**: Kimi is supported as a Pi driver. It is not advertised as
   a peeragent target until peeragent gains a Kimi adapter.
 - **Installed-peer detection**: Recognize a PATH override or an enabled plugin
@@ -179,7 +180,8 @@ standard `agents/openai.yaml` schema.
   model-selection pattern, model-assignment prose, portable skill frontmatter,
   Codex metadata, and peer preflight; repo skill-style scope.
 - Tests added: `test_peer_preflight.sh` covers inactive, unknown, missing CLI,
-  authenticated, and unauthenticated Claude/Codex paths;
+  authenticated, unauthenticated, and transcript-fallback Claude/Codex paths in
+  both directions;
   `skill-portability.test.sh` protects portable frontmatter, Codex policy, and
   GLM/Kimi driver wording.
 - Simplification: replaced the 274-line Claude-only model table with a compact

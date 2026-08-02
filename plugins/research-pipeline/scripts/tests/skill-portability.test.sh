@@ -7,6 +7,7 @@ plugin_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 python3 - "$plugin_root" <<'PY'
 from pathlib import Path
 import sys
+import yaml
 
 root = Path(sys.argv[1])
 allowed = {"name", "description"}
@@ -42,11 +43,19 @@ for skill_name in (
     "update-epicize",
 ):
     metadata = root / "skills" / skill_name / "agents" / "openai.yaml"
-    body = metadata.read_text(encoding="utf-8")
-    if f"${skill_name}" not in body:
+    document = yaml.safe_load(metadata.read_text(encoding="utf-8"))
+    prompt = document.get("interface", {}).get("default_prompt")
+    if not isinstance(prompt, str) or f"${skill_name}" not in prompt:
         raise AssertionError(f"{metadata}: default prompt does not name the skill")
-    if "allow_implicit_invocation:" not in body:
-        raise AssertionError(f"{metadata}: missing Codex invocation policy")
+    policy = document.get("policy", {}).get("allow_implicit_invocation")
+    if not isinstance(policy, bool):
+        raise AssertionError(f"{metadata}: invocation policy must be a boolean")
+
+    expected = skill_name != "expand"
+    if policy is not expected:
+        raise AssertionError(
+            f"{metadata}: invocation policy is {policy!r}, expected {expected!r}"
+        )
 PY
 
 if grep -q 'host Claude.*Codex' \

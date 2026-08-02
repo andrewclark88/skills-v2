@@ -48,6 +48,11 @@ output=$(CLAUDE_AUTH_EXIT=1 run_hook '{"model":"gpt-5.6-sol","hook_event_name":"
 printf '%s' "$output" | grep -q "Claude NOT authenticated"
 printf '%s' "$output" | grep -q "claude auth login"
 
+# Claude host reports a missing Codex CLI.
+output=$(run_hook '{"model":"claude-fable-5","hook_event_name":"SessionStart"}')
+printf '%s' "$output" | grep -q "Codex is the configured cross-model peer"
+printf '%s' "$output" | grep -q "'codex' is not on PATH"
+
 # Claude host selects Codex, including transcript-path fallback detection.
 cat > "$tmp_dir/bin/codex" <<'EOF'
 #!/bin/sh
@@ -60,5 +65,8 @@ test -z "$(run_hook '{"model":"claude-fable-5","hook_event_name":"SessionStart"}
 output=$(CODEX_AUTH_EXIT=1 run_hook '{"transcript_path":"/tmp/.claude/session.jsonl","hook_event_name":"SessionStart"}')
 printf '%s' "$output" | grep -q "Codex NOT authenticated"
 printf '%s' "$output" | grep -q "codex login"
+
+# Codex transcript-path fallback selects Claude too.
+test -z "$(run_hook '{"transcript_path":"/tmp/.codex/session.jsonl","hook_event_name":"SessionStart"}')"
 
 printf '%s\n' 'peer preflight: ok'

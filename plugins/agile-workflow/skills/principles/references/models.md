@@ -122,9 +122,11 @@ the in-skill prose names; this is what they mean.
   `~/.pi/agent/settings.json`; project overrides live in `.pi/settings.json`.
   Use `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`, or select a
   one-off driver with `--provider`, `--model`, and `--thinking`.
-- Skills installed through the Pi plugin bridge inherit the active Pi driver.
-  Resolve internal workers from capability and reserve peeragent for a
-  different training lineage.
+- When the Pi plugin bridge is operational, skills installed through it inherit
+  the active Pi driver. Resolve internal workers from capability and reserve
+  peeragent for a different training lineage. This repository's bridge is
+  currently blocked by the parked macOS filesystem-lock probe issue, so that
+  skill-loading path is not yet verified locally.
 
 ## 3. Role → capability → model
 

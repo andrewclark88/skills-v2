@@ -47,14 +47,17 @@ defaults.
 ## Driver and peer separation
 
 Claude Code, Codex, and Pi own their interactive driver defaults. Pi can drive
-with GLM, Kimi, or another configured provider while consuming these shared
-skills through the plugin bridge.
+with GLM, Kimi, or another configured provider. Consuming these shared skills
+additionally requires a working Pi plugin bridge; that bridge is currently
+blocked on this project's macOS filesystem-lock capability probe, so Pi is not
+yet a verified Research Pipeline workflow host here.
 
 Cross-model review is lineage-relative, not harness-relative. Claude-driven
-work normally chooses Codex; Codex-driven work normally chooses Claude; GLM- or
-Kimi-driven Pi work normally chooses Claude or Codex. Gemini and Z.AI are valid
-fallback peer classes when available. Kimi is a driver class in the current
-matrix but is not a peeragent target until peeragent provides a Kimi adapter.
+work normally chooses Codex; Codex-driven work normally chooses Claude. Once
+the bridge path is operational, GLM- or Kimi-driven Pi work should normally
+choose Claude or Codex. Gemini and Z.AI are valid fallback peer classes when
+available. Kimi is a driver class in the current matrix but is not a peeragent
+target until peeragent provides a Kimi adapter.
 
 A same-lineage reviewer can still provide useful fresh context, but must not be
 reported as cross-model evidence.

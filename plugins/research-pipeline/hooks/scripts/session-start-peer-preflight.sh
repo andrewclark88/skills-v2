@@ -76,8 +76,8 @@ fi
 if ! command -v "$peer_cli" >/dev/null 2>&1; then
   echo "=== ⚠️  peer-review preflight ==="
   echo "${peer_name} is the configured cross-model peer for this ${host} session,"
-  echo "but '${peer_cli}' is not on PATH. Cross-model review will fall back to a"
-  echo "fresh same-host reviewer. Install ${peer_name} or select another peer class."
+  echo "but '${peer_cli}' is not on PATH. The active workflow will apply its"
+  echo "documented no-peer fallback. Install ${peer_name} or select another peer class."
   echo "=== END peer-review preflight ==="
   exit 0
 fi
@@ -90,8 +90,8 @@ fi
 
 echo "=== ⚠️  peer-review preflight: ${peer_name} NOT authenticated ==="
 echo "${peer_name} is the configured cross-model peer for this ${host} session,"
-echo "but its subscription-backed CLI is not authenticated. Cross-model review"
-echo "will fall back to a fresh same-host reviewer until authentication succeeds."
+echo "but its subscription-backed CLI is not authenticated. The active workflow"
+echo "will apply its documented no-peer fallback until authentication succeeds."
 echo ""
 echo "Fix before relying on peer review:  ${auth_hint}"
 echo "=== END peer-review preflight ==="
