@@ -217,4 +217,4 @@ This primer is designed for systems with users, persistence, and at least modera
 |----------|---------|
 | [First Principles Primer](first-principles.md) | How to *think* about design decisions — complements this primer's *what* to decide |
 | [Build Process](build-process.md) | The pipeline this primer augments |
-| [Research Briefs](briefs/system-design/) | Full research behind this primer — 4 specialist briefs + synthesis |
+| Research briefs (`briefs/system-design/`, when present) | Full research behind this primer |

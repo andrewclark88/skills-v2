@@ -211,7 +211,8 @@ class WorkViewSelfHealTest(unittest.TestCase):
         self.assertIn("Rule A body", printed)
         # Probe timed out -> version unknown -> copy treated as stale -> installer
         # invoked. The hook never raised.
-        run_installer.assert_called_once_with(self.root, self.plugin)
+        # main() resolves the payload cwd; macOS canonicalizes /var to /private/var.
+        run_installer.assert_called_once_with(self.root.resolve(), self.plugin)
 
     def test_run_installer_suppresses_output(self) -> None:
         with self._env(), mock.patch.object(prompt_context.subprocess, "run") as run:

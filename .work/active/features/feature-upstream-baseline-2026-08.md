@@ -68,6 +68,9 @@ Merge `upstream/main` to preserve ancestry, pinned at
 - Upstream's content-integrity test used Bash 4's `mapfile`, which fails under
   the supported macOS system Bash 3.2. Its line collection now uses an
   equivalent portable read loop without changing the assertions.
+- Upstream's prompt-context timeout test compared unresolved macOS temporary
+  paths against the hook's canonical path. Its expectation now resolves the
+  fixture root, preserving the behavior assertion across `/var` → `/private/var`.
 - The repository's dogfood `.work/bin/work-view` was refreshed from 0.11.3 to
   the adopted 0.16.14 prebuilt and passed version and board-capability checks.
 
@@ -79,4 +82,4 @@ Merge `upstream/main` to preserve ancestry, pinned at
 - Both marketplace catalogs parse and expose the same ordered plugin identities.
 - Claude/Codex manifest versions match for every locally owned plugin pair.
 - Upstream-owned plugin trees match the pinned upstream baseline except for the
-  two documented test portability/correctness fixes.
+  three documented test portability/correctness fixes.
