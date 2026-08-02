@@ -62,12 +62,29 @@ composition over agentic-research; and keep migrations operator-confirmed.
 - Retain `agile-workflow + research-pipeline` as Andrew's primary process.
 - Carry Workbench as an optional upstream plugin; do not adopt or convert
   existing projects automatically.
+- Treat Workbench as prior art for selective evolution, not as a future
+  migration target. Candidate ideas must be evaluated and adopted individually
+  without importing its mutually exclusive substrate schemas.
 - Treat current upstream files as authoritative for upstream-owned plugins.
   Do not resolve old snapshot conflicts line by line.
 - Preserve fork-owned research-pipeline capabilities, but compose with current
   `agentic-research` rather than maintaining a stale vendored ARD kernel.
 - Preserve the knowledge navigator and validate it in both Claude and Codex.
 - Keep all project migrations explicit and operator-confirmed.
+
+### Workbench ideas worth evaluating later
+
+- Outcome-first natural-language requests that route into the existing staged
+  process without requiring users to name every skill.
+- Proportional ceremony: formal design and review depth should track decision
+  consequence and risk, not merely item size.
+- Semantic autonomy: human-owned product and irreversible choices remain
+  explicit while routine reversible choices stay with the agent.
+- A shared review-weight vocabulary, provided it composes with the existing
+  quality gates rather than replacing them.
+
+These are possible enhancements to the retained workflow. Workbench's `.work/`,
+`.research/`, and `.knowledge/` schemas are not adoption targets.
 
 ## Decomposition
 

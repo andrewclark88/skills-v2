@@ -22,5 +22,7 @@ single-sourced.
 - Agile-workflow is clearly the primary substrate for Andrew's process.
 - Research-pipeline is described as an overlay, not the entire methodology.
 - Workbench is documented as optional and mutually exclusive per project.
+- Workbench is treated as prior art; any borrowed ideas are named individually
+  and expressed through the retained agile-workflow + research-pipeline model.
 - Codex hook support is described accurately.
 - No documentation points at retired or duplicated ARD machinery.
