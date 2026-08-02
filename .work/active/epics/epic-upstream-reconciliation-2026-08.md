@@ -1,7 +1,7 @@
 ---
 id: epic-upstream-reconciliation-2026-08
 kind: epic
-stage: drafting
+stage: implementing
 tags: [agile-workflow, research-pipeline, upstream-sync, process]
 parent: null
 depends_on: []
@@ -56,6 +56,31 @@ existing projects; add Workbench as an available but not automatically adopted
 alternative; preserve research-pipeline's project-process and knowledge-layer
 capabilities; replace its vendored ARD implementation with an explicit
 composition over agentic-research; and keep migrations operator-confirmed.
+
+## Design decisions
+
+- Retain `agile-workflow + research-pipeline` as Andrew's primary process.
+- Carry Workbench as an optional upstream plugin; do not adopt or convert
+  existing projects automatically.
+- Treat current upstream files as authoritative for upstream-owned plugins.
+  Do not resolve old snapshot conflicts line by line.
+- Preserve fork-owned research-pipeline capabilities, but compose with current
+  `agentic-research` rather than maintaining a stale vendored ARD kernel.
+- Preserve the knowledge navigator and validate it in both Claude and Codex.
+- Keep all project migrations explicit and operator-confirmed.
+
+## Decomposition
+
+1. `feature-upstream-baseline-2026-08` — establish current upstream-owned plugin
+   content while preserving fork marketplace identity and research-pipeline.
+2. `feature-research-composition-2026-08` — replace vendored ARD coupling with
+   an explicit agentic-research integration and settle research skill routing.
+3. `feature-knowledge-hooks-2026-08` — preserve and modernize the knowledge
+   index/graph and cross-host session hooks.
+4. `feature-process-docs-2026-08` — update the combined build process,
+   manifests, templates, and guidance for the new plugin map.
+5. `feature-cross-host-validation-2026-08` — run structural, behavioral,
+   Claude, and Codex validation before any version bump or publication.
 
 ## Non-goals
 
