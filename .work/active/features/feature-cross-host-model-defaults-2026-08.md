@@ -1,7 +1,7 @@
 ---
 id: feature-cross-host-model-defaults-2026-08
 kind: feature
-stage: review
+stage: done
 tags: [claude, codex, workflow, prompt-ware]
 parent: null
 depends_on: []
@@ -203,3 +203,24 @@ standard `agents/openai.yaml` schema.
 - Every Research Pipeline skill passes the system skill validator.
 - Every new `agents/openai.yaml` parses and contains typed invocation policy.
 - Host-specific model-name scan and `git diff --check`: clean.
+
+## Review (2026-08-02)
+
+**Verdict**: Approve with comments
+
+**Blockers**: none. The independent reviewer found that Pi workflow support was
+overclaimed while the plugin bridge is blocked; acceptance and shared docs now
+distinguish raw Pi driving from verified skill loading.
+**Important**: none. Symmetric missing-peer and transcript-fallback coverage was
+added, and preflight warnings now defer to each workflow's documented fallback.
+**Nits**: The portability test now parses YAML and asserts exact boolean
+invocation policy, including `expand: false`.
+**Rejected**: No change to SessionStart host detection or the portable
+frontmatter/OpenAI metadata projections; the reviewer found those correct.
+
+**Notes**: Standard weight, one independent fresh-context pass. The preferred
+Claude cross-model pass could not authenticate because its OAuth token was
+revoked, so review used the workflow's fresh-context fallback. Receiver-confirmed
+findings were fixed in `085466d6`; focused shell tests, the 19-test Python suite,
+and `git diff --check` passed afterward. Closure reason: all current-cycle
+findings are fixed and verified; the Pi bridge defect remains separately parked.
