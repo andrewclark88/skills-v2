@@ -4,9 +4,6 @@ description: >
   Coordinate several decision-linked research engagements as a research epic. Retains the familiar
   program entrypoint while using separately registered agentic-research engagements rather than a
   second nested research engine.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
-model: opus
 ---
 
 # Research Program

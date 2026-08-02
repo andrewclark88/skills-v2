@@ -1,7 +1,7 @@
 {
   "name": "research-pipeline",
   "version": "0.1.26",
-  "description": "Research-grounded pipeline plugin — adds the research family, architecture phase, blocking briefs, knowledge index, doc-review, and quality-checkpoint to projects using the agile-workflow substrate. Companion to nklisch/skills agile-workflow.",
+  "description": "Project-process and knowledge overlay for agile-workflow, using agentic-research as its authoritative grounded-research engine.",
   "author": {
     "name": "andrewclark88"
   },
@@ -11,8 +11,8 @@
   "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Research Pipeline",
-    "shortDescription": "Research-grounded planning on top of the agile-workflow substrate",
-    "longDescription": "Research-grounded pipeline that feeds the agile-workflow substrate: the research family (research / deep-research / research-program), architecture, blocking briefs, knowledge index, doc-review, and a release-gate-orchestrating quality-checkpoint. Produces research-grounded epic items and runs cascading consistency checks.",
+    "shortDescription": "Project process and knowledge over grounded research",
+    "longDescription": "Project-process overlay for agile-workflow with prior-art scouting, intent-based research entrypoints, architecture and design integration, a three-layer knowledge index and graph, cross-host context hooks, document review, and release quality orchestration. Requires agentic-research for grounded research execution and ARD verification.",
     "developerName": "andrewclark88",
     "category": "Productivity",
     "capabilities": [

@@ -38,7 +38,7 @@
     {
       "name": "research-pipeline",
       "source": "./plugins/research-pipeline",
-      "description": "Research-grounded project-process overlay for agile-workflow: prior-art scouting, research planning, knowledge indexing and visualization, architecture grounding, design integration, and cross-host context hooks.",
+      "description": "Project-process and knowledge overlay for agile-workflow, with familiar research intents delegated to the authoritative agentic-research engine.",
       "category": "productivity",
       "policy": {
         "installation": "AVAILABLE",

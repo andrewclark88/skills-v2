@@ -1,18 +1,9 @@
 ---
 name: knowledge-index
 description: >
-  Regenerate the project knowledge index from frontmatter — produces a three-layer model.
-  Layer 1: knowledge-index-nav.yaml (~5-8KB, auto-loaded at session start within the
-  harness's 10KB hook-output cap; surfaces corpus counts + 15 most-recent docs + docs
-  flagged with nav_priority: high in frontmatter). Layer 2: knowledge-index.yaml (terse
-  full per-doc index, on-demand via Read). Layer 3: knowledge-index-detail.yaml (rich
-  layer with summaries / decisions / key_findings / related, on-demand). Runs an inline
-  lint pass that catches drift, broken supersession chains, and missing required fields.
-  Navigator size warned at 8KB / errored at 10KB. Run at the start of any session, or
-  anytime you've added or modified docs.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+  Regenerate and lint the project's three-layer knowledge index from document, research, and work
+  artifacts. Use after knowledge-bearing files change, when session navigation is stale, or to audit
+  frontmatter, relationships, substrate shape, and the navigator size budget.
 ---
 
 # Knowledge Index

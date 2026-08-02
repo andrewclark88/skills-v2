@@ -4,9 +4,6 @@ description: >
   Investigate a consequential multi-facet domain. Retains the familiar deep-research intent while
   delegating the campaign, ARD discipline, specialists, synthesis, and verification to
   agentic-research:research-orchestrator.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
-model: opus
 ---
 
 # Deep Research

@@ -4,9 +4,6 @@ description: >
   Map prior art before project definition or scope expansion. Retains the familiar breadth-first
   pipeline entrypoint and delegates grounded acquisition, synthesis, and verification to
   agentic-research:research-orchestrator.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
-model: opus
 ---
 
 # Scout

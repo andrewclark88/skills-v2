@@ -1,18 +1,9 @@
 ---
 name: gate-citations
 description: >
-  Citation-integrity gate for the .research/ corpus. Runs agentic-research's
-  authoritative citation lint (a mechanical script, NOT a deep sub-agent) over the research
-  briefs and synthesis tiers, then converts broken-chain findings — unresolved /
-  colliding / mismatched handles, unreachable sources, missing provenance, thin
-  attestations — into substrate items in .work/ with gate_origin:citations and
-  tags:[research, citations]. Severity-staged like the other gates
-  (high → implementing, medium → drafting, low → backlog). Syntactic only — it
-  proves citations point at real, attested sources; the semantic check (claim
-  support) is handled by agentic-research's adversarial and evaluation stages. Runs as the research
-  gate in /research-pipeline:quality-checkpoint; can also auto-trigger during
-  /agile-workflow:release-deploy.
-allowed-tools: Read, Write, Glob, Grep, Bash
+  Run agentic-research's authoritative citation lint over a project's .research corpus and convert
+  broken-chain findings into agile-workflow items. Use as the research integrity gate during a
+  quality checkpoint or release; semantic support remains owned by the research engagement.
 ---
 
 # Gate-Citations

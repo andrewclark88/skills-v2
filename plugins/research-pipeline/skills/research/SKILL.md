@@ -4,9 +4,6 @@ description: >
   Answer a bounded external technology or domain question that can change a project decision.
   Keeps the familiar research-pipeline entrypoint while delegating grounded execution and ARD
   verification to agentic-research:research-orchestrator.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
-model: opus
 ---
 
 # Research

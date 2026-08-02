@@ -4,9 +4,6 @@ description: >
   Produce implementation-curated domain knowledge that unblocks a work item. Retains the familiar
   pipeline brief entrypoint while delegating grounded research and verification to
   agentic-research:research-orchestrator.
-user-invocable: true
-allowed-tools: Read, Glob, Grep, Skill, AskUserQuestion
-model: opus
 ---
 
 # Brief

@@ -1,22 +1,9 @@
 ---
 name: knowledge-graph
 description: >
-  Render the project's knowledge index as an interactive browser graph + integrity QA. Reads
-  docs/knowledge-index.yaml (nodes) + docs/knowledge-index-detail.yaml (typed related[] edges,
-  summaries, decisions, supersession), adds directory-containment edges for research trees, and emits
-  a self-contained HTML. DEFAULT is a 3D view (3d-force-graph/three.js) where docs are stacked into
-  vertical layers by a selectable dimension (kind / group / status / recency / in-degree / community);
-  pass --2d for the cytoscape.js view (search-first "type to explore" DOI navigation + QA lenses +
-  sortable table). Doubles as a knowledge-index LINTER: classifies unresolved related[] targets
-  (unindexed-on-disk / broken-ref / out-of-scope) and surfaces orphans + superseded chains. When an
-  .research/attestation/ tier exists, overlays the ARD citation chain as a distinct evidence-node class
-  (attestations + brief→attestation [handle]{N} edges; unresolved handles flagged red) without
-  schema-linting them as docs. Sibling to agile-workflow:board (board = work substrate; this = knowledge
-  corpus). Use when the user asks to "visualize the knowledge graph", "show the doc graph", "graph the
-  research", "find orphan docs", "see the citation chain", or "audit the knowledge index integrity".
-user-invocable: true
-allowed-tools: Bash, Read
-model: haiku
+  Render the project's knowledge index as an interactive 2D or 3D graph with relationship,
+  containment, supersession, orphan, and research-evidence integrity overlays. Use to visualize the
+  knowledge corpus, find broken or missing links, inspect citation chains, or audit graph integrity.
 ---
 
 # Knowledge Graph
